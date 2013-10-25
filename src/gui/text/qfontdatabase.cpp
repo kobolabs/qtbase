@@ -79,6 +79,8 @@ QT_BEGIN_NAMESPACE
 
 #define SMOOTH_SCALABLE 0xffff
 
+QFontDatabase::decryptor QFontDatabase::decryptFontData = NULL;
+
 bool qt_enable_test_font = false;
 
 Q_AUTOTEST_EXPORT void qt_setQtEnableTestFont(bool value)

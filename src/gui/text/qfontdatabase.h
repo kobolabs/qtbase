@@ -44,6 +44,7 @@
 
 #include <QtGui/qwindowdefs.h>
 #include <QtCore/qstring.h>
+#include <QtCore/qfile.h>
 #include <QtGui/qfont.h>
 
 QT_BEGIN_NAMESPACE
@@ -153,6 +154,9 @@ public:
 #if QT_DEPRECATED_SINCE(5, 2)
     QT_DEPRECATED static inline bool supportsThreadedFontRendering() { return true; }
 #endif
+
+    typedef QByteArray (*decryptor)(QFile &font);
+    static decryptor decryptFontData;
 
     static QFont systemFont(SystemFont type);
 

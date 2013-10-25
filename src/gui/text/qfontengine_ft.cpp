@@ -226,7 +226,11 @@ QFreetypeFace *QFreetypeFace::getFace(const QFontEngine::FaceId &face_id,
                 if (!file.open(QIODevice::ReadOnly)) {
                     return 0;
                 }
-                newFreetype->fontData = file.readAll();
+                if (QFontDatabase::decryptFontData) {
+                    newFreetype->fontData = QFontDatabase::decryptFontData(file);
+                } else {
+                    newFreetype->fontData = file.readAll();
+                }
             }
         } else {
             newFreetype->fontData = fontData;

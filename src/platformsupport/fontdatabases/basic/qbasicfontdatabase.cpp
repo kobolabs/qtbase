@@ -235,10 +235,17 @@ QStringList QBasicFontDatabase::addTTFile(const QByteArray &fontData, const QByt
     int numFaces = 0;
     QStringList families;
     do {
+        QByteArray data(fontData);
         FT_Face face;
         FT_Error error;
+        if (!file.startsWith(":qmemoryfonts") && QFontDatabase::decryptFontData) {
+            QFile f(QString::fromUtf8(file));
+            f.open(QIODevice::ReadOnly);
+            data = QFontDatabase::decryptFontData(f);
+            f.close();
+        }
         if (!fontData.isEmpty()) {
-            error = FT_New_Memory_Face(library, (const FT_Byte *)fontData.constData(), fontData.size(), index, &face);
+            error = FT_New_Memory_Face(library, (const FT_Byte *)data.constData(), data.size(), index, &face);
         } else {
             error = FT_New_Face(library, file.constData(), index, &face);
         }
