@@ -78,7 +78,7 @@
 #endif
 
 #if !defined(QT_MAX_CACHED_GLYPH_SIZE)
-#  define QT_MAX_CACHED_GLYPH_SIZE 64
+#  define QT_MAX_CACHED_GLYPH_SIZE 128
 #endif
 
 QT_BEGIN_NAMESPACE
