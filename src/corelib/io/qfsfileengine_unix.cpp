@@ -159,8 +159,17 @@ bool QFSFileEnginePrivate::nativeOpen(QIODevice::OpenMode openMode)
 
         // On failure, return and report the error.
         if (fd == -1) {
-            q->setError(errno == EMFILE ? QFile::ResourceError : QFile::OpenError,
-                        qt_error_string(errno));
+            switch (errno) {
+            case EMFILE:
+                q->setError(QFile::ResourceError, qt_error_string(errno));
+                break;
+            case ENAMETOOLONG:
+                q->setError(QFile::NameTooLongError, qt_error_string(errno));
+                break;
+            default:
+                q->setError(QFile::OpenError, qt_error_string(errno));
+                break;
+            }
             return false;
         }
 

@@ -2135,6 +2135,9 @@ QString qt_error_string(int errorCode)
     case ENOSPC:
         s = QT_TRANSLATE_NOOP("QIODevice", "No space left on device");
         break;
+    case ENAMETOOLONG:
+        s = QT_TRANSLATE_NOOP("QIODevice", "Name is too long");
+        break;
     default: {
 #ifdef Q_OS_WIN
         wchar_t *string = 0;

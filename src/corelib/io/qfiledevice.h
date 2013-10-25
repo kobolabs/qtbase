@@ -72,7 +72,8 @@ public:
         PositionError = 11,
         ResizeError = 12,
         PermissionsError = 13,
-        CopyError = 14
+        CopyError = 14,
+        NameTooLongError = 15
     };
 
     enum Permission {
