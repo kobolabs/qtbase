@@ -245,6 +245,8 @@ void QLabelPrivate::init()
 
     openExternalLinks = false;
 
+    leading = -1;
+
     setLayoutItemMargins(QStyle::SE_LabelLayoutItem);
 }
 
@@ -301,6 +303,14 @@ void QLabel::setText(const QString &text)
     } else {
         delete d->control;
         d->control = 0;
+    }
+
+    if (d->control) {
+        QFont current_font = font();
+        if (d->leading >= 0) {
+            current_font.setLeading(d->leading);
+        }
+        d->control->document()->setDefaultFont(current_font);
     }
 
     if (d->isRichText) {
@@ -1366,8 +1376,13 @@ void QLabel::changeEvent(QEvent *ev)
     Q_D(QLabel);
     if(ev->type() == QEvent::FontChange || ev->type() == QEvent::ApplicationFontChange) {
         if (d->isTextLabel) {
-            if (d->control)
-                d->control->document()->setDefaultFont(font());
+            if (d->control) {
+                QFont current_font = font();
+                if (d->leading >= 0) {
+                    current_font.setLeading(d->leading);
+                }
+                d->control->document()->setDefaultFont(current_font);
+            }
             d->updateLabel();
         }
     } else if (ev->type() == QEvent::PaletteChange && d->control) {
@@ -1407,6 +1422,21 @@ void QLabel::setScaledContents(bool enable)
         d->cachedimage = 0;
     }
     update(contentsRect());
+}
+
+int QLabel::leading() const
+{
+    Q_D(const QLabel);
+    return d->leading;
+}
+
+void QLabel::setLeading(int leading)
+{
+    Q_D(QLabel);
+    if (d->leading == leading)
+        return;
+    d->leading = leading;
+    d->updateLabel();
 }
 
 Qt::LayoutDirection QLabelPrivate::textDirection() const

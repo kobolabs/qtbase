@@ -213,6 +213,7 @@ public:
     virtual QFixed ascent() const = 0;
     virtual QFixed descent() const = 0;
     virtual QFixed leading() const = 0;
+    virtual void setLeading(int) { };
     virtual QFixed xHeight() const;
     virtual QFixed averageCharWidth() const;
 
@@ -391,6 +392,7 @@ public:
     virtual QFixed ascent() const;
     virtual QFixed descent() const;
     virtual QFixed leading() const;
+    virtual void setLeading(int);
     virtual QFixed xHeight() const;
     virtual QFixed averageCharWidth() const;
     virtual QImage alphaMapForGlyph(glyph_t);

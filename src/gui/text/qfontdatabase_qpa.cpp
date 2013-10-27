@@ -198,6 +198,9 @@ QFontEngine *loadEngine(int script, const QFontDef &request,
 {
 
     QFontEngine *engine = loadSingleEngine(script, request, foundry, style, size);
+    if (engine && request.forceLeading >= 0) {
+        engine->setLeading(request.forceLeading);
+    }
     //make sure that the db has all fallback families
     if (engine && engine->type() != QFontEngine::Multi
         && !(request.styleStrategy & QFont::NoFontMerging) && !engine->symbol ) {

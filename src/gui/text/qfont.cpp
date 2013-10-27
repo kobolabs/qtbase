@@ -126,6 +126,7 @@ bool QFontDef::exactMatch(const QFontDef &other) const
             && weight        == other.weight
             && style        == other.style
             && this_family   == other_family
+            && forceLeading == other.forceLeading
             && (styleName.isEmpty() || other.styleName.isEmpty() || styleName == other.styleName)
             && (this_foundry.isEmpty()
                 || other_foundry.isEmpty()
@@ -203,12 +204,12 @@ extern QMutex *qt_fontdatabase_mutex();
 
 #define QT_FONT_ENGINE_FROM_DATA(data, script) data->engines[script]
 
-QFontEngine *QFontPrivate::engineForScript(int script) const
+QFontEngine *QFontPrivate::engineForScript(int script, bool force) const
 {
     QMutexLocker locker(qt_fontdatabase_mutex());
     if (script <= QChar::Script_Latin)
         script = QChar::Script_Common;
-    if (engineData && engineData->fontCache != QFontCache::instance()) {
+    if ((engineData && engineData->fontCache != QFontCache::instance()) || (engineData && force)) {
         // throw out engineData that came from a different thread
         if (!engineData->ref.deref())
             delete engineData;
@@ -290,6 +291,8 @@ void QFontPrivate::resolve(uint mask, const QFontPrivate *other)
 
     if (! (mask & QFont::HintingPreferenceResolved))
         request.hintingPreference = other->request.hintingPreference;
+
+    request.forceLeading = other->request.forceLeading;
 
     if (! (mask & QFont::UnderlineResolved))
         underline = other->underline;
@@ -1708,6 +1711,7 @@ bool QFont::operator==(const QFont &f) const
                 && f.d->letterSpacingIsAbsolute == d->letterSpacingIsAbsolute
                 && f.d->letterSpacing == d->letterSpacing
                 && f.d->wordSpacing == d->wordSpacing
+                && f.d->request.forceLeading == d->request.forceLeading
             ));
 }
 
@@ -2130,7 +2134,13 @@ void QFont::cacheStatistics()
 
 }
 
-
+void QFont::setLeading(int leading)
+{
+    d->request.forceLeading = leading;
+    QFontEngine *engine = d->engineForScript(QChar::Script_Common, true);
+    Q_ASSERT(engine != 0);
+    engine->setLeading(leading);
+}
 
 /*****************************************************************************
   QFont stream functions
