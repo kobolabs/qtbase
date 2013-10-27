@@ -145,6 +145,8 @@ public:
     QCursor cursor;
 #endif
 
+    int leading;
+
     friend class QMessageBoxPrivate;
 };
 

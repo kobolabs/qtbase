@@ -633,6 +633,7 @@ QFontEngineFT::QFontEngineFT(const QFontDef &fd)
     embeddedbitmap = false;
     cacheEnabled = qEnvironmentVariableIsSet("QT_USE_FT_CACHE");
     m_subPixelPositionCount = 4;
+    force_leading = -1;
 }
 
 QFontEngineFT::~QFontEngineFT()
@@ -1184,7 +1185,15 @@ QFixed QFontEngineFT::descent() const
 
 QFixed QFontEngineFT::leading() const
 {
+    if (force_leading >= 0) {
+        return force_leading;
+    }
     return QFixed::fromFixed(metrics.height - metrics.ascender + metrics.descender);
+}
+
+void QFontEngineFT::setLeading(int leading)
+{
+    force_leading = leading;
 }
 
 QFixed QFontEngineFT::xHeight() const

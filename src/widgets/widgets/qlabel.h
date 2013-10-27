@@ -64,6 +64,7 @@ class Q_WIDGETS_EXPORT QLabel : public QFrame
     Q_PROPERTY(Qt::TextInteractionFlags textInteractionFlags READ textInteractionFlags WRITE setTextInteractionFlags)
     Q_PROPERTY(bool hasSelectedText READ hasSelectedText)
     Q_PROPERTY(QString selectedText READ selectedText)
+    Q_PROPERTY(int leading READ leading WRITE setLeading)
 
 public:
     explicit QLabel(QWidget *parent=0, Qt::WindowFlags f=0);
@@ -114,6 +115,9 @@ public:
     bool hasSelectedText() const;
     QString selectedText() const;
     int selectionStart() const;
+
+    int leading() const;
+    void setLeading(int);
 
 public Q_SLOTS:
     void setText(const QString &);

@@ -1779,6 +1779,11 @@ QFixed QFontEngineMulti::leading() const
     return engine(0)->leading();
 }
 
+void QFontEngineMulti::setLeading(int leading)
+{
+    engine(0)->setLeading(leading);
+}
+
 QFixed QFontEngineMulti::xHeight() const
 {
     return engine(0)->xHeight();

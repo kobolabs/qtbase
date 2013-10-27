@@ -272,6 +272,9 @@ public:
     inline uint resolve() const { return resolve_mask; }
     inline void resolve(uint mask) { resolve_mask = mask; }
 
+    int leading() const;
+    void setLeading(int);
+
 private:
     explicit QFont(QFontPrivate *);
 

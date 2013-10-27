@@ -214,6 +214,7 @@ private:
     virtual QFixed ascent() const;
     virtual QFixed descent() const;
     virtual QFixed leading() const;
+    virtual void setLeading(int);
     virtual QFixed xHeight() const;
     virtual QFixed averageCharWidth() const;
 
@@ -346,6 +347,7 @@ private:
 
     FT_Size_Metrics metrics;
     mutable bool kerning_pairs_loaded;
+    int force_leading;
 };
 
 inline uint qHash(const QFontEngineFT::GlyphAndSubPixelPosition &g)

@@ -73,7 +73,8 @@ struct QFontDef
           styleStrategy(QFont::PreferDefault), styleHint(QFont::AnyStyle),
           weight(50), fixedPitch(false), style(QFont::StyleNormal), stretch(100),
           hintingPreference(QFont::PreferDefaultHinting), ignorePitch(true),
-          fixedPitchComputed(0), reserved(0)
+          fixedPitchComputed(0), reserved(0),
+          forceLeading(-1)
     {
     }
 
@@ -97,6 +98,7 @@ struct QFontDef
     uint ignorePitch : 1;
     uint fixedPitchComputed : 1; // for Mac OS X only
     int reserved   : 14; // for future extensions
+    int forceLeading;
 
     bool exactMatch(const QFontDef &other) const;
     bool operator==(const QFontDef &other) const
@@ -111,6 +113,7 @@ struct QFontDef
                     && family == other.family
                     && (styleName.isEmpty() || other.styleName.isEmpty() || styleName == other.styleName)
                     && hintingPreference == other.hintingPreference
+                    && forceLeading == other.forceLeading
                           ;
     }
     inline bool operator<(const QFontDef &other) const
@@ -125,6 +128,7 @@ struct QFontDef
         if (!styleName.isEmpty() && !other.styleName.isEmpty() && styleName != other.styleName)
             return styleName < other.styleName;
         if (hintingPreference != other.hintingPreference) return hintingPreference < other.hintingPreference;
+        if (forceLeading != other.forceLeading) return forceLeading < other.forceLeading;
 
 
         if (ignorePitch != other.ignorePitch) return ignorePitch < other.ignorePitch;
@@ -157,7 +161,7 @@ public:
     QFontPrivate(const QFontPrivate &other);
     ~QFontPrivate();
 
-    QFontEngine *engineForScript(int script) const;
+    QFontEngine *engineForScript(int script, bool force = false) const;
     void alterCharForCapitalization(QChar &c) const;
 
     QAtomicInt ref;
