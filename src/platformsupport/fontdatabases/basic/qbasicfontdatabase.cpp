@@ -244,7 +244,7 @@ QStringList QBasicFontDatabase::addTTFile(const QByteArray &fontData, const QByt
             data = QFontDatabase::decryptFontData(f);
             f.close();
         }
-        if (!fontData.isEmpty()) {
+        if (!data.isEmpty()) {
             error = FT_New_Memory_Face(library, (const FT_Byte *)data.constData(), data.size(), index, &face);
         } else {
             error = FT_New_Face(library, file.constData(), index, &face);
