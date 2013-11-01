@@ -48,6 +48,7 @@
 #include "qcocoacolordialoghelper.h"
 #include "qcocoafiledialoghelper.h"
 #include "qcocoafontdialoghelper.h"
+#include "qcocoaintegration.h"
 #include "qcocoasystemsettings.h"
 #include "qcocoasystemtrayicon.h"
 #include "qcocoamenuitem.h"
@@ -63,6 +64,8 @@
 #include <qpa/qplatformnativeinterface.h>
 
 QT_BEGIN_NAMESPACE
+
+extern QCocoaIntegration *cocoaIntegration();
 
 const char *QCocoaTheme::name = "cocoa";
 
@@ -308,7 +311,7 @@ QPlatformMenuBar *QCocoaTheme::createPlatformMenuBar() const
     if (!haveMenubar) {
         haveMenubar = true;
         QObject::connect(qGuiApp, SIGNAL(focusWindowChanged(QWindow*)),
-            QGuiApplicationPrivate::platformIntegration()->nativeInterface(),
+            cocoaIntegration()->nativeInterface(),
                 SLOT(onAppFocusWindowChanged(QWindow*)));
     }
 

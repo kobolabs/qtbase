@@ -48,6 +48,13 @@
 
 QT_BEGIN_NAMESPACE
 
+static QCocoaIntegration *mCocoaIntegration = 0;
+
+QCocoaIntegration *cocoaIntegration()
+{
+	return mCocoaIntegration;
+}
+
 class QCocoaIntegrationPlugin : public QPlatformIntegrationPlugin
 {
     Q_OBJECT
@@ -62,8 +69,11 @@ QPlatformIntegration * QCocoaIntegrationPlugin::create(const QString& system, co
 
     QCocoaAutoReleasePool pool;
 
-    if (system.toLower() == "cocoa")
-        return new QCocoaIntegration;
+    if (system.toLower() == "cocoa") {
+        if (!mCocoaIntegration)
+            mCocoaIntegration = new QCocoaIntegration;
+        return mCocoaIntegration;
+    }
 
     return 0;
 }
