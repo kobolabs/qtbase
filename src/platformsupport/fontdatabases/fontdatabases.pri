@@ -1,4 +1,4 @@
-!win32|contains(QT_CONFIG, freetype):!mac {
+!win32|contains(QT_CONFIG, freetype) {
     include($$PWD/basic/basic.pri)
 }
 
