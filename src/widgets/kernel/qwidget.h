@@ -164,7 +164,7 @@ class Q_WIDGETS_EXPORT QWidget : public QObject, public QPaintDevice
     Q_PROPERTY(bool focus READ hasFocus)
     Q_PROPERTY(Qt::ContextMenuPolicy contextMenuPolicy READ contextMenuPolicy WRITE setContextMenuPolicy)
     Q_PROPERTY(bool updatesEnabled READ updatesEnabled WRITE setUpdatesEnabled DESIGNABLE false)
-    Q_PROPERTY(bool visible READ isVisible WRITE setVisible DESIGNABLE false)
+    Q_PROPERTY(bool visible READ isVisible WRITE setVisible)
     Q_PROPERTY(bool minimized READ isMinimized)
     Q_PROPERTY(bool maximized READ isMaximized)
     Q_PROPERTY(bool fullScreen READ isFullScreen)
