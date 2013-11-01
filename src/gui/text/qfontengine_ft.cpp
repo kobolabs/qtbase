@@ -221,7 +221,7 @@ QFreetypeFace *QFreetypeFace::getFace(const QFontEngine::FaceId &face_id,
                 newFreetype->fontData = qt_fontdata_from_index(idx.toInt(&ok));
                 if (!ok)
                     newFreetype->fontData = QByteArray();
-            } else if (!QFileInfo(fileName).isNativePath()) {
+            } else if (QFileInfo(fileName).exists()) {
                 QFile file(fileName);
                 if (!file.open(QIODevice::ReadOnly)) {
                     return 0;
