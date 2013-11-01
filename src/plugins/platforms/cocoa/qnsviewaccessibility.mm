@@ -45,12 +45,15 @@
 #include "qcocoahelpers.h"
 #include "qcocoaaccessibility.h"
 #include "qcocoaaccessibilityelement.h"
+#include "qcocoaintegration.h"
 #include <qpa/qplatformintegration.h>
 
 #include <QtGui/private/qaccessible2_p.h>
 #include <QtCore/QDebug>
 
 #import <AppKit/NSAccessibility.h>
+
+extern QCocoaIntegration *cocoaIntegration();
 
 @implementation QNSView (QNSViewAccessibility)
 
@@ -63,7 +66,7 @@
 - (id)accessibilityAttributeValue:(NSString *)attribute {
 
     // activate accessibility updates
-    QGuiApplicationPrivate::platformIntegration()->accessibility()->setActive(true);
+    cocoaIntegration()->accessibility()->setActive(true);
 
     if ([attribute isEqualToString:NSAccessibilityRoleAttribute]) {
         if (m_window->accessibleRoot())

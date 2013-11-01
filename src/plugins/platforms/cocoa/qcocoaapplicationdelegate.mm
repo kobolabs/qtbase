@@ -88,6 +88,8 @@
 
 QT_USE_NAMESPACE
 
+extern QCocoaIntegration *cocoaIntegration();
+
 static QCocoaApplicationDelegate *sharedCocoaApplicationDelegate = nil;
 
 static void cleanupCocoaApplicationDelegate()
@@ -114,8 +116,8 @@ static void cleanupCocoaApplicationDelegate()
 - (void)updateScreens:(NSNotification *)notification
 {
     Q_UNUSED(notification);
-    if (QCocoaIntegration *ci = dynamic_cast<QCocoaIntegration *>(QGuiApplicationPrivate::platformIntegration()))
-        ci->updateScreens();
+    QCocoaIntegration *ci = cocoaIntegration();
+    ci->updateScreens();
 }
 
 - (void)dealloc
