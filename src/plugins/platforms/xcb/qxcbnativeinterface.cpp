@@ -70,6 +70,8 @@
 
 QT_BEGIN_NAMESPACE
 
+extern QXcbIntegration *xcbIntegration();
+
 // return QXcbNativeInterface::ResourceType for the key.
 static int resourceType(const QByteArray &key)
 {
@@ -248,7 +250,7 @@ void *QXcbNativeInterface::getTimestamp(const QXcbScreen *screen)
 
 void *QXcbNativeInterface::startupId()
 {
-    QXcbIntegration* integration = static_cast<QXcbIntegration *>(QGuiApplicationPrivate::platformIntegration());
+    QXcbIntegration* integration = xcbIntegration();
     QXcbConnection *defaultConnection = integration->defaultConnection();
     if (defaultConnection)
         return reinterpret_cast<void *>(const_cast<char *>(defaultConnection->startupId().constData()));
@@ -257,7 +259,7 @@ void *QXcbNativeInterface::startupId()
 
 void *QXcbNativeInterface::x11Screen()
 {
-    QXcbIntegration *integration = static_cast<QXcbIntegration *>(QGuiApplicationPrivate::platformIntegration());
+    QXcbIntegration *integration = xcbIntegration();
     QXcbConnection *defaultConnection = integration->defaultConnection();
     if (defaultConnection)
         return reinterpret_cast<void *>(defaultConnection->primaryScreen());
