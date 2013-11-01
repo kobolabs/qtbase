@@ -44,6 +44,13 @@
 
 QT_BEGIN_NAMESPACE
 
+static QXcbIntegration *m_xcbIntegration = 0;
+
+QXcbIntegration *xcbIntegration()
+{
+	return m_xcbIntegration;
+}
+
 class QXcbIntegrationPlugin : public QPlatformIntegrationPlugin
 {
    Q_OBJECT
@@ -54,9 +61,11 @@ public:
 
 QPlatformIntegration* QXcbIntegrationPlugin::create(const QString& system, const QStringList& parameters, int &argc, char **argv)
 {
-    if (system.toLower() == "xcb")
-        return new QXcbIntegration(parameters, argc, argv);
-
+    if (system.toLower() == "xcb") {
+        if (!m_xcbIntegration)
+            m_xcbIntegration = new QXcbIntegration(parameters, argc, argv);
+        return m_xcbIntegration;
+    }
     return 0;
 }
 

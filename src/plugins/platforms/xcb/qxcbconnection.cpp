@@ -92,6 +92,8 @@
 
 QT_BEGIN_NAMESPACE
 
+extern QXcbIntegration *xcbIntegration();
+
 #ifdef XCB_USE_XLIB
 static int nullErrorHandler(Display *, XErrorEvent *)
 {
@@ -241,7 +243,7 @@ void QXcbConnection::updateScreens()
     // Now that they are in the right order, emit the added signals for new screens only
     foreach (QXcbScreen* screen, m_screens)
         if (newScreens.contains(screen))
-            ((QXcbIntegration*)QGuiApplicationPrivate::platformIntegration())->screenAdded(screen);
+            xcbIntegration()->screenAdded(screen);
 }
 
 QXcbConnection::QXcbConnection(QXcbNativeInterface *nativeInterface, bool canGrabServer, const char *displayName)
