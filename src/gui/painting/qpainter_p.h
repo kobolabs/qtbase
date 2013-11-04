@@ -235,7 +235,7 @@ public:
 #if !defined(QT_NO_RAWFONT)
     void drawGlyphs(const quint32 *glyphArray, QFixedPoint *positionArray, int glyphCount,
                     const QRawFont &font, bool overline = false, bool underline = false,
-                    bool strikeOut = false);
+                    bool strikeOut = false, bool isVertical = false);
 #endif
 
     void updateMatrix();

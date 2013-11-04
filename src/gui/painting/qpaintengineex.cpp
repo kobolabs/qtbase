@@ -1049,7 +1049,7 @@ Q_GUI_EXPORT QPainterPath qt_painterPathFromVectorPath(const QVectorPath &path)
     return p;
 }
 
-void QPaintEngineEx::drawStaticTextItem(QStaticTextItem *staticTextItem)
+void QPaintEngineEx::drawStaticTextItem(QStaticTextItem *staticTextItem, bool isVertical)
 {
     QPainterPath path;
     path.setFillRule(Qt::WindingFill);
@@ -1059,7 +1059,7 @@ void QPaintEngineEx::drawStaticTextItem(QStaticTextItem *staticTextItem)
 
     QFontEngine *fontEngine = staticTextItem->fontEngine();
     fontEngine->addGlyphsToPath(staticTextItem->glyphs, staticTextItem->glyphPositions,
-                                staticTextItem->numGlyphs, &path, 0);
+                                staticTextItem->numGlyphs, &path, 0, isVertical);
     if (!path.isEmpty()) {
         QPainterState *s = state();
         QPainter::RenderHints oldHints = s->renderHints;

@@ -403,7 +403,7 @@ public:
     Qt::LayoutDirection layoutDirection() const;
 
 #if !defined(QT_NO_RAWFONT)
-    void drawGlyphRun(const QPointF &position, const QGlyphRun &glyphRun);
+    void drawGlyphRun(const QPointF &position, const QGlyphRun &glyphRun, const bool isVertical = false);
 #endif
 
     void drawStaticText(const QPointF &topLeftPosition, const QStaticText &staticText);
