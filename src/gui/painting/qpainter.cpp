@@ -5526,7 +5526,7 @@ void QPainter::drawImage(const QRectF &targetRect, const QImage &image, const QR
     \sa QGlyphRun::setRawFont(), QGlyphRun::setPositions(), QGlyphRun::setGlyphIndexes()
 */
 #if !defined(QT_NO_RAWFONT)
-void QPainter::drawGlyphRun(const QPointF &position, const QGlyphRun &glyphRun)
+void QPainter::drawGlyphRun(const QPointF &position, const QGlyphRun &glyphRun, const bool isVertical)
 {
     Q_D(QPainter);
 
@@ -5555,13 +5555,13 @@ void QPainter::drawGlyphRun(const QPointF &position, const QGlyphRun &glyphRun)
     }
 
     d->drawGlyphs(glyphIndexes, fixedPointPositions.data(), count, font, glyphRun.overline(),
-                  glyphRun.underline(), glyphRun.strikeOut());
+                  glyphRun.underline(), glyphRun.strikeOut(), isVertical);
 }
 
 void QPainterPrivate::drawGlyphs(const quint32 *glyphArray, QFixedPoint *positions,
                                  int glyphCount,
                                  const QRawFont &font, bool overline, bool underline,
-                                 bool strikeOut)
+                                 bool strikeOut, bool isVertical)
 {
     Q_Q(QPainter);
 
@@ -5600,7 +5600,7 @@ void QPainterPrivate::drawGlyphs(const quint32 *glyphArray, QFixedPoint *positio
         staticTextItem.glyphs = reinterpret_cast<glyph_t *>(const_cast<glyph_t *>(glyphArray));
         staticTextItem.glyphPositions = positions;
 
-        extended->drawStaticTextItem(&staticTextItem);
+        extended->drawStaticTextItem(&staticTextItem, isVertical);
     } else {
         QTextItemInt textItem;
         textItem.fontEngine = fontEngine;

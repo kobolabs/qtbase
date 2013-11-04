@@ -2113,6 +2113,28 @@ void QPainterPath::translate(qreal dx, qreal dy)
     }
 }
 
+void QPainterPath::rotate(qreal a)
+{
+    if (!d_ptr || (a == 0))
+        return;
+
+    int elementsLeft = d_ptr->elements.size();
+    if (elementsLeft <= 0)
+        return;
+
+    detach();
+    QPainterPath::Element *element = d_func()->elements.data();
+    Q_ASSERT(element);
+    QMatrix matrix = QMatrix().rotate(a);
+    while (elementsLeft--) {
+        qreal x = element->x;
+        qreal y = element->y;
+        element->x = matrix.m11() * x + matrix.m21() * y + matrix.dx();
+        element->y = matrix.m22() * y + matrix.m12() * x + matrix.dy();
+        ++element;
+    }
+}
+
 /*!
     \fn void QPainterPath::translate(const QPointF &offset)
     \overload

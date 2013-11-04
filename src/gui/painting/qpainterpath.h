@@ -152,6 +152,7 @@ public:
     bool intersects(const QRectF &rect) const;
 
     void translate(qreal dx, qreal dy);
+    void rotate(qreal a);
     inline void translate(const QPointF &offset);
 
     QPainterPath translated(qreal dx, qreal dy) const;

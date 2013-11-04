@@ -1476,7 +1476,7 @@ void QFontEngineFT::addOutlineToPath(qreal x, qreal y, const QGlyphLayout &glyph
 }
 
 void QFontEngineFT::addGlyphsToPath(glyph_t *glyphs, QFixedPoint *positions, int numGlyphs,
-                                    QPainterPath *path, QTextItem::RenderFlags)
+                                    QPainterPath *path, QTextItem::RenderFlags, bool isVertical)
 {
     FT_Face face = lockFace(Unscaled);
 
@@ -1490,7 +1490,17 @@ void QFontEngineFT::addGlyphsToPath(glyph_t *glyphs, QFixedPoint *positions, int
             continue;
         if (embolden) Q_FT_GLYPHSLOT_EMBOLDEN(g);
         if (obliquen) Q_FT_GLYPHSLOT_OBLIQUE(g);
-        QFreetypeFace::addGlyphToPath(face, g, positions[gl], path, xsize, ysize);
+        QPainterPath tmpPath;
+        QFreetypeFace::addGlyphToPath(face, g, positions[gl], &tmpPath, xsize, ysize);
+        if (isVertical) {
+            qreal x, y;
+            x = positions[gl].x.toReal();
+            y = positions[gl].y.toReal();
+            tmpPath.translate(-x, -y);
+            tmpPath.rotate(-90);
+            tmpPath.translate(x, y);
+        }
+        path->addPath(tmpPath);
     }
     unlockFace();
 }
