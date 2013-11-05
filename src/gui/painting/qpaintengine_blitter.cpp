@@ -785,8 +785,9 @@ void QBlitterPaintEngine::stroke(const QVectorPath &path, const QPen &pen)
     QRasterPaintEngine::stroke(path, pen);
 }
 
-void QBlitterPaintEngine::drawStaticTextItem(QStaticTextItem *sti)
+void QBlitterPaintEngine::drawStaticTextItem(QStaticTextItem *sti, bool isVertical)
 {
+	Q_UNUSED(isVertical);
     Q_D(QBlitterPaintEngine);
     d->lock();
     QRasterPaintEngine::drawStaticTextItem(sti);

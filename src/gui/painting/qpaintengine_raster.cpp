@@ -3024,8 +3024,9 @@ static QPair<int, int> visibleGlyphRange(const QRectF &clip, QFontEngine *fontEn
 /*!
    \reimp
 */
-void QRasterPaintEngine::drawStaticTextItem(QStaticTextItem *textItem)
+void QRasterPaintEngine::drawStaticTextItem(QStaticTextItem *textItem, bool isVertical)
 {
+	Q_UNUSED(isVertical);
     if (textItem->numGlyphs == 0)
         return;
 

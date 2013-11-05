@@ -95,7 +95,7 @@ public:
     void drawPoints(const QPointF *points, int pointCount);
     void drawPoints(const QPoint *points, int pointCount);
     void stroke(const QVectorPath &path, const QPen &pen);
-    void drawStaticTextItem(QStaticTextItem *);
+    void drawStaticTextItem(QStaticTextItem *, bool isVertical = false);
 };
 
 QT_END_NAMESPACE

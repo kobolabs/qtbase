@@ -1465,8 +1465,9 @@ void QGL2PaintEngineEx::drawImage(const QRectF& dest, const QImage& image, const
     }
 }
 
-void QGL2PaintEngineEx::drawStaticTextItem(QStaticTextItem *textItem)
+void QGL2PaintEngineEx::drawStaticTextItem(QStaticTextItem *textItem, bool isVertical)
 {
+	Q_UNUSED(isVertical);
     Q_D(QGL2PaintEngineEx);
 
     ensureActive();
