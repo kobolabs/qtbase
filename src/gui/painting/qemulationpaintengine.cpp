@@ -205,8 +205,9 @@ void QEmulationPaintEngine::drawTextItem(const QPointF &p, const QTextItem &text
     real_engine->drawTextItem(p, textItem);
 }
 
-void QEmulationPaintEngine::drawStaticTextItem(QStaticTextItem *item)
+void QEmulationPaintEngine::drawStaticTextItem(QStaticTextItem *item, bool isVertical)
 {
+	Q_UNUSED(isVertical);
     real_engine->drawStaticTextItem(item);
 }
 

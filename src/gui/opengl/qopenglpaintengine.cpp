@@ -1420,8 +1420,9 @@ void QOpenGL2PaintEngineEx::drawImage(const QRectF& dest, const QImage& image, c
     d->drawTexture(dest, src, image.size(), !image.hasAlphaChannel());
 }
 
-void QOpenGL2PaintEngineEx::drawStaticTextItem(QStaticTextItem *textItem)
+void QOpenGL2PaintEngineEx::drawStaticTextItem(QStaticTextItem *textItem, bool isVertical)
 {
+	Q_UNUSED(isVertical);
     Q_D(QOpenGL2PaintEngineEx);
 
     ensureActive();

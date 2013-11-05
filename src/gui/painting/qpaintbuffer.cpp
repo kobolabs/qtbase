@@ -1242,8 +1242,9 @@ void QPaintBufferEngine::drawTiledPixmap(const QRectF &r, const QPixmap &pm, con
         buffer->updateBoundingRect(r);
 }
 
-void QPaintBufferEngine::drawStaticTextItem(QStaticTextItem *staticTextItem)
+void QPaintBufferEngine::drawStaticTextItem(QStaticTextItem *staticTextItem, bool isVertical)
 {
+	Q_UNUSED(isVertical);
     QVariantList variants;
 
     variants << QVariant(staticTextItem->font);

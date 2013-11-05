@@ -133,7 +133,7 @@ public:
     virtual void stroke(const QVectorPath &path, const QPen &pen);
     virtual void clip(const QVectorPath &path, Qt::ClipOperation op);
 
-    virtual void drawStaticTextItem(QStaticTextItem *textItem);
+    virtual void drawStaticTextItem(QStaticTextItem *textItem, bool isVertical = false);
 
     bool drawTexture(const QRectF &r, GLuint textureId, const QSize &size, const QRectF &sr);
 

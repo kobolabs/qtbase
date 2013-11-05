@@ -197,7 +197,7 @@ public:
     void clip(const QRegion &region, Qt::ClipOperation op);
     inline const QClipData *clipData() const;
 
-    void drawStaticTextItem(QStaticTextItem *textItem);
+    void drawStaticTextItem(QStaticTextItem *textItem, bool isVertical = false);
     virtual bool drawCachedGlyphs(int numGlyphs, const glyph_t *glyphs, const QFixedPoint *positions,
                                   QFontEngine *fontEngine);
 
