@@ -86,7 +86,8 @@ protected slots:
     virtual QRegion doRedraw();
 
 protected:
-    void initializeCompositor();
+    virtual void initializeCompositor();
+    virtual void initializeScreenImage();
 
     QList<QFbWindow *> mWindowStack;
     QRegion mRepaintRegion;
@@ -98,12 +99,12 @@ protected:
     QImage::Format mFormat;
     QSizeF mPhysicalSize;
     QImage *mScreenImage;
+    QPainter *mCompositePainter;
 
 private:
     void invalidateRectCache() { mIsUpToDate = false; }
     void generateRects();
 
-    QPainter *mCompositePainter;
     QList<QPair<QRect, int> > mCachedRects;
     QList <QFbBackingStore*> mBackingStores;
 
