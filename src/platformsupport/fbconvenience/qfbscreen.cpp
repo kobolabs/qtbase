@@ -59,13 +59,16 @@ QFbScreen::~QFbScreen()
     delete mScreenImage;
 }
 
+void QFbScreen::initializeScreenImage()
+{
+    delete mScreenImage;
+    mScreenImage = new QImage(mGeometry.size(), mFormat);
+}
+
 void QFbScreen::initializeCompositor()
 {
-    mScreenImage = new QImage(mGeometry.size(), mFormat);
-
-    mRedrawTimer.setSingleShot(true);
-    mRedrawTimer.setInterval(0);
-    connect(&mRedrawTimer, SIGNAL(timeout()), this, SLOT(doRedraw()));
+    delete mCompositePainter;
+    mCompositePainter = new QPainter(mScreenImage);
 }
 
 void QFbScreen::addWindow(QFbWindow *window)
@@ -161,11 +164,14 @@ void QFbScreen::setPhysicalSize(const QSize &size)
 
 void QFbScreen::setGeometry(const QRect &rect)
 {
-    delete mCompositePainter;
-    mCompositePainter = 0;
-    delete mScreenImage;
     mGeometry = rect;
-    mScreenImage = new QImage(mGeometry.size(), mFormat);
+    initializeScreenImage();
+    initializeCompositor();
+
+    mRedrawTimer.setSingleShot(true);
+    mRedrawTimer.setInterval(0);
+    connect(&mRedrawTimer, SIGNAL(timeout()), this, SLOT(doRedraw()), Qt::UniqueConnection);
+
     invalidateRectCache();
     QWindowSystemInterface::handleScreenGeometryChange(QPlatformScreen::screen(), geometry());
     QWindowSystemInterface::handleScreenAvailableGeometryChange(QPlatformScreen::screen(), availableGeometry());
@@ -222,8 +228,6 @@ QRegion QFbScreen::doRedraw()
     if (!mIsUpToDate)
         generateRects();
 
-    if (!mCompositePainter)
-        mCompositePainter = new QPainter(mScreenImage);
     for (int rectIndex = 0; rectIndex < mRepaintRegion.rectCount(); rectIndex++) {
         QRegion rectRegion = rects[rectIndex];
 
