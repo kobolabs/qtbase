@@ -51,6 +51,9 @@ QT_BEGIN_NAMESPACE
 
 QFbScreen::QFbScreen() : mCursor(0), mGeometry(), mDepth(16), mFormat(QImage::Format_RGB16), mScreenImage(0), mCompositePainter(0), mIsUpToDate(false)
 {
+    mRedrawTimer.setSingleShot(true);
+    mRedrawTimer.setInterval(0);
+    connect(&mRedrawTimer, SIGNAL(timeout()), this, SLOT(doRedraw()));
 }
 
 QFbScreen::~QFbScreen()
@@ -168,10 +171,6 @@ void QFbScreen::setGeometry(const QRect &rect)
     initializeScreenImage();
     initializeCompositor();
 
-    mRedrawTimer.setSingleShot(true);
-    mRedrawTimer.setInterval(0);
-    connect(&mRedrawTimer, SIGNAL(timeout()), this, SLOT(doRedraw()), Qt::UniqueConnection);
-
     invalidateRectCache();
     QWindowSystemInterface::handleScreenGeometryChange(QPlatformScreen::screen(), geometry());
     QWindowSystemInterface::handleScreenAvailableGeometryChange(QPlatformScreen::screen(), availableGeometry());
@@ -227,6 +226,9 @@ QRegion QFbScreen::doRedraw()
 
     if (!mIsUpToDate)
         generateRects();
+
+    if (!mCompositePainter)
+        initializeCompositor();
 
     for (int rectIndex = 0; rectIndex < mRepaintRegion.rectCount(); rectIndex++) {
         QRegion rectRegion = rects[rectIndex];
