@@ -111,8 +111,8 @@ void QFbWindow::repaint(const QRegion &region)
     mOldGeometry = currentGeometry;
     // If this is a move, redraw the previous location
     if (mOldGeometryLocal != currentGeometry)
-        platformScreen()->setDirty(mOldGeometryLocal);
-    platformScreen()->setDirty(dirtyRegion);
+        platformScreen()->setDirty(platformScreen()->mapToDevice(mOldGeometryLocal));
+    platformScreen()->setDirty(platformScreen()->mapToDevice(dirtyRegion));
 }
 
 QT_END_NAMESPACE

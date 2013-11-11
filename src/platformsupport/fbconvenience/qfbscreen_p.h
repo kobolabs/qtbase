@@ -105,8 +105,10 @@ private:
     void invalidateRectCache() { mIsUpToDate = false; }
     void generateRects();
 
+    QRect mapToDevice(const QRect &rect) const;
+
     QList<QPair<QRect, int> > mCachedRects;
-    QList <QFbBackingStore*> mBackingStores;
+    QList<QFbBackingStore*> mBackingStores;
 
     friend class QFbWindow;
     bool mIsUpToDate;
