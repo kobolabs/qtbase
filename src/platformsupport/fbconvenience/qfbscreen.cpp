@@ -270,23 +270,17 @@ QRegion QFbScreen::doRedraw()
 
             rectRegion -= intersect;
 
-            // we only expect one rectangle, but defensive coding...
-            foreach (QRect rect, intersect.rects()) {
-                if (layer == -1) {
-                    mCompositePainter->fillRect(rect, Qt::black);
-                    layer = mWindowStack.size() - 1;
-                }
+            layer = mWindowStack.size() - 1;
 
-                for (int layerIndex = layer; layerIndex != -1; layerIndex--) {
-                    if (!mWindowStack[layerIndex]->window()->isVisible())
-                        continue;
-                    // if (mWindowStack[layerIndex]->isMinimized())
-                    //     continue;
-                    QRect windowRect = mWindowStack[layerIndex]->geometry().translated(-screenOffset);
-                    QTransform transform = map(screen()->angleBetween(nativeOrientation(), orientation()), mGeometry);
-                    mCompositePainter->setTransform(transform, false);
-                    mCompositePainter->drawImage(windowRect.topLeft(), mWindowStack[layerIndex]->backingStore()->image());
-                }
+            for (int layerIndex = layer; layerIndex != -1; layerIndex--) {
+                if (!mWindowStack[layerIndex]->window()->isVisible())
+                    continue;
+                // if (mWindowStack[layerIndex]->isMinimized())
+                //     continue;
+                QRect windowRect = mWindowStack[layerIndex]->geometry().translated(-screenOffset);
+                QTransform transform = map(screen()->angleBetween(nativeOrientation(), orientation()), mGeometry);
+                mCompositePainter->setTransform(transform, false);
+                mCompositePainter->drawImage(windowRect.topLeft(), mWindowStack[layerIndex]->backingStore()->image());
             }
         }
     }
