@@ -91,7 +91,7 @@ void QFbScreen::addWindow(QFbWindow *window)
         }
     }
     invalidateRectCache();
-    setDirty(window->geometry());
+    setDirty(mapToDevice(window->geometry()));
     QWindow *w = topWindow();
     QWindowSystemInterface::handleWindowActivated(w);
     topWindowChanged(w);
@@ -101,7 +101,7 @@ void QFbScreen::removeWindow(QFbWindow *window)
 {
     mWindowStack.removeOne(window);
     invalidateRectCache();
-    setDirty(window->geometry());
+    setDirty(mapToDevice(window->geometry()));
     QWindow *w = topWindow();
     QWindowSystemInterface::handleWindowActivated(w);
     topWindowChanged(w);
@@ -114,7 +114,7 @@ void QFbScreen::raise(QFbWindow *window)
         return;
     mWindowStack.move(index, 0);
     invalidateRectCache();
-    setDirty(window->geometry());
+    setDirty(mapToDevice(window->geometry()));
     QWindow *w = topWindow();
     QWindowSystemInterface::handleWindowActivated(w);
     topWindowChanged(w);
@@ -127,7 +127,7 @@ void QFbScreen::lower(QFbWindow *window)
         return;
     mWindowStack.move(index, mWindowStack.size() - 1);
     invalidateRectCache();
-    setDirty(window->geometry());
+    setDirty(mapToDevice(window->geometry()));
     QWindow *w = topWindow();
     QWindowSystemInterface::handleWindowActivated(w);
     topWindowChanged(w);
@@ -148,6 +148,33 @@ QWindow *QFbScreen::topLevelAt(const QPoint & p) const
             return fbw->window();
     }
     return 0;
+}
+
+static QTransform map(int angle, const QRect &geometry)
+{
+	QSize size = geometry.size();
+	QTransform t;
+	switch (angle) {
+		case 90:
+			t.translate(size.width(), 0);
+			break;
+		case 180:
+			t.translate(size.width(), size.height());
+			break;
+		case 270:
+			t.translate(0, size.height());
+			break;
+		default:
+			break;
+	}
+	t.rotate(angle);
+	return t;
+}
+
+QRect QFbScreen::mapToDevice(const QRect &rect) const
+{
+    QTransform transform = map(screen()->angleBetween(nativeOrientation(), orientation()), mGeometry);
+    return transform.mapRect(rect);
 }
 
 void QFbScreen::setDirty(const QRect &rect)
@@ -245,10 +272,8 @@ QRegion QFbScreen::doRedraw()
 
             // we only expect one rectangle, but defensive coding...
             foreach (QRect rect, intersect.rects()) {
-                bool firstLayer = true;
                 if (layer == -1) {
                     mCompositePainter->fillRect(rect, Qt::black);
-                    firstLayer = false;
                     layer = mWindowStack.size() - 1;
                 }
 
@@ -258,13 +283,9 @@ QRegion QFbScreen::doRedraw()
                     // if (mWindowStack[layerIndex]->isMinimized())
                     //     continue;
                     QRect windowRect = mWindowStack[layerIndex]->geometry().translated(-screenOffset);
-                    QRect windowIntersect = rect.translated(-windowRect.left(),
-                                                            -windowRect.top());
-                    mCompositePainter->drawImage(rect, mWindowStack[layerIndex]->backingStore()->image(),
-                                                windowIntersect);
-                    if (firstLayer) {
-                        firstLayer = false;
-                    }
+                    QTransform transform = map(screen()->angleBetween(nativeOrientation(), orientation()), mGeometry);
+                    mCompositePainter->setTransform(transform, false);
+                    mCompositePainter->drawImage(windowRect.topLeft(), mWindowStack[layerIndex]->backingStore()->image());
                 }
             }
         }
