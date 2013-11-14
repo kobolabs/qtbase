@@ -373,6 +373,15 @@ QSqlIndex QSqlDriver::primaryIndex(const QString&) const
     return QSqlIndex();
 }
 
+/*!
+    Registers a sqlite busy handler callback function
+*/
+int QSqlDriver::busyHandler(int(*handler)(void*, int), void* pArg)
+{
+    Q_UNUSED(handler);
+    Q_UNUSED(pArg);
+    return 0;
+}
 
 /*!
     Returns a QSqlRecord populated with the names of the fields in
