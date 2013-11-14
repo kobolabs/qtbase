@@ -98,6 +98,7 @@ public:
     QSqlError lastError() const;
 
     virtual QVariant handle() const;
+    virtual int busyHandler(int(*handler)(void*, int), void* pArg);
     virtual bool hasFeature(DriverFeature f) const = 0;
     virtual void close() = 0;
     virtual QSqlResult *createResult() const = 0;

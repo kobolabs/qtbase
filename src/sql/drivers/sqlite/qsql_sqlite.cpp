@@ -783,6 +783,12 @@ QVariant QSQLiteDriver::handle() const
     return QVariant::fromValue(d->access);
 }
 
+int QSQLiteDriver::busyHandler(int(*handler)(void*, int), void* pArg)
+{
+    Q_D(QSQLiteDriver);
+    return sqlite3_busy_handler(d->access, handler, pArg);
+}
+
 QString QSQLiteDriver::escapeIdentifier(const QString &identifier, IdentifierType type) const
 {
     Q_UNUSED(type);
