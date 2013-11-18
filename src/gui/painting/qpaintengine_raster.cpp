@@ -3026,7 +3026,6 @@ static QPair<int, int> visibleGlyphRange(const QRectF &clip, QFontEngine *fontEn
 */
 void QRasterPaintEngine::drawStaticTextItem(QStaticTextItem *textItem, bool isVertical)
 {
-	Q_UNUSED(isVertical);
     if (textItem->numGlyphs == 0)
         return;
 
@@ -3052,9 +3051,9 @@ void QRasterPaintEngine::drawStaticTextItem(QStaticTextItem *textItem, bool isVe
         copy.glyphs += range.first;
         copy.glyphPositions += range.first;
         copy.numGlyphs = range.second - range.first;
-        QPaintEngineEx::drawStaticTextItem(&copy);
+        QPaintEngineEx::drawStaticTextItem(&copy, isVertical);
     } else {
-        QPaintEngineEx::drawStaticTextItem(textItem);
+        QPaintEngineEx::drawStaticTextItem(textItem, isVertical);
     }
 }
 
