@@ -132,6 +132,12 @@ public:
     static QPixmap fromImage(const QImage &image, Qt::ImageConversionFlags flags = Qt::AutoColor);
     static QPixmap fromImageReader(QImageReader *imageReader, Qt::ImageConversionFlags flags = Qt::AutoColor);
     static QPixmap fromScaledImage(QImage &image, const QSize& s, Qt::AspectRatioMode aspectMode, Qt::TransformationMode mode);
+#ifdef Q_COMPILER_RVALUE_REFS
+    static QPixmap fromImage(QImage &&image, Qt::ImageConversionFlags flags = Qt::AutoColor)
+    {
+        return fromImageInPlace(image, flags);
+    }
+#endif
 
     bool load(const QString& fileName, const char *format = 0, Qt::ImageConversionFlags flags = Qt::AutoColor);
     bool loadFromData(const uchar *buf, uint len, const char* format = 0, Qt::ImageConversionFlags flags = Qt::AutoColor);
@@ -168,6 +174,7 @@ public:
 
 protected:
     int metric(PaintDeviceMetric) const;
+    static QPixmap fromImageInPlace(QImage &image, Qt::ImageConversionFlags flags = Qt::AutoColor);
 
 private:
     QExplicitlySharedDataPointer<QPlatformPixmap> data;
