@@ -1447,9 +1447,12 @@ public:
             return cacheIt.value();
 
         QObject *obj = OBJECT_PTR(node);
-        QVariant value = obj->property(name.toLatin1());
+        QByteArray namebytes = name.toLatin1();
+        QVariant value = obj->property(namebytes);
         if (!value.isValid()) {
-            if (name == QLatin1String("class")) {
+            if (namebytes.startsWith("qApp_")) {
+                value = qApp->property(namebytes.mid(5));
+            } else if (name == QLatin1String("class")) {
                 QString className = QString::fromLatin1(obj->metaObject()->className());
                 if (className.contains(QLatin1Char(':')))
                     className.replace(QLatin1Char(':'), QLatin1Char('-'));
