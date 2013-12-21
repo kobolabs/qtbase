@@ -653,7 +653,7 @@ typename QVector<T>::iterator QVector<T>::erase(iterator abegin, iterator aend)
             }
         } else {
             destruct(abegin, aend);
-            memmove(abegin, aend, (d->size - itemsToErase - itemsUntouched) * sizeof(T));
+            memmove((void *) abegin, (void *) aend, (d->size - itemsToErase - itemsUntouched) * sizeof(T));
         }
         d->size -= itemsToErase;
     }
