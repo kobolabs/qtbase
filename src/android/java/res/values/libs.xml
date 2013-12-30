@@ -1,9 +1,8 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
     <array name="qt_sources">
-        <item>https://download.qt-project.org/ministro/android/qt5/latest</item>
+        <item>https://download.qt-project.org/ministro/android/qt5/qt-5.2</item>
     </array>
-    <string name="repository">default</string>
 
     <!-- The following is handled automatically by the deployment tool. It should
          not be edited manually. -->

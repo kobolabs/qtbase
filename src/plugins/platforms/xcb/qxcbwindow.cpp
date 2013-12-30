@@ -1145,6 +1145,17 @@ void QXcbWindow::updateNetWmUserTime(xcb_timestamp_t timestamp)
             xcb_change_property(xcb_connection(), XCB_PROP_MODE_REPLACE, m_window, atom(QXcbAtom::_NET_WM_USER_TIME_WINDOW),
                                 XCB_ATOM_WINDOW, 32, 1, &m_netWmUserTimeWindow);
             xcb_delete_property(xcb_connection(), m_window, atom(QXcbAtom::_NET_WM_USER_TIME));
+#ifndef QT_NO_DEBUG
+            QByteArray ba("Qt NET_WM user time window");
+            Q_XCB_CALL(xcb_change_property(xcb_connection(),
+                                           XCB_PROP_MODE_REPLACE,
+                                           m_netWmUserTimeWindow,
+                                           atom(QXcbAtom::_NET_WM_NAME),
+                                           atom(QXcbAtom::UTF8_STRING),
+                                           8,
+                                           ba.length(),
+                                           ba.constData()));
+#endif
         } else if (!isSupportedByWM) {
             // WM no longer supports it, then we should remove the
             // _NET_WM_USER_TIME_WINDOW atom.
@@ -1534,11 +1545,18 @@ void QXcbWindow::handleClientMessageEvent(const xcb_client_message_event_t *even
 #endif
     } else if (event->type == atom(QXcbAtom::_XEMBED)) {
         handleXEmbedMessage(event);
-    } else if (event->type == atom(QXcbAtom::MANAGER) || event->type == atom(QXcbAtom::_NET_ACTIVE_WINDOW)
-               || event->type == atom(QXcbAtom::_NET_WM_STATE) || event->type == atom(QXcbAtom::MANAGER)
+    } else if (event->type == atom(QXcbAtom::_NET_ACTIVE_WINDOW)) {
+        connection()->setFocusWindow(this);
+        QWindowSystemInterface::handleWindowActivated(window());
+    } else if (event->type == atom(QXcbAtom::MANAGER)
+               || event->type == atom(QXcbAtom::_NET_WM_STATE)
                || event->type == atom(QXcbAtom::WM_CHANGE_STATE)) {
-        // Ignore _NET_ACTIVE_WINDOW, _NET_WM_STATE, MANAGER which are relate to tray icons
+        // Ignore _NET_WM_STATE, MANAGER which are relate to tray icons
         // and other messages.
+    } else if (event->type == atom(QXcbAtom::_COMPIZ_DECOR_PENDING)
+            || event->type == atom(QXcbAtom::_COMPIZ_DECOR_REQUEST)
+            || event->type == atom(QXcbAtom::_COMPIZ_DECOR_DELETE_PIXMAP)) {
+        //silence the _COMPIZ messages for now
     } else {
         qWarning() << "QXcbWindow: Unhandled client message:" << connection()->atomName(event->type);
     }

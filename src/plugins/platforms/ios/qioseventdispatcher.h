@@ -54,15 +54,13 @@ public:
     explicit QIOSEventDispatcher(QObject *parent = 0);
 
     bool processEvents(QEventLoop::ProcessEventsFlags flags) Q_DECL_OVERRIDE;
-    void interrupt() Q_DECL_OVERRIDE;
 
     void handleRunLoopExit(CFRunLoopActivity activity);
 
-    void checkIfApplicationShouldQuit();
-    void interruptQApplicationExec();
+    void interruptEventLoopExec();
 
 private:
-    uint m_processEventCallsAfterAppExec;
+    uint m_processEventCallsAfterExec;
     RunLoopObserver<QIOSEventDispatcher> m_runLoopExitObserver;
 };
 

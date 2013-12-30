@@ -42,6 +42,7 @@
 #include "qqnxnativeinterface.h"
 
 #include "qqnxscreen.h"
+#include "qqnxwindow.h"
 
 #include <QtGui/QScreen>
 #include <QtGui/QWindow>
@@ -51,11 +52,13 @@ QT_BEGIN_NAMESPACE
 void *QQnxNativeInterface::nativeResourceForWindow(const QByteArray &resource, QWindow *window)
 {
     if (resource == "windowGroup" && window && window->screen()) {
-        const QQnxScreen * const screen = static_cast<QQnxScreen *>(window->screen()->handle());
+        QQnxScreen * const screen = static_cast<QQnxScreen *>(window->screen()->handle());
         if (screen) {
+            screen_window_t screenWindow = reinterpret_cast<screen_window_t>(window->winId());
+            QQnxWindow *qnxWindow = screen->findWindow(screenWindow);
             // We can't just call data() instead of constData() here, since that would detach
             // and the lifetime of the char * would not be long enough. Therefore the const_cast.
-            return const_cast<char *>(screen->rootWindow()->groupName().constData());
+            return qnxWindow ? const_cast<char *>(qnxWindow->groupName().constData()) : 0;
         }
     }
 
@@ -68,6 +71,14 @@ void *QQnxNativeInterface::nativeResourceForScreen(const QByteArray &resource, Q
         return static_cast<QObject*>(static_cast<QQnxScreen*>(screen->handle()));
 
     return 0;
+}
+
+void QQnxNativeInterface::setWindowProperty(QPlatformWindow *window, const QString &name, const QVariant &value)
+{
+    if (name == QStringLiteral("mmRendererWindowName")) {
+        QQnxWindow *qnxWindow = static_cast<QQnxWindow*>(window);
+        qnxWindow->setMMRendererWindowName(value.toString());
+    }
 }
 
 QT_END_NAMESPACE

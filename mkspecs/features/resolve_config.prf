@@ -22,25 +22,35 @@ CONFIG(static, static|shared) {
     contains(TEMPLATE, ".*lib"): CONFIG += dll
 }
 
-static_and_shared {
-    !macx-xcode: addExclusiveBuilds(static, Static, shared, Shared)
-} else: fix_output_dirs {
-    static: \
-        fixExclusiveOutputDirs(static, shared)
-    else: \
-        fixExclusiveOutputDirs(shared, static)
-}
+!macx-xcode: \
+    addExclusiveBuilds(shared, static)
 
 CONFIG(debug, debug|release): \
     CONFIG -= release
 else: \
     CONFIG -= debug
 
-debug_and_release {
-    !macx-xcode: addExclusiveBuilds(debug, Debug, release, Release)
-} else: fix_output_dirs {
-    debug: \
-        fixExclusiveOutputDirs(debug, release)
-    else: \
-        fixExclusiveOutputDirs(release, debug)
+!macx-xcode {
+    addExclusiveBuilds(debug, release)
+} else {
+    # The Xcode generator always generates project files with
+    # debug and release configurations, regardless of whether
+    # or not debug_and_release is active.
+    for(build, $$list(debug release)) {
+        suffix =
+        contains(QT_CONFIG, debug_and_release) {
+            equals(build, debug): \
+                suffix = _debug
+        } else {
+            contains(QT_CONFIG, debug): \
+                suffix = _debug
+        }
+
+        library_suffix_$${build}.name = $$QMAKE_XCODE_LIBRARY_SUFFIX_SETTING
+        library_suffix_$${build}.value = $$suffix
+        library_suffix_$${build}.build = $$build
+        QMAKE_MAC_XCODE_SETTINGS += library_suffix_$${build}
+
+        CONFIG *= xcode_dynamic_library_suffix
+    }
 }

@@ -48,17 +48,14 @@
 QT_BEGIN_NAMESPACE
 
 QFbWindow::QFbWindow(QWindow *window)
-    : QPlatformWindow(window), mBackingStore(0)
+    : QPlatformWindow(window), mBackingStore(0), mWindowState(Qt::WindowNoState)
 {
     static QAtomicInt winIdGenerator(1);
     mWindowId = winIdGenerator.fetchAndAddRelaxed(1);
-
-    platformScreen()->addWindow(this);
 }
 
 QFbWindow::~QFbWindow()
 {
-    platformScreen()->removeWindow(this);
 }
 
 QFbScreen *QFbWindow::platformScreen() const
@@ -76,6 +73,31 @@ void QFbWindow::setGeometry(const QRect &rect)
 
     QPlatformWindow::setGeometry(rect);
 }
+
+void QFbWindow::setVisible(bool visible)
+{
+    if (visible) {
+        if (mWindowState & Qt::WindowFullScreen)
+            setGeometry(platformScreen()->geometry());
+        else if (mWindowState & Qt::WindowMaximized)
+            setGeometry(platformScreen()->availableGeometry());
+    }
+    QPlatformWindow::setVisible(visible);
+
+    if (visible)
+        platformScreen()->addWindow(this);
+    else
+        platformScreen()->removeWindow(this);
+}
+
+
+void QFbWindow::setWindowState(Qt::WindowState state)
+{
+    QPlatformWindow::setWindowState(state);
+    mWindowState = state;
+    platformScreen()->invalidateRectCache();
+}
+
 
 void QFbWindow::setWindowFlags(Qt::WindowFlags flags)
 {

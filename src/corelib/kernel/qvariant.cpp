@@ -1,6 +1,7 @@
 /****************************************************************************
 **
 ** Copyright (C) 2013 Digia Plc and/or its subsidiary(-ies).
+** Copyright (C) 2013 Olivier Goffart <ogoffart@woboq.com>
 ** Contact: http://www.qt-project.org/legal
 **
 ** This file is part of the QtCore module of the Qt Toolkit.
@@ -221,6 +222,19 @@ static qlonglong qConvertToNumber(const QVariant::Private *d, bool *ok)
         return qlonglong(qMetaTypeUNumber(d));
     }
 
+    if (QMetaType::typeFlags(d->type) & QMetaType::IsEnumeration) {
+        switch (QMetaType::sizeOf(d->type)) {
+        case 1:
+            return d->is_shared ? *reinterpret_cast<signed char *>(d->data.shared->ptr) : d->data.sc;
+        case 2:
+            return d->is_shared ? *reinterpret_cast<qint16 *>(d->data.shared->ptr) : d->data.s;
+        case 4:
+            return d->is_shared ? *reinterpret_cast<qint32 *>(d->data.shared->ptr) : d->data.i;
+        case 8:
+            return d->is_shared ? *reinterpret_cast<qint64 *>(d->data.shared->ptr) : d->data.ll;
+        }
+    }
+
     *ok = false;
     return Q_INT64_C(0);
 }
@@ -254,6 +268,19 @@ static qulonglong qConvertToUnsignedNumber(const QVariant::Private *d, bool *ok)
     case QMetaType::UShort:
     case QMetaType::ULong:
         return qMetaTypeUNumber(d);
+    }
+
+    if (QMetaType::typeFlags(d->type) & QMetaType::IsEnumeration) {
+        switch (QMetaType::sizeOf(d->type)) {
+        case 1:
+            return d->is_shared ? *reinterpret_cast<uchar *>(d->data.shared->ptr) : d->data.uc;
+        case 2:
+            return d->is_shared ? *reinterpret_cast<quint16 *>(d->data.shared->ptr) : d->data.us;
+        case 4:
+            return d->is_shared ? *reinterpret_cast<quint32 *>(d->data.shared->ptr) : d->data.u;
+        case 8:
+            return d->is_shared ? *reinterpret_cast<qint64 *>(d->data.shared->ptr) : d->data.ull;
+        }
     }
 
     *ok = false;
@@ -888,15 +915,13 @@ static bool customCompare(const QVariant::Private *a, const QVariant::Private *b
 static bool customConvert(const QVariant::Private *d, int t, void *result, bool *ok)
 {
     if (d->type >= QMetaType::User || t >= QMetaType::User) {
-        const bool isOk = QMetaType::convert(constData(*d), d->type, result, t);
-        if (ok)
-            *ok = isOk;
-        return isOk;
+        if (QMetaType::convert(constData(*d), d->type, result, t)) {
+            if (ok)
+                *ok = true;
+            return true;
+        }
     }
-
-    if (ok)
-        *ok = false;
-    return false;
+    return convert(d, t, result, ok);
 }
 
 #if !defined(QT_NO_DEBUG_STREAM)
@@ -1892,6 +1917,7 @@ void QVariant::load(QDataStream &s)
 void QVariant::save(QDataStream &s) const
 {
     quint32 typeId = type();
+    bool fakeUserType = false;
     if (s.version() < QDataStream::Qt_4_0) {
         int i;
         for (i = 0; i <= MapFromThreeCount - 1; ++i) {
@@ -1916,12 +1942,16 @@ void QVariant::save(QDataStream &s) const
         } else if (typeId >= QMetaType::QKeySequence && typeId <= QMetaType::QQuaternion) {
             // and as a result these types received lower ids too
             typeId +=1;
+        } else if (typeId == QMetaType::QPolygonF) {
+            // This existed in Qt 4 only as a custom type
+            typeId = 127;
+            fakeUserType = true;
         }
     }
     s << typeId;
     if (s.version() >= QDataStream::Qt_4_2)
         s << qint8(d.is_null);
-    if (d.type >= QVariant::UserType) {
+    if (d.type >= QVariant::UserType || fakeUserType) {
         s << QMetaType::typeName(userType());
     }
 
@@ -2849,8 +2879,13 @@ bool QVariant::canConvert(int targetTypeId) const
 
     if (targetTypeId < 0)
         return false;
-    if (targetTypeId >= QMetaType::User)
-        return canConvertMetaObject(currentType, targetTypeId, d.data.o);
+    if (targetTypeId >= QMetaType::User) {
+        if (QMetaType::typeFlags(targetTypeId) & QMetaType::IsEnumeration) {
+            targetTypeId = QMetaType::Int;
+        } else {
+            return canConvertMetaObject(currentType, targetTypeId, d.data.o);
+        }
+    }
 
     if (currentType == QMetaType::QJsonValue) {
         switch (targetTypeId) {
@@ -2883,13 +2918,16 @@ bool QVariant::canConvert(int targetTypeId) const
                 return true;
             // fall through
         case QVariant::UInt:
+        case QVariant::LongLong:
+        case QVariant::ULongLong:
                return currentType == QMetaType::ULong
                    || currentType == QMetaType::Long
                    || currentType == QMetaType::UShort
                    || currentType == QMetaType::UChar
                    || currentType == QMetaType::Char
                    || currentType == QMetaType::SChar
-                   || currentType == QMetaType::Short;
+                   || currentType == QMetaType::Short
+                   || QMetaType::typeFlags(currentType) & QMetaType::IsEnumeration;
         case QVariant::Image:
             return currentType == QVariant::Pixmap || currentType == QVariant::Bitmap;
         case QVariant::Pixmap:
@@ -2918,7 +2956,9 @@ bool QVariant::canConvert(int targetTypeId) const
         case QMetaType::ULong:
         case QMetaType::Short:
         case QMetaType::UShort:
-            return qCanConvertMatrix[QVariant::Int] & (1 << currentType) || currentType == QVariant::Int;
+            return qCanConvertMatrix[QVariant::Int] & (1 << currentType)
+                || currentType == QVariant::Int
+                || QMetaType::typeFlags(currentType) & QMetaType::IsEnumeration;
         case QMetaType::QObjectStar:
             return canConvertMetaObject(currentType, targetTypeId, d.data.o);
         default:
@@ -2969,7 +3009,8 @@ bool QVariant::convert(int targetTypeId)
     }
 
     bool isOk = true;
-    if (!handlerManager[d.type]->convert(&oldValue.d, targetTypeId, data(), &isOk))
+    int converterType = std::max(oldValue.userType(), targetTypeId);
+    if (!handlerManager[converterType]->convert(&oldValue.d, targetTypeId, data(), &isOk))
         isOk = false;
     d.is_null = !isOk;
     return isOk;

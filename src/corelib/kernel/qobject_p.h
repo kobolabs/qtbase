@@ -90,10 +90,19 @@ class Q_CORE_EXPORT QAbstractDeclarativeData
 {
 public:
     static void (*destroyed)(QAbstractDeclarativeData *, QObject *);
+    static void (*destroyed_qml1)(QAbstractDeclarativeData *, QObject *);
     static void (*parentChanged)(QAbstractDeclarativeData *, QObject *, QObject *);
     static void (*signalEmitted)(QAbstractDeclarativeData *, QObject *, int, void **);
     static int  (*receivers)(QAbstractDeclarativeData *, const QObject *, int);
     static bool (*isSignalConnected)(QAbstractDeclarativeData *, const QObject *, int);
+};
+
+// This is an implementation of QAbstractDeclarativeData that is identical with
+// the implementation in QtDeclarative and QtQml for the first bit
+struct QAbstractDeclarativeDataImpl : public QAbstractDeclarativeData
+{
+    quint32 ownedByQml1:1;
+    quint32 unused: 31;
 };
 
 class Q_CORE_EXPORT QObjectPrivate : public QObjectData

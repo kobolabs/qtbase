@@ -135,8 +135,11 @@ public:
     QList<QUrl> addDefaultSuffixToUrls(const QList<QUrl> &urlsToFix) const;
     bool removeDirectory(const QString &path);
     void setLabelTextControl(QFileDialog::DialogLabel label, const QString &text);
+    inline void updateLookInLabel();
     inline void updateFileNameLabel();
+    inline void updateFileTypeLabel();
     void updateOkButtonText(bool saveAsOnFolder = false);
+    void updateCancelButtonText();
 
     inline QModelIndex mapToSource(const QModelIndex &index) const;
     inline QModelIndex mapFromSource(const QModelIndex &index) const;
@@ -248,7 +251,8 @@ public:
     // setVisible_sys returns true if it ends up showing a native
     // dialog. Returning false means that a non-native dialog must be
     // used instead.
-    bool canBeNativeDialog();
+    bool canBeNativeDialog() const;
+    inline bool usingWidgets() const;
 
     void setDirectory_sys(const QUrl &directory);
     QUrl directory_sys() const;
@@ -347,7 +351,7 @@ inline QModelIndex QFileDialogPrivate::mapFromSource(const QModelIndex &index) c
 }
 
 inline QString QFileDialogPrivate::rootPath() const {
-    return model->rootPath();
+    return (model ? model->rootPath() : QStringLiteral("/"));
 }
 
 inline void QFileDialogPrivate::setDirectory_sys(const QUrl &directory)

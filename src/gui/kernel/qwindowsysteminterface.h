@@ -130,7 +130,7 @@ public:
     static void handleTouchCancelEvent(QWindow *w, QTouchDevice *device, Qt::KeyboardModifiers mods = Qt::NoModifier);
     static void handleTouchCancelEvent(QWindow *w, ulong timestamp, QTouchDevice *device, Qt::KeyboardModifiers mods = Qt::NoModifier);
 
-    static void handleGeometryChange(QWindow *w, const QRect &newRect);
+    static void handleGeometryChange(QWindow *w, const QRect &newRect, const QRect &oldRect = QRect());
     static void handleCloseEvent(QWindow *w, bool *accepted = 0);
     static void handleEnterEvent(QWindow *w, const QPointF &local = QPointF(), const QPointF& global = QPointF());
     static void handleLeaveEvent(QWindow *w);
@@ -176,6 +176,15 @@ public:
     static void handleTabletEnterProximityEvent(int device, int pointerType, qint64 uid);
     static void handleTabletLeaveProximityEvent(ulong timestamp, int device, int pointerType, qint64 uid);
     static void handleTabletLeaveProximityEvent(int device, int pointerType, qint64 uid);
+
+#ifndef QT_NO_GESTURES
+    static void handleGestureEvent(QWindow *window,  ulong timestamp, Qt::NativeGestureType type,
+                                   QPointF &local, QPointF &global);
+    static void handleGestureEventWithRealValue(QWindow *window,  ulong timestamp, Qt::NativeGestureType type,
+                                                qreal value, QPointF &local, QPointF &global);
+    static void handleGestureEventWithSequenceIdAndValue(QWindow *window, ulong timestamp,Qt::NativeGestureType type,
+                                                         ulong sequenceId, quint64 value, QPointF &local, QPointF &global);
+#endif // QT_NO_GESTURES
 
     static void handlePlatformPanelEvent(QWindow *w);
 #ifndef QT_NO_CONTEXTMENU

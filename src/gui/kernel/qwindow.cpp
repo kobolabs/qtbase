@@ -227,6 +227,8 @@ QWindow::~QWindow()
         QGuiApplicationPrivate::focus_window = 0;
     if (QGuiApplicationPrivate::currentMouseWindow == this)
         QGuiApplicationPrivate::currentMouseWindow = 0;
+    if (QGuiApplicationPrivate::tabletPressTarget == this)
+        QGuiApplicationPrivate::tabletPressTarget = 0;
     QGuiApplicationPrivate::window_list.removeAll(this);
     destroy();
 }
@@ -363,6 +365,10 @@ void QWindowPrivate::setScreen(QScreen *newScreen, bool recreate)
         }
         emit q->screenChanged(newScreen);
     }
+}
+
+void QWindowPrivate::clearFocusObject()
+{
 }
 
 /*!
@@ -980,8 +986,13 @@ Qt::ScreenOrientation QWindow::contentOrientation() const
 qreal QWindow::devicePixelRatio() const
 {
     Q_D(const QWindow);
+
+    // If there is no platform window, do the second best thing and
+    // return the app global devicePixelRatio. This is the highest
+    // devicePixelRatio found on the system screens, and will be
+    // correct for single-display systems (a very common case).
     if (!d->platformWindow)
-        return 1.0;
+        return qApp->devicePixelRatio();
     return d->platformWindow->devicePixelRatio();
 }
 
@@ -1640,17 +1651,18 @@ QObject *QWindow::focusObject() const
 /*!
     Shows the window.
 
-    This equivalent to calling showFullScreen() or showNormal(), depending
-    on whether the platform defaults to windows being fullscreen or not, and
-    whether the window is a popup.
+    This is equivalent to calling showFullScreen(), showMaximized(), or showNormal(),
+    depending on the platform's default behavior for the window type and flags.
 
-    \sa showFullScreen(), showNormal(), hide(), QStyleHints::showIsFullScreen(), flags()
+    \sa showFullScreen(), showMaximized(), showNormal(), hide(), QStyleHints::showIsFullScreen(), flags()
 */
 void QWindow::show()
 {
-    bool isPopup = d_func()->windowFlags & Qt::Popup & ~Qt::Window;
-    if (!isPopup && qApp->styleHints()->showIsFullScreen())
+    Qt::WindowState defaultState = QGuiApplicationPrivate::platformIntegration()->defaultWindowState(d_func()->windowFlags);
+    if (defaultState == Qt::WindowFullScreen)
         showFullScreen();
+    else if (defaultState == Qt::WindowMaximized)
+        showMaximized();
     else
         showNormal();
 }

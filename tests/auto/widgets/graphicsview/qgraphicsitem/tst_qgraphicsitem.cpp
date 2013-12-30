@@ -4221,6 +4221,7 @@ void tst_QGraphicsItem::cursor()
     QCursor cursor = view.viewport()->cursor();
 
     {
+        QTest::mouseMove(view.viewport(), QPoint(100, 50));
         QMouseEvent event(QEvent::MouseMove, QPoint(100, 50), Qt::NoButton, 0, 0);
         QApplication::sendEvent(view.viewport(), &event);
     }
@@ -5089,6 +5090,10 @@ public:
 
 void tst_QGraphicsItem::paint()
 {
+#ifdef Q_OS_MACX
+    if (QSysInfo::MacintoshVersion == QSysInfo::MV_10_7)
+        QSKIP("QTBUG-31454 - Unstable auto-test");
+#endif
     QGraphicsScene scene;
 
     PaintTester paintTester;
@@ -6454,6 +6459,12 @@ public:
 
 void tst_QGraphicsItem::ensureUpdateOnTextItem()
 {
+#ifdef Q_OS_MAC
+    if (QSysInfo::MacintoshVersion == QSysInfo::MV_10_7) {
+        QSKIP("This test is unstable on 10.7 in CI");
+    }
+#endif
+
     QGraphicsScene scene;
     QGraphicsView view(&scene);
     view.show();

@@ -47,6 +47,10 @@
 #include <QTouchEvent>
 #include <QPointer>
 
+#ifdef QT_DEBUG_ANDROID_IM_PROTOCOL
+# include <QDebug>
+#endif
+
 using namespace QtAndroid;
 
 namespace QtAndroidInput
@@ -63,12 +67,32 @@ namespace QtAndroidInput
 
     static QPointer<QWindow> m_mouseGrabber;
 
+    static int m_lastCursorPos = -1;
+
     void updateSelection(int selStart, int selEnd, int candidatesStart, int candidatesEnd)
     {
         AttachedJNIEnv env;
         if (!env.jniEnv)
             return;
 
+#ifdef QT_DEBUG_ANDROID_IM_PROTOCOL
+        qDebug() << ">>> UPDATESELECTION" << selStart << selEnd << candidatesStart << candidatesEnd;
+#endif
+        if (candidatesStart == -1 && candidatesEnd == -1 && selStart == selEnd) {
+            // Qt only gives us position inside the block, so if we move to the
+            // same position in another block, the Android keyboard will believe
+            // we have not changed position, and be terribly confused.
+            if (selStart == m_lastCursorPos) {
+#ifdef QT_DEBUG_ANDROID_IM_PROTOCOL
+                qDebug() << ">>> FAKEUPDATESELECTION" << selStart+1;
+#endif
+                env.jniEnv->CallStaticVoidMethod(applicationClass(), m_updateSelectionMethodID,
+                                         selStart+1, selEnd+1, candidatesStart, candidatesEnd);
+            }
+            m_lastCursorPos = selStart;
+        } else {
+            m_lastCursorPos = -1;
+        }
         env.jniEnv->CallStaticVoidMethod(applicationClass(), m_updateSelectionMethodID,
                                          selStart, selEnd, candidatesStart, candidatesEnd);
     }
@@ -86,6 +110,9 @@ namespace QtAndroidInput
                                          width,
                                          height,
                                          inputHints);
+#ifdef QT_DEBUG_ANDROID_IM_PROTOCOL
+        qDebug() << "@@@ SHOWSOFTWAREKEYBOARD" << left << top << width << height << inputHints;
+#endif
     }
 
     void resetSoftwareKeyboard()
@@ -95,6 +122,9 @@ namespace QtAndroidInput
             return;
 
         env.jniEnv->CallStaticVoidMethod(applicationClass(), m_resetSoftwareKeyboardMethodID);
+#ifdef QT_DEBUG_ANDROID_IM_PROTOCOL
+        qDebug() << "@@@ RESETSOFTWAREKEYBOARD";
+#endif
     }
 
     void hideSoftwareKeyboard()
@@ -104,6 +134,9 @@ namespace QtAndroidInput
             return;
 
         env.jniEnv->CallStaticVoidMethod(applicationClass(), m_hideSoftwareKeyboardMethodID);
+#ifdef QT_DEBUG_ANDROID_IM_PROTOCOL
+        qDebug() << "@@@ HIDESOFTWAREKEYBOARD";
+#endif
     }
 
     bool isSoftwareKeyboardVisible()
@@ -112,7 +145,11 @@ namespace QtAndroidInput
         if (!env.jniEnv)
             return false;
 
-        return env.jniEnv->CallStaticBooleanMethod(applicationClass(), m_isSoftwareKeyboardVisibleMethodID);
+        bool visibility = env.jniEnv->CallStaticBooleanMethod(applicationClass(), m_isSoftwareKeyboardVisibleMethodID);
+#ifdef QT_DEBUG_ANDROID_IM_PROTOCOL
+        qDebug() << "@@@ ISSOFTWAREKEYBOARDVISIBLE" << visibility;
+#endif
+        return visibility;
     }
 
 
@@ -228,6 +265,9 @@ namespace QtAndroidInput
             return;
 
         QAndroidPlatformIntegration *platformIntegration = QtAndroid::androidPlatformIntegration();
+        if (!platformIntegration)
+            return;
+
         QTouchDevice *touchDevice = platformIntegration->touchDevice();
         if (touchDevice == 0) {
             touchDevice = new QTouchDevice;
@@ -271,8 +311,8 @@ namespace QtAndroidInput
             case 0x00000005:
                 return Qt::Key_Call;
 
-            case 0x0000001b:
-                return Qt::Key_WebCam;
+            case 0x0000001b: // KEYCODE_CAMERA
+                return Qt::Key_Camera;
 
             case 0x0000001c:
                 return Qt::Key_Clear;
@@ -280,7 +320,7 @@ namespace QtAndroidInput
             case 0x00000037:
                 return Qt::Key_Comma;
 
-            case 0x00000043:
+            case 0x00000043: // KEYCODE_DEL
                 return Qt::Key_Backspace;
 
             case 0x00000017: // KEYCODE_DPAD_CENTER
@@ -398,6 +438,27 @@ namespace QtAndroidInput
             case 0x00000018:
                 return Qt::Key_VolumeUp;
 
+            case 0x00000011: // KEYCODE_STAR
+                return Qt::Key_Asterisk;
+
+            case 0x00000012: // KEYCODE_POUND
+                return Qt::Key_NumberSign;
+
+            case 0x00000050: // KEYCODE_FOCUS
+                return Qt::Key_CameraFocus;
+
+            case 0x00000070: // KEYCODE_FORWARD_DEL
+                return Qt::Key_Delete;
+
+            case 0x00000080: // KEYCODE_MEDIA_CLOSE
+                return Qt::Key_Close;
+
+            case 0x00000081: // KEYCODE_MEDIA_EJECT
+                return Qt::Key_Eject;
+
+            case 0x00000082: // KEYCODE_MEDIA_RECORD
+                return Qt::Key_MediaRecord;
+
             case 0x000000b7: // KEYCODE_PROG_RED
                 return Qt::Key_Red;
 
@@ -416,13 +477,30 @@ namespace QtAndroidInput
             case 0x000000a7: // KEYCODE_CHANNEL_DOWN
                 return Qt::Key_ChannelDown;
 
+            case 0x000000a8: // KEYCODE_ZOOM_IN
+                return Qt::Key_ZoomIn;
+
+            case 0x000000a9: // KEYCODE_ZOOM_OUT
+                return Qt::Key_ZoomOut;
+
+            case 0x000000af: // KEYCODE_CAPTIONS
+                return Qt::Key_Subtitle;
+
+            case 0x000000d0: // KEYCODE_CALENDAR
+                return Qt::Key_Calendar;
+
+            case 0x000000d1: // KEYCODE_MUSIC
+                return Qt::Key_Music;
+
+            case 0x000000d2: // KEYCODE_CALCULATOR
+                return Qt::Key_Calculator;
+
             case 0x00000000: // KEYCODE_UNKNOWN
-            case 0x00000011: // KEYCODE_STAR ?!?!?
-            case 0x00000012: // KEYCODE_POUND ?!?!?
+                return Qt::Key_unknown;
+
             case 0x00000053: // KEYCODE_NOTIFICATION ?!?!?
             case 0x0000004f: // KEYCODE_HEADSETHOOK ?!?!?
             case 0x00000044: // KEYCODE_GRAVE ?!?!?
-            case 0x00000050: // KEYCODE_FOCUS ?!?!?
                 return Qt::Key_Any;
 
             default:
@@ -447,7 +525,7 @@ namespace QtAndroidInput
                                                mapAndroidKey(key),
                                                modifiers,
                                                QChar(unicode),
-                                               true);
+                                               false);
     }
 
     static void keyUp(JNIEnv */*env*/, jobject /*thiz*/, jint key, jint unicode, jint modifier)
@@ -467,9 +545,18 @@ namespace QtAndroidInput
                                                mapAndroidKey(key),
                                                modifiers,
                                                QChar(unicode),
-                                               true);
+                                               false);
     }
 
+    static void keyboardVisibilityChanged(JNIEnv */*env*/, jobject /*thiz*/, jboolean /*visibility*/)
+    {
+        QAndroidInputContext *inputContext = QAndroidInputContext::androidInputContext();
+        if (inputContext)
+            inputContext->emitInputPanelVisibleChanged();
+#ifdef QT_DEBUG_ANDROID_IM_PROTOCOL
+        qDebug() << "@@@ KEYBOARDVISIBILITYCHANGED" << inputContext;
+#endif
+    }
 
     static JNINativeMethod methods[] = {
         {"touchBegin","(I)V",(void*)touchBegin},
@@ -480,7 +567,8 @@ namespace QtAndroidInput
         {"mouseMove", "(III)V", (void *)mouseMove},
         {"longPress", "(III)V", (void *)longPress},
         {"keyDown", "(III)V", (void *)keyDown},
-        {"keyUp", "(III)V", (void *)keyUp}
+        {"keyUp", "(III)V", (void *)keyUp},
+        {"keyboardVisibilityChanged", "(Z)V", (void *)keyboardVisibilityChanged}
     };
 
 #define GET_AND_CHECK_STATIC_METHOD(VAR, CLASS, METHOD_NAME, METHOD_SIGNATURE) \

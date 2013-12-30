@@ -101,7 +101,12 @@ QIOSIntegration::~QIOSIntegration()
 bool QIOSIntegration::hasCapability(Capability cap) const
 {
     switch (cap) {
+    case BufferQueueingOpenGL:
+        return true;
     case OpenGL:
+    case ThreadedOpenGL:
+        return true;
+    case ThreadedPixmaps:
         return true;
     case MultipleWindows:
         return true;
@@ -126,7 +131,6 @@ QPlatformBackingStore *QIOSIntegration::createPlatformBackingStore(QWindow *wind
 // Used when the QWindow's surface type is set by the client to QSurface::OpenGLSurface
 QPlatformOpenGLContext *QIOSIntegration::createPlatformOpenGLContext(QOpenGLContext *context) const
 {
-    Q_UNUSED(context);
     return new QIOSContext(context);
 }
 
@@ -156,7 +160,7 @@ QPlatformServices *QIOSIntegration::services() const
 QVariant QIOSIntegration::styleHint(StyleHint hint) const
 {
     switch (hint) {
-    case ShowIsFullScreen:
+    case ShowIsMaximized:
         return true;
     case SetFocusOnTouchRelease:
         return true;

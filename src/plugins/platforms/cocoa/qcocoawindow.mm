@@ -160,7 +160,9 @@ static bool isMouseEvent(NSEvent *ev)
 
     // Only tool or dialog windows should become key:
     if (m_cocoaPlatformWindow
-        && (m_cocoaPlatformWindow->window()->type() == Qt::Tool || m_cocoaPlatformWindow->window()->type() == Qt::Dialog))
+        && (m_cocoaPlatformWindow->m_overrideBecomeKey ||
+            m_cocoaPlatformWindow->window()->type() == Qt::Tool ||
+            m_cocoaPlatformWindow->window()->type() == Qt::Dialog))
         return YES;
     return NO;
 }
@@ -204,15 +206,20 @@ QCocoaWindow::QCocoaWindow(QWindow *tlw)
     , m_nsWindowDelegate(0)
     , m_synchedWindowState(Qt::WindowActive)
     , m_windowModality(Qt::NonModal)
+    , m_windowUnderMouse(false)
     , m_inConstructor(true)
     , m_glContext(0)
     , m_menubar(0)
+    , m_windowCursor(0)
     , m_hasModalSession(false)
     , m_frameStrutEventsEnabled(false)
+    , m_geometryUpdateExposeAllowed(false)
     , m_isExposed(false)
     , m_registerTouchCount(0)
     , m_resizableTransientParent(false)
+    , m_overrideBecomeKey(false)
     , m_alertRequest(NoAlertRequest)
+    , monitor(nil)
 {
 #ifdef QT_COCOA_ENABLE_WINDOW_DEBUG
     qDebug() << "QCocoaWindow::QCocoaWindow" << this;
@@ -367,6 +374,11 @@ void QCocoaWindow::setVisible(bool visible)
                 if ((window()->type() == Qt::Popup || window()->type() == Qt::Dialog || window()->type() == Qt::Tool)
                     && [m_nsWindow isKindOfClass:[NSPanel class]]) {
                     [(NSPanel *)m_nsWindow setWorksWhenModal:YES];
+                    if (!(parentCocoaWindow && window()->transientParent()->isActive()) && window()->type() == Qt::Popup) {
+                        monitor = [NSEvent addGlobalMonitorForEventsMatchingMask:NSLeftMouseDownMask|NSRightMouseDownMask|NSOtherMouseDown handler:^(NSEvent *) {
+                            QWindowSystemInterface::handleMouseEvent(window(), QPointF(-1, -1), QPointF(window()->framePosition() - QPointF(1, 1)), Qt::LeftButton);
+                        }];
+                    }
                 }
             }
         }
@@ -402,6 +414,10 @@ void QCocoaWindow::setVisible(bool visible)
             }
         } else {
             [m_contentView setHidden:YES];
+        }
+        if (monitor && window()->type() == Qt::Popup) {
+            [NSEvent removeMonitor:monitor];
+            monitor = nil;
         }
         if (parentCocoaWindow && window()->type() == Qt::Popup) {
             parentCocoaWindow->m_activePopupWindow = 0;
@@ -450,24 +466,30 @@ NSUInteger QCocoaWindow::windowStyleMask(Qt::WindowFlags flags)
 {
     Qt::WindowType type = static_cast<Qt::WindowType>(int(flags & Qt::WindowType_Mask));
     NSInteger styleMask = NSBorderlessWindowMask;
-
+    if (flags & Qt::FramelessWindowHint)
+        return styleMask;
     if ((type & Qt::Popup) == Qt::Popup) {
-        if (!windowIsPopupType(type) && !(flags & Qt::FramelessWindowHint))
+        if (!windowIsPopupType(type))
             styleMask = (NSUtilityWindowMask | NSResizableWindowMask | NSClosableWindowMask |
                          NSMiniaturizableWindowMask | NSTitledWindowMask);
     } else {
-        // Filter flags for supported properties
-        flags &= Qt::WindowType_Mask | Qt::FramelessWindowHint | Qt::WindowTitleHint |
-                 Qt::WindowMinMaxButtonsHint | Qt::WindowCloseButtonHint;
-        if (flags == Qt::Window) {
+        if (type == Qt::Window && !(flags & Qt::CustomizeWindowHint)) {
             styleMask = (NSResizableWindowMask | NSClosableWindowMask | NSMiniaturizableWindowMask | NSTitledWindowMask);
-        } else if ((flags & Qt::Dialog) == Qt::Dialog) {
-            if (window()->modality() == Qt::NonModal)
+        } else if (type == Qt::Dialog) {
+            if (flags & Qt::CustomizeWindowHint) {
+                if (flags & Qt::WindowMaximizeButtonHint)
+                    styleMask = NSResizableWindowMask;
+                if (flags & Qt::WindowTitleHint)
+                    styleMask |= NSTitledWindowMask;
+                if (flags & Qt::WindowCloseButtonHint)
+                    styleMask |= NSClosableWindowMask;
+                if (flags & Qt::WindowMinimizeButtonHint)
+                    styleMask |= NSMiniaturizableWindowMask;
+            } else {
                 styleMask = NSResizableWindowMask | NSClosableWindowMask | NSTitledWindowMask;
-            else
-                styleMask = NSResizableWindowMask | NSTitledWindowMask;
-        } else if (!(flags & Qt::FramelessWindowHint)) {
-            if ((flags & Qt::Dialog) || (flags & Qt::WindowMaximizeButtonHint))
+            }
+        } else {
+            if (flags & Qt::WindowMaximizeButtonHint)
                 styleMask |= NSResizableWindowMask;
             if (flags & Qt::WindowTitleHint)
                 styleMask |= NSTitledWindowMask;
@@ -661,6 +683,8 @@ bool QCocoaWindow::setKeyboardGrabEnabled(bool grab)
     if (!m_nsWindow)
         return false;
 
+    m_overrideBecomeKey = grab;
+
     if (grab && ![m_nsWindow isKeyWindow])
         [m_nsWindow makeKeyWindow];
     else if (!grab && [m_nsWindow isKeyWindow])
@@ -672,6 +696,8 @@ bool QCocoaWindow::setMouseGrabEnabled(bool grab)
 {
     if (!m_nsWindow)
         return false;
+
+    m_overrideBecomeKey = grab;
 
     if (grab && ![m_nsWindow isKeyWindow])
         [m_nsWindow makeKeyWindow];
@@ -688,7 +714,10 @@ WId QCocoaWindow::winId() const
 void QCocoaWindow::setParent(const QPlatformWindow *parentWindow)
 {
     // recreate the window for compatibility
+    bool unhideAfterRecreate = parentWindow && !m_contentViewIsToBeEmbedded && ![m_contentView isHidden];
     recreateWindow(parentWindow);
+    if (unhideAfterRecreate)
+        [m_contentView setHidden:NO];
     setCocoaGeometry(geometry());
 }
 
@@ -843,10 +872,9 @@ NSWindow * QCocoaWindow::createNSWindow()
                                                     // before the window is shown and needs a proper window.).
         if ((type & Qt::Popup) == Qt::Popup)
             [window setHasShadow:YES];
-        else {
-             setWindowShadow(flags);
-             [window setHidesOnDeactivate: NO];
-        }
+        else
+            setWindowShadow(flags);
+        [window setHidesOnDeactivate: NO];
 
 #if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_7
         if (QSysInfo::QSysInfo::MacintoshVersion >= QSysInfo::MV_10_7) {
@@ -1008,6 +1036,23 @@ QCocoaMenuBar *QCocoaWindow::menubar() const
     return m_menubar;
 }
 
+void QCocoaWindow::setWindowCursor(NSCursor *cursor)
+{
+    // This function is called (via QCocoaCursor) by Qt to set
+    // the cursor for this window. It can be called for a window
+    // that is not currenly under the mouse pointer (for example
+    // for a popup window.) Qt expects the set cursor to "stick":
+    // it should be accociated with the window until a different
+    // cursor is set.
+
+    // Cocoa has different abstractions. We can set the cursor *now*:
+    if (m_windowUnderMouse)
+        [cursor set];
+    // or we can set the cursor on mouse enter/leave using tracking
+    // areas. This is done in QNSView, save the cursor:
+    m_windowCursor = cursor;
+}
+
 void QCocoaWindow::registerTouch(bool enable)
 {
     m_registerTouchCount += enable ? 1 : -1;
@@ -1034,20 +1079,59 @@ qreal QCocoaWindow::devicePixelRatio() const
     }
 }
 
+// Returns whether the window can be expose, which it can
+// if it is on screen and has a valid geometry.
+bool QCocoaWindow::isWindowExposable()
+{
+    QSize size = geometry().size();
+    bool validGeometry = (size.width() > 0 && size.height() > 0);
+    bool validScreen = ([[m_contentView window] screen] != 0);
+    bool nonHiddenSuperView = ![[m_contentView superview] isHidden];
+    return (validGeometry && validScreen && nonHiddenSuperView);
+}
+
+// Exposes the window by posting an expose event to QWindowSystemInterface
 void QCocoaWindow::exposeWindow()
 {
-    if (!m_isExposed && ![[m_contentView superview] isHidden]) {
+    m_geometryUpdateExposeAllowed = true;
+
+    if (!isWindowExposable())
+        return;
+
+    if (!m_isExposed) {
         m_isExposed = true;
+        m_exposedGeometry = geometry();
         QWindowSystemInterface::handleExposeEvent(window(), QRegion(geometry()));
     }
 }
 
+// Obscures the window by posting an empty expose event to QWindowSystemInterface
 void QCocoaWindow::obscureWindow()
 {
     if (m_isExposed) {
+        m_geometryUpdateExposeAllowed = false;
         m_isExposed = false;
         QWindowSystemInterface::handleExposeEvent(window(), QRegion());
     }
+}
+
+// Updates window geometry by posting an expose event to QWindowSystemInterface
+void QCocoaWindow::updateExposedGeometry()
+{
+    // updateExposedGeometry is not allowed to send the initial expose. If you want
+    // that call exposeWindow();
+    if (!m_geometryUpdateExposeAllowed)
+        return;
+
+    if (!isWindowExposable())
+        return;
+
+    if (m_exposedGeometry == geometry())
+        return;
+
+    m_isExposed = true;
+    m_exposedGeometry = geometry();
+    QWindowSystemInterface::handleExposeEvent(window(), QRegion(geometry()));
 }
 
 QWindow *QCocoaWindow::childWindowAt(QPoint windowPoint)

@@ -183,7 +183,7 @@ Configure::Configure(int& argc, char** argv)
     dictionary[ "PLUGIN_MANIFESTS" ] = "yes";
     dictionary[ "DIRECTWRITE" ]     = "no";
     dictionary[ "NIS" ]             = "no";
-    dictionary[ "NEON" ]            = "no";
+    dictionary[ "NEON" ]            = "auto";
     dictionary[ "LARGE_FILE" ]      = "yes";
     dictionary[ "FONT_CONFIG" ]     = "no";
     dictionary[ "POSIX_IPC" ]       = "no";
@@ -194,8 +194,10 @@ Configure::Configure(int& argc, char** argv)
     dictionary[ "QT_CUPS" ]         = "auto";
     dictionary[ "CFG_GCC_SYSROOT" ] = "yes";
     dictionary[ "SLOG2" ]           = "no";
+    dictionary[ "PPS" ]             = "no";
     dictionary[ "SYSTEM_PROXIES" ]  = "no";
     dictionary[ "WERROR" ]          = "auto";
+    dictionary[ "QREAL" ]           = "double";
 
     //Only used when cross compiling.
     dictionary[ "QT_INSTALL_SETTINGS" ] = "/etc/xdg";
@@ -383,7 +385,7 @@ void Configure::parseCmdLine()
             configCmdLine.clear();
             reloadCmdLine();
         } else {
-            dictionary[ "HELP" ] = "yes";
+            dictionary[ "DONE" ] = "error";
         }
         i = 0;
     }
@@ -417,6 +419,12 @@ void Configure::parseCmdLine()
             if (i == argCount)
                 break;
             dictionary[ "QCONFIG" ] = configCmdLine.at(i);
+        }
+        else if (configCmdLine.at(i) == "-qreal") {
+            ++i;
+            if (i == argCount)
+                break;
+            dictionary[ "QREAL" ] = configCmdLine.at(i);
         }
 
         else if (configCmdLine.at(i) == "-release") {
@@ -872,6 +880,10 @@ void Configure::parseCmdLine()
             dictionary[ "SLOG2" ] = "no";
         } else if (configCmdLine.at(i) == "-slog2") {
             dictionary[ "SLOG2" ] = "yes";
+        } else if (configCmdLine.at(i) == "-no-pps") {
+            dictionary[ "PPS" ] = "no";
+        } else if (configCmdLine.at(i) == "-pps") {
+            dictionary[ "PPS" ] = "yes";
         } else if (configCmdLine.at(i) == "-no-system-proxies") {
             dictionary[ "SYSTEM_PROXIES" ] = "no";
         } else if (configCmdLine.at(i) == "-system-proxies") {
@@ -1297,7 +1309,7 @@ void Configure::parseCmdLine()
         }
 
         else {
-            dictionary[ "HELP" ] = "yes";
+            dictionary[ "DONE" ] = "error";
             cout << "Unknown option " << configCmdLine.at(i) << endl;
             break;
         }
@@ -1317,7 +1329,7 @@ void Configure::parseCmdLine()
 
     if (dictionary["QMAKESPEC"].toLower() == "features"
         || !mkspecs.contains(dictionary["QMAKESPEC"], Qt::CaseInsensitive)) {
-        dictionary[ "HELP" ] = "yes";
+        dictionary[ "DONE" ] = "error";
         if (dictionary ["QMAKESPEC_FROM"] == "commandline") {
             cout << "Invalid option \"" << dictionary["QMAKESPEC"] << "\" for -platform." << endl;
         } else if (dictionary ["QMAKESPEC_FROM"] == "env") {
@@ -1355,10 +1367,10 @@ void Configure::parseCmdLine()
         const QStringList family = devices.filter(dictionary["XQMAKESPEC"], Qt::CaseInsensitive);
 
         if (family.isEmpty()) {
-            dictionary["HELP"] = "yes";
+            dictionary[ "DONE" ] = "error";
             cout << "Error: No device matching '" << dictionary["XQMAKESPEC"] << "'." << endl;
         } else if (family.size() > 1) {
-            dictionary["HELP"] = "yes";
+            dictionary[ "DONE" ] = "error";
 
             cout << "Error: Multiple matches for device '" << dictionary["XQMAKESPEC"] << "'. Candidates are:" << endl;
 
@@ -1373,7 +1385,7 @@ void Configure::parseCmdLine()
         // Ensure that -spec (XQMAKESPEC) exists in the mkspecs folder as well
         if (dictionary.contains("XQMAKESPEC") &&
                 !mkspecs.contains(dictionary["XQMAKESPEC"], Qt::CaseInsensitive)) {
-            dictionary["HELP"] = "yes";
+            dictionary[ "DONE" ] = "error";
             cout << "Invalid option \"" << dictionary["XQMAKESPEC"] << "\" for -xplatform." << endl;
         }
     }
@@ -1425,27 +1437,15 @@ void Configure::parseCmdLine()
     for (QStringList::Iterator it = disabledModules.begin(); it != disabledModules.end(); ++it)
         qtConfig.removeAll(*it);
 
-    if ((dictionary[ "REDO" ] != "yes") && (dictionary[ "HELP" ] != "yes"))
+    if ((dictionary[ "REDO" ] != "yes") && (dictionary[ "HELP" ] != "yes")
+            && (dictionary[ "DONE" ] != "error"))
         saveCmdLine();
 }
 
 void Configure::validateArgs()
 {
     // Validate the specified config
-
-    // Get all possible configurations from the file system.
-    QDir dir;
-    QStringList filters;
-    filters << "qconfig-*.h";
-    dir.setNameFilters(filters);
-    dir.setPath(sourcePath + "/src/corelib/global/");
-
-    QStringList stringList =  dir.entryList();
-
-    QStringList::Iterator it;
-    for (it = stringList.begin(); it != stringList.end(); ++it)
-        allConfigs << it->remove("qconfig-").remove(".h");
-    allConfigs << "full";
+    QString cfgpath = sourcePath + "/src/corelib/global/qconfig-" + dictionary["QCONFIG"] + ".h";
 
     // Try internal configurations first.
     QStringList possible_configs = QStringList()
@@ -1457,23 +1457,22 @@ void Configure::validateArgs()
     int index = possible_configs.indexOf(dictionary["QCONFIG"]);
     if (index >= 0) {
         for (int c = 0; c <= index; c++) {
-            qmakeConfig += possible_configs[c] + "-config";
+            qtConfig += possible_configs[c] + "-config";
         }
+        if (dictionary["QCONFIG"] != "full")
+            dictionary["QCONFIG_PATH"] = cfgpath;
         return;
     }
 
-    // If the internal configurations failed, try others.
-    QStringList::Iterator config;
-    for (config = allConfigs.begin(); config != allConfigs.end(); ++config) {
-        if ((*config) == dictionary[ "QCONFIG" ])
-            break;
+    if (!QFileInfo::exists(cfgpath)) {
+        cfgpath = QFileInfo(dictionary["QCONFIG"]).absoluteFilePath();
+        if (!QFileInfo::exists(cfgpath)) {
+            dictionary[ "DONE" ] = "error";
+            cout << "No such configuration \"" << qPrintable(dictionary["QCONFIG"]) << "\"" << endl ;
+            return;
+        }
     }
-    if (config == allConfigs.end()) {
-        dictionary[ "HELP" ] = "yes";
-        cout << "No such configuration \"" << qPrintable(dictionary[ "QCONFIG" ]) << "\"" << endl ;
-    }
-    else
-        qmakeConfig += (*config) + "-config";
+    dictionary["QCONFIG_PATH"] = cfgpath;
 }
 
 // Output helper functions --------------------------------[ Start ]-
@@ -1648,12 +1647,16 @@ void Configure::applySpecSpecifics()
         dictionary[ "QT_CUPS" ]             = "no";
         dictionary[ "QT_GLIB" ]             = "no";
         dictionary[ "QT_ICONV" ]            = "no";
+        dictionary[ "FONT_CONFIG" ]         = "auto";
 
         dictionary["DECORATIONS"]           = "default windows styled";
     } else if ((platform() == QNX) || (platform() == BLACKBERRY)) {
         dictionary["STACK_PROTECTOR_STRONG"] = "auto";
         dictionary["SLOG2"]                 = "auto";
+        dictionary["PPS"]                   = "auto";
         dictionary["QT_XKBCOMMON"]          = "no";
+        dictionary[ "ANGLE" ]               = "no";
+        dictionary[ "FONT_CONFIG" ]         = "auto";
     } else if (platform() == ANDROID) {
         dictionary[ "REDUCE_EXPORTS" ]      = "yes";
         dictionary[ "BUILD" ]               = "release";
@@ -1784,6 +1787,9 @@ bool Configure::displayHelp()
         desc(                   "-sysroot <dir>",       "Sets <dir> as the target compiler's and qmake's sysroot and also sets pkg-config paths.");
         desc(                   "-no-gcc-sysroot",      "When using -sysroot, it disables the passing of --sysroot to the compiler.\n");
 
+        desc(                   "-qconfig <local>",     "Use src/corelib/global/qconfig-<local>.h rather than the\n"
+                                                        "default 'full'.\n");
+
         desc("NIS",  "no",      "-no-nis",              "Do not compile NIS support.");
         desc("NIS",  "yes",     "-nis",                 "Compile NIS support.\n");
 
@@ -1864,6 +1870,9 @@ bool Configure::displayHelp()
         if ((platform() == QNX) || (platform() == BLACKBERRY)) {
             desc("SLOG2", "yes",  "-slog2",             "Compile with slog2 support.");
             desc("SLOG2", "no",  "-no-slog2",           "Do not compile with slog2 support.");
+
+            desc("PPS", "yes",  "-pps",                 "Compile with PPS support.");
+            desc("PPS", "no",  "-no-pps",               "Do not compile with PPS support.");
         }
 
         desc("ANGLE", "yes",       "-angle",            "Use the ANGLE implementation of OpenGL ES 2.0.");
@@ -1886,6 +1895,9 @@ bool Configure::displayHelp()
         desc("PROCESS", "partial", "-process",          "Generate only top-level Makefile.");
         desc("PROCESS", "full", "-fully-process",       "Generate Makefiles/Project files for the entire Qt\ntree.");
         desc("PROCESS", "no", "-dont-process",          "Do not generate Makefiles/Project files.\n");
+
+        desc(                  "-qreal [double|float]", "typedef qreal to the specified type. The default is double.\n"
+                                                        "Note that changing this flag affects binary compatibility.\n");
 
         desc("RTTI", "no",      "-no-rtti",             "Do not compile runtime type information.");
         desc("RTTI", "yes",     "-rtti",                "Compile runtime type information.");
@@ -1935,13 +1947,6 @@ bool Configure::displayHelp()
         desc("MSVC_MP", "no", "-no-mp",                 "Do not use multiple processors for compiling with MSVC");
         desc("MSVC_MP", "yes", "-mp",                   "Use multiple processors for compiling with MSVC (-MP).\n");
 
-/*      We do not support -qconfig on Windows yet
-
-        desc(                   "-qconfig <local>",     "Use src/tools/qconfig-local.h rather than the default.\nPossible values for local:");
-        for (int i=0; i<allConfigs.size(); ++i)
-            desc(               "",                     qPrintable(QString("  %1").arg(allConfigs.at(i))), false, ' ');
-        printf("\n");
-*/
         desc(                   "-loadconfig <config>", "Run configure with the parameters from file configure_<config>.cache.");
         desc(                   "-saveconfig <config>", "Run configure and save the parameters in file configure_<config>.cache.");
         desc(                   "-redo",                "Run configure with the same parameters as last time.\n");
@@ -2103,9 +2108,7 @@ bool Configure::checkAvailability(const QString &part)
         available = findFile("pcre.h");
 
     else if (part == "ICU")
-        available = findFile("unicode/utypes.h") && findFile("unicode/ucol.h") && findFile("unicode/ustring.h")
-                        && (findFile("icuin.lib") || findFile("sicuin.lib")
-                              || findFile("libicuin.lib") || findFile("libsicuin.lib")); // "lib" prefix for mingw, 's' prefix for static
+        available = tryCompileProject("unix/icu");
 
     else if (part == "ANGLE") {
         available = checkAngleAvailability();
@@ -2209,6 +2212,12 @@ bool Configure::checkAvailability(const QString &part)
         available = (platform() == QNX || platform() == BLACKBERRY) && compilerSupportsFlag("qcc -fstack-protector-strong");
     } else if (part == "SLOG2") {
         available = tryCompileProject("unix/slog2");
+    } else if (part == "PPS") {
+        available = (platform() == QNX || platform() == BLACKBERRY) && tryCompileProject("unix/pps");
+    } else if (part == "NEON") {
+        available = (dictionary["QT_ARCH"] == "arm") && tryCompileProject("unix/neon");
+    } else if (part == "FONT_CONFIG") {
+        available = tryCompileProject("unix/fontconfig");
     }
 
     return available;
@@ -2220,6 +2229,9 @@ bool Configure::checkAvailability(const QString &part)
 void Configure::autoDetection()
 {
     cout << "Running configuration tests..." << endl;
+
+    // Auto-detect CPU architectures.
+    detectArch();
 
     if (dictionary["C++11"] == "auto") {
         if (!dictionary["QMAKESPEC"].contains("msvc"))
@@ -2304,6 +2316,8 @@ void Configure::autoDetection()
         dictionary["AVX2"] = checkAvailability("AVX2") ? "yes" : "no";
     if (dictionary["IWMMXT"] == "auto")
         dictionary["IWMMXT"] = checkAvailability("IWMMXT") ? "yes" : "no";
+    if (dictionary["NEON"] == "auto")
+        dictionary["NEON"] = checkAvailability("NEON") ? "yes" : "no";
     if (dictionary["OPENSSL"] == "auto")
         dictionary["OPENSSL"] = checkAvailability("OPENSSL") ? "yes" : "no";
     if (dictionary["DBUS"] == "auto")
@@ -2345,14 +2359,26 @@ void Configure::autoDetection()
         dictionary["SLOG2"] = checkAvailability("SLOG2") ? "yes" : "no";
     }
 
+    if (dictionary["PPS"] == "auto") {
+        dictionary["PPS"] = checkAvailability("PPS") ? "yes" : "no";
+    }
+
     if (dictionary["QT_EVENTFD"] == "auto")
         dictionary["QT_EVENTFD"] = checkAvailability("QT_EVENTFD") ? "yes" : "no";
+
+    if (dictionary["FONT_CONFIG"] == "auto")
+        dictionary["FONT_CONFIG"] = checkAvailability("FONT_CONFIG") ? "yes" : "no";
 
     // Mark all unknown "auto" to the default value..
     for (QMap<QString,QString>::iterator i = dictionary.begin(); i != dictionary.end(); ++i) {
         if (i.value() == "auto")
             i.value() = defaultTo(i.key());
     }
+
+    if (tryCompileProject("unix/ptrsize"))
+        dictionary["QT_POINTER_SIZE"] = "8";
+    else
+        dictionary["QT_POINTER_SIZE"] = "4";
 }
 
 bool Configure::verifyConfiguration()
@@ -2610,7 +2636,6 @@ void Configure::generateOutputVars()
     if (dictionary[ "FORCEDEBUGINFO" ] == "yes")
         qmakeConfig += "force_debug_info";
     qmakeConfig += dictionary[ "BUILD" ];
-    dictionary[ "QMAKE_OUTDIR" ] = dictionary[ "BUILD" ];
 
     if (buildParts.isEmpty()) {
         buildParts = defaultBuildParts;
@@ -2635,9 +2660,6 @@ void Configure::generateOutputVars()
             qmakeVars += "QMAKE_QT_VERSION_OVERRIDE = " + version.left(version.indexOf('.'));
             version.remove(QLatin1Char('.'));
         }
-        dictionary[ "QMAKE_OUTDIR" ] += "_shared";
-    } else {
-        dictionary[ "QMAKE_OUTDIR" ] += "_static";
     }
 
     if (dictionary[ "ACCESSIBILITY" ] == "yes")
@@ -2741,23 +2763,6 @@ void Configure::generateOutputVars()
     if (dictionary[ "SYSTEM_PROXIES" ] == "yes")
         qtConfig += "system-proxies";
 
-    // Add config levels --------------------------------------------
-    QStringList possible_configs = QStringList()
-        << "minimal"
-        << "small"
-        << "medium"
-        << "large"
-        << "full";
-
-    QString set_config = dictionary["QCONFIG"];
-    if (possible_configs.contains(set_config)) {
-        foreach (const QString &cfg, possible_configs) {
-            qtConfig += (cfg + "-config");
-            if (cfg == set_config)
-                break;
-        }
-    }
-
     if (dictionary.contains("XQMAKESPEC") && (dictionary["QMAKESPEC"] != dictionary["XQMAKESPEC"])) {
             qmakeConfig += "cross_compile";
             dictionary["CROSS_COMPILE"] = "yes";
@@ -2767,10 +2772,6 @@ void Configure::generateOutputVars()
 
     if (dictionary.contains("XQMAKESPEC") && dictionary[ "XQMAKESPEC" ].startsWith("linux"))
         qtConfig += "rpath";
-
-    qmakeVars += QString("OBJECTS_DIR     = ") + formatPath(".obj/" + dictionary["QMAKE_OUTDIR"]);
-    qmakeVars += QString("MOC_DIR         = ") + formatPath(".moc/" + dictionary["QMAKE_OUTDIR"]);
-    qmakeVars += QString("RCC_DIR         = ") + formatPath(".rcc/" + dictionary["QMAKE_OUTDIR"]);
 
     if (!qmakeDefines.isEmpty())
         qmakeVars += QString("DEFINES        += ") + qmakeDefines.join(' ');
@@ -2840,7 +2841,6 @@ void Configure::generateOutputVars()
         cout << "Configure could not detect your compiler. QMAKESPEC must either" << endl
              << "be defined as an environment variable, or specified as an" << endl
              << "argument with -platform" << endl;
-        dictionary[ "HELP" ] = "yes";
 
         QStringList winPlatforms;
         QDir mkspecsDir(sourcePath + "/mkspecs");
@@ -2865,6 +2865,11 @@ void Configure::generateCachefile()
         moduleStream << "QT_BUILD_PARTS += " << buildParts.join(' ') << endl;
         if (!skipModules.isEmpty())
             moduleStream << "QT_SKIP_MODULES += " << skipModules.join(' ') << endl;
+        QString qcpath = dictionary["QCONFIG_PATH"];
+        QString qlpath = sourcePath + "/src/corelib/global/";
+        if (qcpath.startsWith(qlpath))
+            qcpath.remove(0, qlpath.length());
+        moduleStream << "QT_QCONFIG_PATH = " << qcpath << endl;
         moduleStream << endl;
 
         moduleStream << "host_build {" << endl;
@@ -2874,6 +2879,7 @@ void Configure::generateCachefile()
         moduleStream << "    QT_CPU_FEATURES." << dictionary["QT_ARCH"] <<
                                     " = " << dictionary["QT_CPU_FEATURES"] << endl;
         moduleStream << "}" << endl;
+        moduleStream << "QT_COORD_TYPE += " << dictionary["QREAL"] << endl;
 
         if (dictionary["QT_EDITION"] != "QT_EDITION_OPENSOURCE")
             moduleStream << "DEFINES        *= QT_EDITION=QT_EDITION_DESKTOP" << endl;
@@ -3183,6 +3189,9 @@ void Configure::generateQConfigPri()
         if (dictionary[ "SLOG2" ] == "yes")
             configStream << " slog2";
 
+        if (dictionary[ "PPS" ] == "yes")
+            configStream << " qqnx_pps";
+
         if (dictionary["DIRECTWRITE"] == "yes")
             configStream << " directwrite";
 
@@ -3280,10 +3289,8 @@ void Configure::generateConfigfiles()
         if (dictionary[ "QCONFIG" ] == "full") {
             tmpStream << "/* Everything */" << endl;
         } else {
-            QString configName("qconfig-" + dictionary[ "QCONFIG" ] + ".h");
-            tmpStream << "/* Copied from " << configName << "*/" << endl;
             tmpStream << "#ifndef QT_BOOTSTRAPPED" << endl;
-            QFile inFile(sourcePath + "/src/corelib/global/" + configName);
+            QFile inFile(dictionary["QCONFIG_PATH"]);
             if (inFile.open(QFile::ReadOnly)) {
                 tmpStream << QTextStream(&inFile).readAll();
                 inFile.close();
@@ -3335,6 +3342,8 @@ void Configure::generateConfigfiles()
         if (dictionary[ "NEON" ] == "yes")
             tmpStream << "#define QT_COMPILER_SUPPORTS_NEON" << endl;
 
+        if (dictionary["QREAL"] != "double")
+            tmpStream << "#define QT_COORD_TYPE " << dictionary["QREAL"] << endl;
 
         tmpStream << endl << "// Compile time features" << endl;
 
@@ -3410,6 +3419,8 @@ void Configure::generateConfigfiles()
         if (dictionary["REDUCE_EXPORTS"] == "yes")     qconfigList += "QT_VISIBILITY_AVAILABLE";
         if (dictionary["REDUCE_RELOCATIONS"] == "yes") qconfigList += "QT_REDUCE_RELOCATIONS";
         if (dictionary["QT_GETIFADDRS"] == "no")       qconfigList += "QT_NO_GETIFADDRS";
+
+        qconfigList += QString("QT_POINTER_SIZE=%1").arg(dictionary["QT_POINTER_SIZE"]);
 
         qconfigList.sort();
         for (int i = 0; i < qconfigList.count(); ++i)
@@ -3543,11 +3554,14 @@ void Configure::displayConfig()
     sout << "    JPEG support............" << dictionary[ "JPEG" ] << endl;
     sout << "    PNG support............." << dictionary[ "PNG" ] << endl;
     sout << "    FreeType support........" << dictionary[ "FREETYPE" ] << endl;
+    sout << "    Fontconfig support......" << dictionary[ "FONT_CONFIG" ] << endl;
     sout << "    HarfBuzz-NG support....." << dictionary[ "HARFBUZZ" ] << endl;
     sout << "    PCRE support............" << dictionary[ "PCRE" ] << endl;
     sout << "    ICU support............." << dictionary[ "ICU" ] << endl;
-    if ((platform() == QNX) || (platform() == BLACKBERRY))
+    if ((platform() == QNX) || (platform() == BLACKBERRY)) {
         sout << "    SLOG2 support..........." << dictionary[ "SLOG2" ] << endl;
+        sout << "    PPS support............." << dictionary[ "PPS" ] << endl;
+    }
     sout << "    ANGLE..................." << dictionary[ "ANGLE" ] << endl;
     sout << endl;
 

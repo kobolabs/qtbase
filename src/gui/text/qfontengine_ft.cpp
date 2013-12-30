@@ -640,7 +640,8 @@ QFontEngineFT::QFontEngineFT(const QFontDef &fd)
 #endif
     defaultFormat = Format_None;
     embeddedbitmap = false;
-    cacheEnabled = qEnvironmentVariableIsSet("QT_USE_FT_CACHE");
+    const QByteArray env = qgetenv("QT_NO_FT_CACHE");
+    cacheEnabled = env.isEmpty() || env.toInt() == 0;
     m_subPixelPositionCount = 4;
     force_leading = -1;
 }
@@ -709,7 +710,6 @@ bool QFontEngineFT::init(FaceId faceId, bool antialias, GlyphFormat format,
         line_thickness =  QFixed::fromFixed(FT_MulFix(face->underline_thickness, face->size->metrics.y_scale));
         underline_position = QFixed::fromFixed(-FT_MulFix(face->underline_position, face->size->metrics.y_scale));
     } else {
-        // copied from QFontEngineQPF
         // ad hoc algorithm
         int score = fontDef.weight * fontDef.pixelSize;
         line_thickness = score / 700;
@@ -1770,7 +1770,7 @@ glyph_metrics_t QFontEngineFT::alphaMapBoundingBox(glyph_t glyph, QFixed subPixe
             glyphSet = &defaultGlyphSet;
         }
     }
-    Glyph * g = glyphSet ? glyphSet->getGlyph(glyph) : 0;
+    Glyph * g = glyphSet ? glyphSet->getGlyph(glyph, subPixelPosition) : 0;
     if (!g || g->format != format) {
         face = lockFace();
         FT_Matrix m = this->matrix;

@@ -28,6 +28,7 @@
 /*!
     \page signalsandslots.html
     \title Signals & Slots
+    \keyword Signals and Slots
     \ingroup qt-basic-concepts
     \brief An overview of Qt's signals and slots inter-object
     communication mechanism.
@@ -274,7 +275,7 @@
     and slot members, as well as pointers to these functions.
 
     The meta-object contains additional information such as the
-    object's \l{QObject::className()}{class name}. You can
+    object's \l{QMetaObject::className()}{class name}. You can
     also check if an object \l{QObject::inherits()}{inherits}
     a specific class, for example:
 

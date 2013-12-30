@@ -141,9 +141,12 @@ void QWindowSystemInterface::handleApplicationStateChanged(Qt::ApplicationState 
     QWindowSystemInterfacePrivate::handleWindowSystemEvent(e);
 }
 
-void QWindowSystemInterface::handleGeometryChange(QWindow *tlw, const QRect &newRect)
+/*!
+  If \a oldRect is null, Qt will use the previously reported geometry instead.
+ */
+void QWindowSystemInterface::handleGeometryChange(QWindow *tlw, const QRect &newRect, const QRect &oldRect)
 {
-    QWindowSystemInterfacePrivate::GeometryChangeEvent *e = new QWindowSystemInterfacePrivate::GeometryChangeEvent(tlw,newRect);
+    QWindowSystemInterfacePrivate::GeometryChangeEvent *e = new QWindowSystemInterfacePrivate::GeometryChangeEvent(tlw,newRect, oldRect);
     QWindowSystemInterfacePrivate::handleWindowSystemEvent(e);
 }
 
@@ -668,6 +671,35 @@ void QWindowSystemInterface::handleTabletLeaveProximityEvent(int device, int poi
     ulong time = QWindowSystemInterfacePrivate::eventTime.elapsed();
     handleTabletLeaveProximityEvent(time, device, pointerType, uid);
 }
+
+#ifndef QT_NO_GESTURES
+void QWindowSystemInterface::handleGestureEvent(QWindow *window, ulong timestamp, Qt::NativeGestureType type,
+                                                QPointF &local, QPointF &global)
+{
+    QWindowSystemInterfacePrivate::GestureEvent *e =
+        new QWindowSystemInterfacePrivate::GestureEvent(window, timestamp, type, local, global);
+       QWindowSystemInterfacePrivate::handleWindowSystemEvent(e);
+}
+
+void QWindowSystemInterface::handleGestureEventWithRealValue(QWindow *window, ulong timestamp, Qt::NativeGestureType type,
+                                                                qreal value, QPointF &local, QPointF &global)
+{
+    QWindowSystemInterfacePrivate::GestureEvent *e =
+        new QWindowSystemInterfacePrivate::GestureEvent(window, timestamp, type, local, global);
+    e->realValue = value;
+    QWindowSystemInterfacePrivate::handleWindowSystemEvent(e);
+}
+
+void QWindowSystemInterface::handleGestureEventWithSequenceIdAndValue(QWindow *window, ulong timestamp, Qt::NativeGestureType type,
+                                                                         ulong sequenceId, quint64 value, QPointF &local, QPointF &global)
+{
+    QWindowSystemInterfacePrivate::GestureEvent *e =
+        new QWindowSystemInterfacePrivate::GestureEvent(window, timestamp, type, local, global);
+    e->sequenceId = sequenceId;
+    e->intValue = value;
+    QWindowSystemInterfacePrivate::handleWindowSystemEvent(e);
+}
+#endif // QT_NO_GESTURES
 
 void QWindowSystemInterface::handlePlatformPanelEvent(QWindow *w)
 {

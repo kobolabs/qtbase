@@ -1883,9 +1883,14 @@ QFontEngine *QTextEngine::fontEngine(const QScriptItem &si, QFixed *ascent, QFix
                 scaledEngine = feCache.prevScaledFontEngine;
             } else {
                 QFontEngine *scEngine = rawFont.d->fontEngine->cloneWithSize(smallCapsFraction * rawFont.pixelSize());
+                scEngine->ref.ref();
                 scaledEngine = QFontEngineMultiQPA::createMultiFontEngine(scEngine, script);
                 scaledEngine->ref.ref();
                 feCache.prevScaledFontEngine = scaledEngine;
+                // If scEngine is not ref'ed by scaledEngine, make sure it is deallocated and not leaked.
+                if (!scEngine->ref.deref())
+                    delete scEngine;
+
             }
         }
     } else
@@ -3095,7 +3100,7 @@ int QTextEngine::positionInLigature(const QScriptItem *si, int end,
             glyph_pos--;
     }
 
-    const QCharAttributes *attrs = attributes();
+    const QCharAttributes *attrs = attributes() + si->position;
     logClusters = this->logClusters(si);
     clusterLength = getClusterLength(logClusters, attrs, 0, end, glyph_pos, &clusterStart);
 
@@ -3112,11 +3117,11 @@ int QTextEngine::positionInLigature(const QScriptItem *si, int end,
         int closestItem = dist > (perItemWidth / 2) ? n + 1 : n;
         if (cursorOnCharacter && closestItem > 0)
             closestItem--;
-        int pos = si->position + clusterStart + closestItem;
+        int pos = clusterStart + closestItem;
         // Jump to the next grapheme boundary
         while (pos < end && !attrs[pos].graphemeBoundary)
             pos++;
-        return pos;
+        return si->position + pos;
     }
     return si->position + end;
 }

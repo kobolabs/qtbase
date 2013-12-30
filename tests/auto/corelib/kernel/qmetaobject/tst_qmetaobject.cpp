@@ -43,7 +43,7 @@
 
 #include <qobject.h>
 #include <qmetaobject.h>
-#include <qwindow.h>
+#include <qabstractproxymodel.h>
 #include <private/qmetaobject_p.h>
 
 Q_DECLARE_METATYPE(const QMetaObject *)
@@ -155,6 +155,7 @@ private slots:
     void invokeCustomTypes();
     void invokeMetaConstructor();
     void invokeTypedefTypes();
+    void invokeException();
     void qtMetaObjectInheritance();
     void normalizedSignature_data();
     void normalizedSignature();
@@ -301,6 +302,19 @@ void tst_QMetaObject::connectSlotsByName()
 
 struct MyUnregisteredType { };
 
+static int countedStructObjectsCount = 0;
+struct CountedStruct
+{
+    CountedStruct() { ++countedStructObjectsCount; }
+    CountedStruct(const CountedStruct &) { ++countedStructObjectsCount; }
+    CountedStruct &operator=(const CountedStruct &) { return *this; }
+    ~CountedStruct() { --countedStructObjectsCount; }
+};
+
+#ifndef QT_NO_EXCEPTIONS
+class ObjectException : public std::exception { };
+#endif
+
 class QtTestObject: public QObject
 {
     friend class tst_QMetaObject;
@@ -339,6 +353,13 @@ public slots:
     { QObject::moveToThread(t); }
 
     void slotWithUnregisteredParameterType(MyUnregisteredType);
+
+    CountedStruct throwingSlot(const CountedStruct &, CountedStruct s2) {
+#ifndef QT_NO_EXCEPTIONS
+        throw ObjectException();
+#endif
+        return s2;
+    }
 
 signals:
     void sig0();
@@ -746,13 +767,13 @@ void tst_QMetaObject::invokeBlockingQueuedMetaMember()
 void tst_QMetaObject::qtMetaObjectInheritance()
 {
     QVERIFY(QObject::staticMetaObject.superClass() == 0);
-    QCOMPARE(QWindow::staticMetaObject.indexOfEnumerator("Qt::ScreenOrientation"), -1);
-    QCOMPARE(QWindow::staticMetaObject.indexOfEnumerator("ScreenOrientation"), -1);
-    int indexOfContentOrientation = QWindow::staticMetaObject.indexOfProperty("contentOrientation");
-    QVERIFY(indexOfContentOrientation != -1);
-    QMetaProperty contentOrientation = QWindow::staticMetaObject.property(indexOfContentOrientation);
-    QVERIFY(contentOrientation.isValid());
-    QCOMPARE(contentOrientation.enumerator().name(), "ScreenOrientation");
+    QCOMPARE(QSortFilterProxyModel::staticMetaObject.indexOfEnumerator("Qt::CaseSensitivity"), -1);
+    QCOMPARE(QSortFilterProxyModel::staticMetaObject.indexOfEnumerator("CaseSensitivity"), -1);
+    int indexOfSortCaseSensitivity = QSortFilterProxyModel::staticMetaObject.indexOfProperty("sortCaseSensitivity");
+    QVERIFY(indexOfSortCaseSensitivity != -1);
+    QMetaProperty sortCaseSensitivity = QSortFilterProxyModel::staticMetaObject.property(indexOfSortCaseSensitivity);
+    QVERIFY(sortCaseSensitivity.isValid());
+    QCOMPARE(sortCaseSensitivity.enumerator().name(), "CaseSensitivity");
 }
 
 struct MyType
@@ -845,6 +866,23 @@ void tst_QMetaObject::invokeTypedefTypes()
     QCOMPARE(spy.count(), 1);
     QCOMPARE(spy.at(0).count(), 1);
     QCOMPARE(spy.at(0).at(0), QVariant(arg));
+}
+
+void tst_QMetaObject::invokeException()
+{
+#ifndef QT_NO_EXCEPTIONS
+    QtTestObject obj;
+    QCOMPARE(countedStructObjectsCount, 0);
+    try {
+        CountedStruct s;
+        QVERIFY(QMetaObject::invokeMethod(&obj, "throwingSlot", Q_RETURN_ARG(CountedStruct, s),
+                                          Q_ARG(CountedStruct, s), Q_ARG(CountedStruct, s)));
+        QFAIL("Did not throw");
+    } catch(ObjectException &) {}
+    QCOMPARE(countedStructObjectsCount, 0);
+#else
+    QSKIP("Needs exceptions");
+#endif
 }
 
 void tst_QMetaObject::normalizedSignature_data()

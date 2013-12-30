@@ -113,9 +113,7 @@ NmakeMakefileGenerator::writeMakefile(QTextStream &t)
                             qPrintable(variables["QMAKESPEC"].first().toQString()));
                     return false;
                 }
-            }
-#ifdef Q_OS_WIN
-            else if (project->isActiveConfig(QStringLiteral("winrt"))) {
+            } else if (project->isActiveConfig(QStringLiteral("winrt"))) {
                 QString arch = project->first("VCPROJ_ARCH").toQString().toLower();
                 QString compiler;
                 QString compilerArch;
@@ -126,6 +124,7 @@ NmakeMakefileGenerator::writeMakefile(QTextStream &t)
                     compiler = QStringLiteral("x86_amd64");
                     compilerArch = QStringLiteral("amd64");
                 }
+#ifdef Q_OS_WIN
 #ifdef Q_OS_WIN64
                 const QString regKey = QStringLiteral("Software\\Wow6432Node\\Microsoft\\VisualStudio\\11.0\\Setup\\VC\\ProductDir");
 #else
@@ -137,6 +136,9 @@ NmakeMakefileGenerator::writeMakefile(QTextStream &t)
                                     "Is it installed?.\n");
                     return false;
                 }
+#else
+                const QString vcInstallDir = "/fake/vc_install_dir";
+#endif // Q_OS_WIN
 
                 QStringList incDirs;
                 QStringList libDirs;
@@ -192,7 +194,6 @@ NmakeMakefileGenerator::writeMakefile(QTextStream &t)
                 t << "\nLIB = " << nmakePathList(libDirs);
                 t << "\nPATH = " << nmakePathList(binDirs) << '\n';
             }
-#endif // Q_OS_WIN
         }
         writeNmakeParts(t);
         return MakefileGenerator::writeMakefile(t);
@@ -234,8 +235,10 @@ QString NmakeMakefileGenerator::defaultInstall(const QString &t)
     if(targetdir.right(1) != Option::dir_sep)
         targetdir += Option::dir_sep;
 
-    if(t == "target" && project->first("TEMPLATE") == "lib") {
-        if(project->isActiveConfig("shared") && project->isActiveConfig("debug")) {
+    if (project->isActiveConfig("debug")) {
+        if (t == "dlltarget"
+            || (project->first("TEMPLATE") == "lib"
+                && project->isActiveConfig("shared"))) {
             QString pdb_target = getPdbTarget();
             pdb_target.remove('"');
             QString src_targ = (project->isEmpty("DESTDIR") ? QString("$(DESTDIR)") : project->first("DESTDIR")) + pdb_target;

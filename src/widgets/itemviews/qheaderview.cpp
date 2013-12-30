@@ -1337,18 +1337,13 @@ QHeaderView::ResizeMode QHeaderView::sectionResizeMode(int logicalIndex) const
    and QTreeView::sizeHintForColumn(). Reimplementing these functions can make this
    function not having an effect.
 
-   If \a resizeSectionsNow is set to true (default) it will do adjustment of sections by calling
-   resizeSections().  (regardless if the precision was changed).
-
     \sa resizeContentsPrecision(), setSectionResizeMode(), resizeSections(), QTableView::sizeHintForColumn(), QTableView::sizeHintForRow(), QTreeView::sizeHintForColumn()
 */
 
-void QHeaderView::setResizeContentsPrecision(int precision, bool resizeSectionsNow)
+void QHeaderView::setResizeContentsPrecision(int precision)
 {
     Q_D(QHeaderView);
     d->resizeContentsPrecision = precision;
-    if (resizeSectionsNow)
-        resizeSections();
 }
 
 /*!
@@ -3693,8 +3688,7 @@ void QHeaderViewPrivate::write(QDataStream &out) const
     out << int(globalResizeMode);
 
     out << sectionItems;
-    if (out.version() >= QDataStream::Qt_5_2)
-        out << resizeContentsPrecision;
+    out << resizeContentsPrecision;
 }
 
 bool QHeaderViewPrivate::read(QDataStream &in)
@@ -3747,8 +3741,10 @@ bool QHeaderViewPrivate::read(QDataStream &in)
     sectionItems = newSectionItems;
     recalcSectionStartPos();
 
-    if (in.version() >= QDataStream::Qt_5_2)
-        in >> resizeContentsPrecision;
+    int tmpint;
+    in >> tmpint;
+    if (in.status() == QDataStream::Ok)  // we haven't read past end
+        resizeContentsPrecision = tmpint;
 
     return true;
 }

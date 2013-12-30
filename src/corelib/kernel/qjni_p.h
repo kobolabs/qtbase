@@ -68,7 +68,7 @@ public:
     operator JNIEnv*() const;
 
 private:
-    friend class QJNIEnvironment;
+    friend class QAndroidJniEnvironment;
     Q_DISABLE_COPY(QJNIEnvironmentPrivate)
     JNIEnv *jniEnv;
 };
@@ -180,14 +180,16 @@ public:
             d = QSharedPointer<QJNIObjectData>(new QJNIObjectData());
             QJNIEnvironmentPrivate env;
             d->m_jobject = env->NewGlobalRef(jobj);
-            d->m_jclass = static_cast<jclass>(env->NewGlobalRef(env->GetObjectClass(jobj)));
+            jclass objectClass = env->GetObjectClass(jobj);
+            d->m_jclass = static_cast<jclass>(env->NewGlobalRef(objectClass));
+            env->DeleteLocalRef(objectClass);
         }
 
         return *this;
     }
 
 private:
-    friend class QJNIObject;
+    friend class QAndroidJniObject;
 
     QJNIObjectPrivate(const char *className, const char *sig, va_list args);
     QJNIObjectPrivate(jclass clazz, const char *sig, va_list args);

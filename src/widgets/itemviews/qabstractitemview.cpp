@@ -1042,7 +1042,7 @@ QAbstractItemView::SelectionBehavior QAbstractItemView::selectionBehavior() cons
     Sets the current item to be the item at \a index.
 
     Unless the current selection mode is
-    \l{QAbstractItemView::}{NoSelection}, the item is also be selected.
+    \l{QAbstractItemView::}{NoSelection}, the item is also selected.
     Note that this function also updates the starting position for any
     new selections the user performs.
 
@@ -1391,6 +1391,15 @@ bool QAbstractItemView::showDropIndicator() const
 }
 
 /*!
+    \since 5.2
+    \reimp
+*/
+QSize QAbstractItemView::viewportSizeHint() const
+{
+    return QAbstractScrollArea::viewportSizeHint();
+}
+
+/*!
     \property QAbstractItemView::dragEnabled
     \brief whether the view supports dragging of its own items
 
@@ -1651,7 +1660,7 @@ bool QAbstractItemView::viewportEvent(QEvent *event)
     case QEvent::WhatsThis: {
         QHelpEvent *he = static_cast<QHelpEvent*>(event);
         const QModelIndex index = indexAt(he->pos());
-        QStyleOptionViewItem option = d->viewOptions();
+        QStyleOptionViewItem option = d->viewOptionsV1();
         option.rect = visualRect(index);
         option.state |= (index == currentIndex() ? QStyle::State_HasFocus : QStyle::State_None);
 
@@ -1851,7 +1860,7 @@ void QAbstractItemView::mouseReleaseEvent(QMouseEvent *event)
             emit clicked(index);
         if (edited)
             return;
-        QStyleOptionViewItem option = d->viewOptions();
+        QStyleOptionViewItem option = d->viewOptionsV1();
         if (d->pressedAlreadySelected)
             option.state |= QStyle::State_Selected;
         if ((model()->flags(index) & Qt::ItemIsEnabled)
@@ -2627,7 +2636,7 @@ void QAbstractItemView::updateEditorGeometries()
     Q_D(QAbstractItemView);
     if(d->editorIndexHash.isEmpty())
         return;
-    QStyleOptionViewItem option = d->viewOptions();
+    QStyleOptionViewItem option = d->viewOptionsV1();
     QEditorIndexHash::iterator it = d->editorIndexHash.begin();
     QWidgetList editorsToRelease;
     QWidgetList editorsToHide;
@@ -2972,7 +2981,7 @@ QSize QAbstractItemView::sizeHintForIndex(const QModelIndex &index) const
     Q_D(const QAbstractItemView);
     if (!d->isIndexValid(index) || !d->itemDelegate)
         return QSize();
-    return d->delegateForIndex(index)->sizeHint(d->viewOptions(), index);
+    return d->delegateForIndex(index)->sizeHint(d->viewOptionsV1(), index);
 }
 
 /*!
@@ -3000,7 +3009,7 @@ int QAbstractItemView::sizeHintForRow(int row) const
 
     ensurePolished();
 
-    QStyleOptionViewItem option = d->viewOptions();
+    QStyleOptionViewItem option = d->viewOptionsV1();
     int height = 0;
     int colCount = d->model->columnCount(d->root);
     QModelIndex index;
@@ -3031,7 +3040,7 @@ int QAbstractItemView::sizeHintForColumn(int column) const
 
     ensurePolished();
 
-    QStyleOptionViewItem option = d->viewOptions();
+    QStyleOptionViewItem option = d->viewOptionsV1();
     int width = 0;
     int rows = d->model->rowCount(d->root);
     QModelIndex index;
@@ -3054,7 +3063,7 @@ int QAbstractItemView::sizeHintForColumn(int column) const
 void QAbstractItemView::openPersistentEditor(const QModelIndex &index)
 {
     Q_D(QAbstractItemView);
-    QStyleOptionViewItem options = d->viewOptions();
+    QStyleOptionViewItem options = d->viewOptionsV1();
     options.rect = visualRect(index);
     options.state |= (index == currentIndex() ? QStyle::State_HasFocus : QStyle::State_None);
 
@@ -3600,43 +3609,43 @@ void QAbstractItemView::startDrag(Qt::DropActions supportedActions)
 QStyleOptionViewItem QAbstractItemView::viewOptions() const
 {
     Q_D(const QAbstractItemView);
-    return d->viewOptions();
-}
-
-QStyleOptionViewItem QAbstractItemViewPrivate::viewOptions() const
-{
-    Q_Q(const QAbstractItemView);
     QStyleOptionViewItem option;
-    option.init(q);
+    option.init(this);
     option.state &= ~QStyle::State_MouseOver;
-    option.font = q->font();
+    option.font = font();
 
 #ifndef Q_WS_MAC
     // On mac the focus appearance follows window activation
     // not widget activation
-    if (!q->hasFocus())
+    if (!hasFocus())
         option.state &= ~QStyle::State_Active;
 #endif
 
     option.state &= ~QStyle::State_HasFocus;
-    if (iconSize.isValid()) {
-        option.decorationSize = iconSize;
+    if (d->iconSize.isValid()) {
+        option.decorationSize = d->iconSize;
     } else {
-        int pm = q->style()->pixelMetric(QStyle::PM_SmallIconSize, 0, q);
+        int pm = style()->pixelMetric(QStyle::PM_SmallIconSize, 0, this);
         option.decorationSize = QSize(pm, pm);
     }
     option.decorationPosition = QStyleOptionViewItem::Left;
     option.decorationAlignment = Qt::AlignCenter;
     option.displayAlignment = Qt::AlignLeft|Qt::AlignVCenter;
-    option.textElideMode = textElideMode;
+    option.textElideMode = d->textElideMode;
     option.rect = QRect();
-    option.showDecorationSelected = q->style()->styleHint(QStyle::SH_ItemView_ShowDecorationSelected, 0, q);
-    if (wrapItemText)
+    option.showDecorationSelected = style()->styleHint(QStyle::SH_ItemView_ShowDecorationSelected, 0, this);
+    if (d->wrapItemText)
         option.features = QStyleOptionViewItem::WrapText;
-    option.locale = q->locale();
+    option.locale = locale();
     option.locale.setNumberOptions(QLocale::OmitGroupSeparator);
-    option.widget = q;
+    option.widget = this;
     return option;
+}
+
+QStyleOptionViewItem QAbstractItemViewPrivate::viewOptionsV1() const
+{
+    Q_Q(const QAbstractItemView);
+    return q->viewOptions();
 }
 
 /*!
@@ -4274,7 +4283,7 @@ bool QAbstractItemViewPrivate::sendDelegateEvent(const QModelIndex &index, QEven
 {
     Q_Q(const QAbstractItemView);
     QModelIndex buddy = model->buddy(index);
-    QStyleOptionViewItem options = viewOptions();
+    QStyleOptionViewItem options = viewOptionsV1();
     options.rect = q->visualRect(buddy);
     options.state |= (buddy == q->currentIndex() ? QStyle::State_HasFocus : QStyle::State_None);
     QAbstractItemDelegate *delegate = delegateForIndex(index);
@@ -4286,7 +4295,7 @@ bool QAbstractItemViewPrivate::openEditor(const QModelIndex &index, QEvent *even
     Q_Q(QAbstractItemView);
 
     QModelIndex buddy = model->buddy(index);
-    QStyleOptionViewItem options = viewOptions();
+    QStyleOptionViewItem options = viewOptionsV1();
     options.rect = q->visualRect(buddy);
     options.state |= (buddy == q->currentIndex() ? QStyle::State_HasFocus : QStyle::State_None);
 
@@ -4338,7 +4347,7 @@ QPixmap QAbstractItemViewPrivate::renderToPixmap(const QModelIndexList &indexes,
     QPixmap pixmap(r->size());
     pixmap.fill(Qt::transparent);
     QPainter painter(&pixmap);
-    QStyleOptionViewItem option = viewOptions();
+    QStyleOptionViewItem option = viewOptionsV1();
     option.state |= QStyle::State_Selected;
     for (int j = 0; j < paintPairs.count(); ++j) {
         option.rect = paintPairs.at(j).first.translated(-r->topLeft());

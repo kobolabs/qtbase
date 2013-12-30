@@ -115,6 +115,7 @@ private slots:
     void sort();
 
     void mkdir();
+    void deleteFile();
 
     void caseSensitivity();
 
@@ -211,7 +212,14 @@ void tst_QFileSystemModel::rootPath()
     QString oldRootPath = model->rootPath();
     const QStringList documentPaths = QStandardPaths::standardLocations(QStandardPaths::DocumentsLocation);
     QVERIFY(!documentPaths.isEmpty());
-    const QString documentPath = documentPaths.front();
+    QString documentPath = documentPaths.front();
+    // In particular on Linux, ~/Documents (the first
+    // DocumentsLocation) may not exist, so choose ~ in that case:
+    if (!QFile::exists(documentPath)) {
+        documentPath = QDir::homePath();
+        qWarning("%s: first documentPath \"%s\" does not exist. Using ~ (\"%s\") instead.",
+                 Q_FUNC_INFO, qPrintable(documentPaths.front()), qPrintable(documentPath));
+    }
     root = model->setRootPath(documentPath);
 
     QTRY_VERIFY(model->rowCount(root) >= 0);
@@ -925,6 +933,25 @@ void tst_QFileSystemModel::mkdir()
     QVERIFY(!bestatic.exists());
     QVERIFY(0 != idx.row());
     QCOMPARE(oldRow, idx.row());
+}
+
+void tst_QFileSystemModel::deleteFile()
+{
+    QString newFilePath = QDir::temp().filePath("NewFileDeleteTest");
+    QFile newFile(newFilePath);
+    if (newFile.exists()) {
+        if (!newFile.remove())
+            qWarning() << "unable to remove" << newFilePath;
+        QTest::qWait(WAITTIME);
+    }
+    if (!newFile.open(QIODevice::WriteOnly | QIODevice::Text)) {
+        qWarning() << "unable to create" << newFilePath;
+    }
+    newFile.close();
+    QModelIndex idx = model->index(newFilePath);
+    QVERIFY(idx.isValid());
+    QVERIFY(model->remove(idx));
+    QVERIFY(!newFile.exists());
 }
 
 void tst_QFileSystemModel::caseSensitivity()

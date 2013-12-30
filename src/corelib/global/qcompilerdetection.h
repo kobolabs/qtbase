@@ -161,6 +161,13 @@
 #      /* Compatibility with older Clang versions */
 #      define __has_extension __has_feature
 #    endif
+#    if defined(__APPLE__)
+     /* Apple/clang specific features */
+#      define Q_DECL_CF_RETURNS_RETAINED __attribute__((cf_returns_retained))
+#      ifdef __OBJC__
+#        define Q_DECL_NS_RETURNS_AUTORELEASED __attribute__((ns_returns_autoreleased))
+#      endif
+#    endif
 #  else
 /* Plain GCC */
 #    if (__GNUC__ * 100 + __GNUC_MINOR__) >= 405
@@ -458,6 +465,7 @@
  *  N2659           Q_COMPILER_THREAD_LOCAL
  *  N2765           Q_COMPILER_UDL
  *  N2442           Q_COMPILER_UNICODE_STRINGS
+ *  N2640           Q_COMPILER_UNIFORM_INIT
  *  N2544           Q_COMPILER_UNRESTRICTED_UNIONS
  *  N1653           Q_COMPILER_VARIADIC_MACROS
  *  N2242 N2555     Q_COMPILER_VARIADIC_TEMPLATES
@@ -495,6 +503,7 @@
 //       constexpr support is only partial
 //#      define Q_COMPILER_CONSTEXPR
 #      define Q_COMPILER_INITIALIZER_LISTS
+#      define Q_COMPILER_UNIFORM_INIT
 #      define Q_COMPILER_NOEXCEPT
 #    endif
 #    if __INTEL_COMPILER >= 1400
@@ -566,6 +575,7 @@
 #    endif
 #    if __has_feature(cxx_generalized_initializers)
 #      define Q_COMPILER_INITIALIZER_LISTS
+#      define Q_COMPILER_UNIFORM_INIT /* both covered by this feature macro, according to docs */
 #    endif
 #    if __has_feature(cxx_lambdas)
 #      define Q_COMPILER_LAMBDA
@@ -620,14 +630,6 @@
 #  endif
 #endif // Q_CC_CLANG
 
-#if defined(Q_CC_CLANG) && defined(__APPLE__)
-/* Apple/clang specific features */
-#  define Q_DECL_CF_RETURNS_RETAINED __attribute__((cf_returns_retained))
-#  ifdef __OBJC__
-#    define Q_DECL_NS_RETURNS_AUTORELEASED __attribute__((ns_returns_autoreleased))
-#  endif
-#endif
-
 #if defined(Q_CC_GNU) && !defined(Q_CC_INTEL) && !defined(Q_CC_CLANG)
 #  if defined(__GXX_EXPERIMENTAL_CXX0X__) || __cplusplus >= 201103L
 #    if (__GNUC__ * 100 + __GNUC_MINOR__) >= 403
@@ -646,6 +648,7 @@
 #      define Q_COMPILER_DELETE_MEMBERS
 #      define Q_COMPILER_EXTERN_TEMPLATES
 #      define Q_COMPILER_INITIALIZER_LISTS
+#      define Q_COMPILER_UNIFORM_INIT
 #      define Q_COMPILER_UNICODE_STRINGS
 #      define Q_COMPILER_VARIADIC_TEMPLATES
 #    endif
@@ -696,15 +699,20 @@
 #    if _MSC_VER >= 1400
        /* C++11 features supported in VC8 = VC2005: */
 #      define Q_COMPILER_VARIADIC_MACROS
+
+#      ifndef __cplusplus_cli
        /* 2005 supports the override and final contextual keywords, in
         the same positions as the C++11 variants, but 'final' is
         called 'sealed' instead:
         http://msdn.microsoft.com/en-us/library/0w2w91tf%28v=vs.80%29.aspx
+        The behavior is slightly different in C++/CLI, which requires the
+        "virtual" keyword to be present too, so don't define for that.
         So don't define Q_COMPILER_EXPLICIT_OVERRIDES (since it's not
         the same as the C++11 version), but define the Q_DECL_* flags
         accordingly: */
 #      define Q_DECL_OVERRIDE override
 #      define Q_DECL_FINAL sealed
+#      endif
 #    endif
 #    if _MSC_VER >= 1600
        /* C++11 features supported in VC10 = VC2010: */
@@ -714,8 +722,9 @@
 #      define Q_COMPILER_DECLTYPE
 #      define Q_COMPILER_RVALUE_REFS
 #      define Q_COMPILER_STATIC_ASSERT
-//  MSVC has std::initilizer_list, but does not support the braces initialization
+//  MSVC's library has std::initilizer_list, but the compiler does not support the braces initialization
 //#      define Q_COMPILER_INITIALIZER_LISTS
+//#      define Q_COMPILER_UNIFORM_INIT
 #    endif
 #    if _MSC_VER >= 1700
        /* C++11 features supported in VC11 = VC2012: */
@@ -726,6 +735,20 @@
 #      define Q_COMPILER_CLASS_ENUM
 #      define Q_COMPILER_ATOMICS
 #    endif /* VC 11 */
+#    if _MSC_VER >= 1800
+       /* C++11 features in VC12 = VC2013 */
+#      define Q_COMPILER_DEFAULT_MEMBERS
+#      define Q_COMPILER_DELETE_MEMBERS
+#      define Q_COMPILER_DELEGATING_CONSTRUCTORS
+#      define Q_COMPILER_EXPLICIT_CONVERSIONS
+#      define Q_COMPILER_NONSTATIC_MEMBER_INIT
+#      define Q_COMPILER_INITIALIZER_LISTS
+// implemented in principle, but has a bug that makes it unusable: http://connect.microsoft.com/VisualStudio/feedback/details/802058/c-11-unified-initialization-fails-with-c-style-arrays
+//      #define Q_COMPILER_UNIFORM_INIT
+#      define Q_COMPILER_RAW_STRINGS
+#      define Q_COMPILER_TEMPLATE_ALIAS
+#      define Q_COMPILER_VARIADIC_TEMPLATES
+#    endif /* VC 12 */
 #endif /* Q_CC_MSVC */
 
 #ifdef __cplusplus

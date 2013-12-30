@@ -221,7 +221,7 @@ QLibraryInfo::QLibraryInfo()
 QString
 QLibraryInfo::licensee()
 {
-    const char *str = QT_CONFIGURE_LICENSEE;
+    const char * volatile str = QT_CONFIGURE_LICENSEE;
     return QString::fromLocal8Bit(str);
 }
 
@@ -234,7 +234,7 @@ QLibraryInfo::licensee()
 QString
 QLibraryInfo::licensedProducts()
 {
-    const char *str = QT_CONFIGURE_LICENSED_PRODUCTS;
+    const char * volatile str = QT_CONFIGURE_LICENSED_PRODUCTS;
     return QString::fromLatin1(str);
 }
 
@@ -442,7 +442,11 @@ QLibraryInfo::rawLocation(LibraryLocation loc, PathGroup group)
                     QCFType<CFURLRef> urlRef = CFBundleCopyBundleURL(bundleRef);
                     if (urlRef) {
                         QCFString path = CFURLCopyFileSystemPath(urlRef, kCFURLPOSIXPathStyle);
+#ifdef Q_OS_MACX
                         return QDir::cleanPath(QString(path) + QLatin1String("/Contents/") + ret);
+#else
+                        return QDir::cleanPath(QString(path) + QLatin1Char('/') + ret); // iOS
+#endif
                     }
                 }
 #endif

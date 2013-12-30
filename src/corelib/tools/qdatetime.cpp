@@ -891,7 +891,7 @@ QString QDate::toString(Qt::DateFormat format) const
     case Qt::DefaultLocaleLongDate:
         return QLocale().toString(*this, QLocale::LongFormat);
     case Qt::RFC2822Date:
-        return toString(QStringLiteral("dd MMM yyyy"));
+        return QLocale::c().toString(*this, QStringLiteral("dd MMM yyyy"));
     default:
 #ifndef QT_NO_TEXTDATE
     case Qt::TextDate:
@@ -1638,9 +1638,6 @@ QString QTime::toString(Qt::DateFormat format) const
     case Qt::DefaultLocaleLongDate:
         return QLocale().toString(*this, QLocale::LongFormat);
     case Qt::RFC2822Date:
-        return QString::fromLatin1("%1:%2:%3").arg(hour(), 2, 10, QLatin1Char('0'))
-                                              .arg(minute(), 2, 10, QLatin1Char('0'))
-                                              .arg(second(), 2, 10, QLatin1Char('0'));
     case Qt::ISODate:
     case Qt::TextDate:
     default:
@@ -2685,10 +2682,10 @@ void QDateTimePrivate::getDateTime(QDate *date, QTime *time) const
 {
     msecsToTime(m_msecs, date, time);
 
-    if (isNullDate())
+    if (date && isNullDate())
         *date = QDate();
 
-    if (isNullTime())
+    if (time && isNullTime())
         *time = QTime();
 }
 
@@ -2768,9 +2765,6 @@ void QDateTimePrivate::refreshDateTime()
     }
 
     // We have a valid date and time and a Qt::LocalTime or Qt::TimeZone that needs calculating
-    QDate date;
-    QTime time;
-    getDateTime(&date, &time);
     // LocalTime and TimeZone might fall into "missing" DaylightTime transition hour
     // Calling toEpochMSecs will adjust the returned date/time if it does
     QDate testDate;
@@ -2784,7 +2778,7 @@ void QDateTimePrivate::refreshDateTime()
         epochMSecs = zoneMSecsToEpochMSecs(m_msecs, m_timeZone, &testDate, &testTime);
 #endif // QT_BOOTSTRAPPED
     }
-    if (testDate == date && testTime == time) {
+    if (timeToMSecs(testDate, testTime) == m_msecs) {
         setValidDateTime();
         // Cache the offset to use in toMSecsSinceEpoch()
         m_offsetFromUtc = (m_msecs - epochMSecs) / 1000;
@@ -3097,9 +3091,10 @@ bool QDateTime::isValid() const
 
 QDate QDateTime::date() const
 {
+    if (d->isNullDate())
+        return QDate();
     QDate dt;
-    QTime tm;
-    d->getDateTime(&dt, &tm);
+    msecsToTime(d->m_msecs, &dt, 0);
     return dt;
 }
 
@@ -3111,9 +3106,10 @@ QDate QDateTime::date() const
 
 QTime QDateTime::time() const
 {
-    QDate dt;
+    if (d->isNullTime())
+        return QTime();
     QTime tm;
-    d->getDateTime(&dt, &tm);
+    msecsToTime(d->m_msecs, 0, &tm);
     return tm;
 }
 
@@ -3548,27 +3544,8 @@ QString QDateTime::toString(Qt::DateFormat format) const
     case Qt::DefaultLocaleLongDate:
         return QLocale().toString(*this, QLocale::LongFormat);
     case Qt::RFC2822Date: {
-        buf = toString(QStringLiteral("dd MMM yyyy hh:mm:ss "));
-
-        int utcOffset = d->m_offsetFromUtc;
-        if (timeSpec() == Qt::LocalTime) {
-            QDateTime utc = toUTC();
-            utc.setTimeSpec(timeSpec());
-            utcOffset = utc.secsTo(*this);
-        }
-
-        const int offset = qAbs(utcOffset);
-        buf += QLatin1Char((offset == utcOffset) ? '+' : '-');
-
-        const int hour = offset / 3600;
-        if (hour < 10)
-            buf += QLatin1Char('0');
-        buf += QString::number(hour);
-
-        const int min = (offset - (hour * 3600)) / 60;
-        if (min < 10)
-            buf += QLatin1Char('0');
-        buf += QString::number(min);
+        buf = QLocale::c().toString(*this, QStringLiteral("dd MMM yyyy hh:mm:ss "));
+        buf += toOffsetString(Qt::TextDate, d->m_offsetFromUtc);
         return buf;
     }
     default:
@@ -3921,7 +3898,16 @@ qint64 QDateTime::msecsTo(const QDateTime &other) const
 
 QDateTime QDateTime::toTimeSpec(Qt::TimeSpec spec) const
 {
-    return fromMSecsSinceEpoch(toMSecsSinceEpoch(), spec, 0);
+    if (d->m_spec == spec && (spec == Qt::UTC || spec == Qt::LocalTime))
+        return *this;
+
+    if (!isValid()) {
+        QDateTime ret = *this;
+        ret.setTimeSpec(spec);
+        return ret;
+    }
+
+    return fromMSecsSinceEpoch(d->toMSecsSinceEpoch(), spec, 0);
 }
 
 /*!
@@ -3939,7 +3925,16 @@ QDateTime QDateTime::toTimeSpec(Qt::TimeSpec spec) const
 
 QDateTime QDateTime::toOffsetFromUtc(int offsetSeconds) const
 {
-    return fromMSecsSinceEpoch(toMSecsSinceEpoch(), Qt::OffsetFromUTC, offsetSeconds);
+    if (d->m_spec == Qt::OffsetFromUTC && d->m_offsetFromUtc == offsetSeconds)
+        return *this;
+
+    if (!isValid()) {
+        QDateTime ret = *this;
+        ret.setOffsetFromUtc(offsetSeconds);
+        return ret;
+    }
+
+    return fromMSecsSinceEpoch(d->toMSecsSinceEpoch(), Qt::OffsetFromUTC, offsetSeconds);
 }
 
 #ifndef QT_BOOTSTRAPPED
@@ -3953,7 +3948,16 @@ QDateTime QDateTime::toOffsetFromUtc(int offsetSeconds) const
 
 QDateTime QDateTime::toTimeZone(const QTimeZone &timeZone) const
 {
-    return fromMSecsSinceEpoch(toMSecsSinceEpoch(), timeZone);
+    if (d->m_spec == Qt::TimeZone && d->m_timeZone == timeZone)
+        return *this;
+
+    if (!isValid()) {
+        QDateTime ret = *this;
+        ret.setTimeZone(timeZone);
+        return ret;
+    }
+
+    return fromMSecsSinceEpoch(d->toMSecsSinceEpoch(), timeZone);
 }
 #endif // QT_BOOTSTRAPPED
 

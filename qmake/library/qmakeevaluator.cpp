@@ -79,19 +79,19 @@ QT_BEGIN_NAMESPACE
 #define fL1S(s) QString::fromLatin1(s)
 
 
-QMakeBaseKey::QMakeBaseKey(const QString &_root, bool _hostBuild)
-    : root(_root), hostBuild(_hostBuild)
+QMakeBaseKey::QMakeBaseKey(const QString &_root, const QString &_stash, bool _hostBuild)
+    : root(_root), stash(_stash), hostBuild(_hostBuild)
 {
 }
 
 uint qHash(const QMakeBaseKey &key)
 {
-    return qHash(key.root) ^ (uint)key.hostBuild;
+    return qHash(key.root) ^ qHash(key.stash) ^ (uint)key.hostBuild;
 }
 
 bool operator==(const QMakeBaseKey &one, const QMakeBaseKey &two)
 {
-    return one.root == two.root && one.hostBuild == two.hostBuild;
+    return one.root == two.root && one.stash == two.stash && one.hostBuild == two.hostBuild;
 }
 
 QMakeBaseEnv::QMakeBaseEnv()
@@ -129,6 +129,7 @@ void QMakeEvaluator::initStatics()
     statics.strhost_build = QLatin1String("host_build");
     statics.strTEMPLATE = ProKey("TEMPLATE");
     statics.strQMAKE_PLATFORM = ProKey("QMAKE_PLATFORM");
+    statics.strQMAKESPEC = ProKey("QMAKESPEC");
 #ifdef PROEVALUATOR_FULL
     statics.strREQUIRES = ProKey("REQUIRES");
 #endif
@@ -939,6 +940,12 @@ void QMakeEvaluator::visitProVariable(
         setTemplate();
     else if (varName == statics.strQMAKE_PLATFORM)
         m_featureRoots = 0;
+    else if (varName == statics.strQMAKESPEC) {
+        if (!values(varName).isEmpty()) {
+            m_qmakespec = values(varName).first().toQString();
+            m_featureRoots = 0;
+        }
+    }
 #ifdef PROEVALUATOR_FULL
     else if (varName == statics.strREQUIRES)
         checkRequirements(values(varName));
@@ -975,6 +982,8 @@ void QMakeEvaluator::loadDefaults()
     vars[ProKey("_DATE_")] << ProString(QDateTime::currentDateTime().toString());
     if (!m_option->qmake_abslocation.isEmpty())
         vars[ProKey("QMAKE_QMAKE")] << ProString(m_option->qmake_abslocation);
+    if (!m_option->qmake_args.isEmpty())
+        vars[ProKey("QMAKE_ARGS")] = ProStringList(m_option->qmake_args);
 #if defined(Q_OS_WIN32)
     vars[ProKey("QMAKE_HOST.os")] << ProString("Windows");
 
@@ -1130,6 +1139,19 @@ bool QMakeEvaluator::prepareProject(const QString &inDir)
         dir = qdfi.path();
     }
 
+    dir = m_outputDir;
+    forever {
+        QString stashfile = dir + QLatin1String("/.qmake.stash");
+        if (dir == (!superdir.isEmpty() ? superdir : m_buildRoot) || m_vfs->exists(stashfile)) {
+            m_stashfile = QDir::cleanPath(stashfile);
+            break;
+        }
+        QFileInfo qdfi(dir);
+        if (qdfi.isRoot())
+            break;
+        dir = qdfi.path();
+    }
+
     return true;
 }
 
@@ -1160,7 +1182,7 @@ bool QMakeEvaluator::loadSpecInternal()
         m_qmakespec = orig_spec.toQString();
 #  endif
 #endif
-    valuesRef(ProKey("QMAKESPEC")) << ProString(m_qmakespec);
+    valuesRef(ProKey("QMAKESPEC")) = ProString(m_qmakespec);
     m_qmakespecName = IoUtils::fileName(m_qmakespec).toString();
     // This also ensures that m_featureRoots is valid.
     if (evaluateFeatureFile(QLatin1String("spec_post.prf")) != ReturnTrue)
@@ -1179,23 +1201,18 @@ bool QMakeEvaluator::loadSpec()
         QMakeEvaluator evaluator(m_option, m_parser, m_vfs, m_handler);
         evaluator.m_sourceRoot = m_sourceRoot;
         evaluator.m_buildRoot = m_buildRoot;
-        if (!m_superfile.isEmpty()) {
-            valuesRef(ProKey("_QMAKE_SUPER_CACHE_")) << ProString(m_superfile);
-            if (evaluator.evaluateFile(
-                    m_superfile, QMakeHandler::EvalConfigFile, LoadProOnly) != ReturnTrue)
-                return false;
+
+        if (!m_superfile.isEmpty() && evaluator.evaluateFile(
+                m_superfile, QMakeHandler::EvalConfigFile, LoadProOnly|LoadHidden) != ReturnTrue) {
+            return false;
         }
-        if (!m_conffile.isEmpty()) {
-            valuesRef(ProKey("_QMAKE_CONF_")) << ProString(m_conffile);
-            if (evaluator.evaluateFile(
-                    m_conffile, QMakeHandler::EvalConfigFile, LoadProOnly) != ReturnTrue)
-                return false;
+        if (!m_conffile.isEmpty() && evaluator.evaluateFile(
+                m_conffile, QMakeHandler::EvalConfigFile, LoadProOnly|LoadHidden) != ReturnTrue) {
+            return false;
         }
-        if (!m_cachefile.isEmpty()) {
-            valuesRef(ProKey("_QMAKE_CACHE_")) << ProString(m_cachefile);
-            if (evaluator.evaluateFile(
-                    m_cachefile, QMakeHandler::EvalConfigFile, LoadProOnly) != ReturnTrue)
-                return false;
+        if (!m_cachefile.isEmpty() && evaluator.evaluateFile(
+                m_cachefile, QMakeHandler::EvalConfigFile, LoadProOnly|LoadHidden) != ReturnTrue) {
+            return false;
         }
         if (qmakespec.isEmpty()) {
             if (!m_hostBuild)
@@ -1229,19 +1246,31 @@ bool QMakeEvaluator::loadSpec()
   cool:
     m_qmakespec = QDir::cleanPath(qmakespec);
 
-    if (!m_superfile.isEmpty()
-        && evaluateFile(m_superfile, QMakeHandler::EvalConfigFile, LoadProOnly|LoadHidden) != ReturnTrue) {
-        return false;
+    if (!m_superfile.isEmpty()) {
+        valuesRef(ProKey("_QMAKE_SUPER_CACHE_")) << ProString(m_superfile);
+        if (evaluateFile(
+                m_superfile, QMakeHandler::EvalConfigFile, LoadProOnly|LoadHidden) != ReturnTrue)
+            return false;
     }
     if (!loadSpecInternal())
         return false;
-    if (!m_conffile.isEmpty()
-        && evaluateFile(m_conffile, QMakeHandler::EvalConfigFile, LoadProOnly) != ReturnTrue) {
-        return false;
+    if (!m_conffile.isEmpty()) {
+        valuesRef(ProKey("_QMAKE_CONF_")) << ProString(m_conffile);
+        if (evaluateFile(
+                m_conffile, QMakeHandler::EvalConfigFile, LoadProOnly) != ReturnTrue)
+            return false;
     }
-    if (!m_cachefile.isEmpty()
-        && evaluateFile(m_cachefile, QMakeHandler::EvalConfigFile, LoadProOnly) != ReturnTrue) {
-        return false;
+    if (!m_cachefile.isEmpty()) {
+        valuesRef(ProKey("_QMAKE_CACHE_")) << ProString(m_cachefile);
+        if (evaluateFile(
+                m_cachefile, QMakeHandler::EvalConfigFile, LoadProOnly) != ReturnTrue)
+            return false;
+    }
+    if (!m_stashfile.isEmpty() && m_vfs->exists(m_stashfile)) {
+        valuesRef(ProKey("_QMAKE_STASH_")) << ProString(m_stashfile);
+        if (evaluateFile(
+                m_stashfile, QMakeHandler::EvalConfigFile, LoadProOnly) != ReturnTrue)
+            return false;
     }
     return true;
 }
@@ -1269,6 +1298,14 @@ void QMakeEvaluator::evaluateCommand(const QString &cmds, const QString &where)
             pro->deref();
         }
     }
+}
+
+void QMakeEvaluator::applyExtraConfigs()
+{
+    if (m_extraConfigs.isEmpty())
+        return;
+
+    evaluateCommand(fL1S("CONFIG += ") + m_extraConfigs.join(QLatin1Char(' ')), fL1S("(extra configs)"));
 }
 
 QMakeEvaluator::VisitReturn QMakeEvaluator::evaluateConfigFeatures()
@@ -1312,7 +1349,7 @@ QMakeEvaluator::VisitReturn QMakeEvaluator::visitProFile(
 #ifdef PROEVALUATOR_THREAD_SAFE
         m_option->mutex.lock();
 #endif
-        QMakeBaseEnv **baseEnvPtr = &m_option->baseEnvs[QMakeBaseKey(m_buildRoot, m_hostBuild)];
+        QMakeBaseEnv **baseEnvPtr = &m_option->baseEnvs[QMakeBaseKey(m_buildRoot, m_stashfile, m_hostBuild)];
         if (!*baseEnvPtr)
             *baseEnvPtr = new QMakeBaseEnv;
         QMakeBaseEnv *baseEnv = *baseEnvPtr;
@@ -1339,6 +1376,7 @@ QMakeEvaluator::VisitReturn QMakeEvaluator::visitProFile(
             baseEval->m_superfile = m_superfile;
             baseEval->m_conffile = m_conffile;
             baseEval->m_cachefile = m_cachefile;
+            baseEval->m_stashfile = m_stashfile;
             baseEval->m_sourceRoot = m_sourceRoot;
             baseEval->m_buildRoot = m_buildRoot;
             baseEval->m_hostBuild = m_hostBuild;
@@ -1365,10 +1403,6 @@ QMakeEvaluator::VisitReturn QMakeEvaluator::visitProFile(
             loadDefaults();
     }
 
-    for (ProValueMap::ConstIterator it = m_extraVars.constBegin();
-         it != m_extraVars.constEnd(); ++it)
-        m_valuemapStack.first().insert(it.key(), it.value());
-
     VisitReturn vr;
 
     m_handler->aboutToEval(currentProFile(), pro, type);
@@ -1377,14 +1411,23 @@ QMakeEvaluator::VisitReturn QMakeEvaluator::visitProFile(
     if (flags & LoadPreFiles) {
         setupProject();
 
+        for (ProValueMap::ConstIterator it = m_extraVars.constBegin();
+             it != m_extraVars.constEnd(); ++it)
+            m_valuemapStack.first().insert(it.key(), it.value());
+
+        // In case default_pre needs to make decisions based on the current
+        // build pass configuration.
+        applyExtraConfigs();
+
         if ((vr = evaluateFeatureFile(QLatin1String("default_pre.prf"))) == ReturnError)
             goto failed;
 
-        evaluateCommand(m_option->precmds, fL1S("(command line)"));
+        if (!m_option->precmds.isEmpty()) {
+            evaluateCommand(m_option->precmds, fL1S("(command line)"));
 
-        // After user configs, to override them
-        if (!m_extraConfigs.isEmpty())
-            evaluateCommand(fL1S("CONFIG += ") + m_extraConfigs.join(QLatin1Char(' ')), fL1S("(extra configs)"));
+            // Again, after user configs, to override them
+            applyExtraConfigs();
+        }
     }
 
     debugMsg(1, "visiting file %s", qPrintable(pro->fileName()));
@@ -1398,8 +1441,7 @@ QMakeEvaluator::VisitReturn QMakeEvaluator::visitProFile(
         // Again, to ensure the project does not mess with us.
         // Specifically, do not allow a project to override debug/release within a
         // debug_and_release build pass - it's too late for that at this point anyway.
-        if (!m_extraConfigs.isEmpty())
-            evaluateCommand(fL1S("CONFIG += ") + m_extraConfigs.join(QLatin1Char(' ')), fL1S("(extra configs)"));
+        applyExtraConfigs();
 
         if ((vr = evaluateFeatureFile(QLatin1String("default_post.prf"))) == ReturnError)
             goto failed;

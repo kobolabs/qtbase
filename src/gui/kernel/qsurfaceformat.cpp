@@ -337,7 +337,7 @@ bool QSurfaceFormat::testOption(QSurfaceFormat::FormatOptions opt) const
 /*!
     Set the minimum depth buffer size to \a size.
 
-    \sa depthBufferSize(), setDepth(), depth()
+    \sa depthBufferSize()
 */
 void QSurfaceFormat::setDepthBufferSize(int size)
 {
@@ -350,7 +350,7 @@ void QSurfaceFormat::setDepthBufferSize(int size)
 /*!
     Returns the depth buffer size.
 
-    \sa setDepthBufferSize(), setDepth(), depth()
+    \sa setDepthBufferSize()
 */
 int QSurfaceFormat::depthBufferSize() const
 {
@@ -396,7 +396,7 @@ bool QSurfaceFormat::hasAlpha() const
 /*!
     Set the preferred stencil buffer size to \a size bits.
 
-    \sa stencilBufferSize(), setStencil(), stencil()
+    \sa stencilBufferSize()
 */
 void QSurfaceFormat::setStencilBufferSize(int size)
 {
@@ -409,7 +409,7 @@ void QSurfaceFormat::setStencilBufferSize(int size)
 /*!
     Returns the stencil buffer size in bits.
 
-    \sa stencil(), setStencil(), setStencilBufferSize()
+    \sa setStencilBufferSize()
 */
 int QSurfaceFormat::stencilBufferSize() const
 {

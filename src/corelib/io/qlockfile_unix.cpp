@@ -54,16 +54,17 @@
 #include <sys/file.h>  // flock
 #include <sys/types.h> // kill
 #include <signal.h>    // kill
+#include <unistd.h>    // gethostname
 
 QT_BEGIN_NAMESPACE
 
-static QString localHostName() // from QHostInfo::localHostName()
+static QByteArray localHostName() // from QHostInfo::localHostName(), modified to return a QByteArray
 {
-    char hostName[512];
-    if (gethostname(hostName, sizeof(hostName)) == -1)
-        return QString();
-    hostName[sizeof(hostName) - 1] = '\0';
-    return QString::fromLocal8Bit(hostName);
+    QByteArray hostName(512, Qt::Uninitialized);
+    if (gethostname(hostName.data(), hostName.size()) == -1)
+        return QByteArray();
+    hostName.truncate(strlen(hostName.data()));
+    return hostName;
 }
 
 // ### merge into qt_safe_write?
@@ -140,6 +141,13 @@ static bool setNativeLocks(int fd)
 
 QLockFile::LockError QLockFilePrivate::tryLock_sys()
 {
+    // Assemble data, to write in a single call to write
+    // (otherwise we'd have to check every write call)
+    // Use operator% from the fast builder to avoid multiple memory allocations.
+    QByteArray fileData = QByteArray::number(QCoreApplication::applicationPid()) % '\n'
+                          % qAppName().toUtf8() % '\n'
+                          % localHostName() % '\n';
+
     const QByteArray lockFileName = QFile::encodeName(fileName);
     const int fd = qt_safe_open(lockFileName.constData(), O_WRONLY | O_CREAT | O_EXCL, 0644);
     if (fd < 0) {
@@ -159,16 +167,6 @@ QLockFile::LockError QLockFilePrivate::tryLock_sys()
 
     // We hold the lock, continue.
     fileHandle = fd;
-
-    // Assemble data, to write in a single call to write
-    // (otherwise we'd have to check every write call)
-    QByteArray fileData;
-    fileData += QByteArray::number(QCoreApplication::applicationPid());
-    fileData += '\n';
-    fileData += qAppName().toUtf8();
-    fileData += '\n';
-    fileData += localHostName().toUtf8();
-    fileData += '\n';
 
     QLockFile::LockError error = QLockFile::NoError;
     if (qt_write_loop(fd, fileData.constData(), fileData.size()) < fileData.size())
@@ -193,7 +191,7 @@ bool QLockFilePrivate::isApparentlyStale() const
     QString hostname, appname;
     if (!getLockInfo(&pid, &hostname, &appname))
         return false;
-    if (hostname == localHostName()) {
+    if (hostname == QString::fromLocal8Bit(localHostName())) {
         if (::kill(pid, 0) == -1 && errno == ESRCH)
             return true; // PID doesn't exist anymore
     }

@@ -20,8 +20,7 @@ ANDROID_JAR_DEPENDENCIES = \
     jar/QtAndroid.jar \
     jar/QtAndroidAccessibility.jar
 ANDROID_LIB_DEPENDENCIES = \
-    plugins/platforms/android/libqtforandroid.so \
-    libs/libgnustl_shared.so
+    plugins/platforms/android/libqtforandroid.so
 ANDROID_BUNDLED_JAR_DEPENDENCIES = \
     jar/QtAndroid-bundled.jar \
     jar/QtAndroidAccessibility-bundled.jar
@@ -49,7 +48,7 @@ mac|darwin {
         LIBS_PRIVATE += -framework CoreServices
     }
     LIBS_PRIVATE += -framework CoreFoundation
-    LIBS += -framework Foundation
+    LIBS_PRIVATE += -framework Foundation
 }
 win32:DEFINES-=QT_NO_CAST_TO_ASCII
 DEFINES += $$MODULE_DEFINES

@@ -43,6 +43,7 @@
 
 #include "qeglfswindow.h"
 #include "qeglfsbackingstore.h"
+#include "qeglfscompositor.h"
 #include "qeglfshooks.h"
 
 #include <QtGui/private/qguiapplication_p.h>
@@ -73,43 +74,26 @@
 
 #include <EGL/egl.h>
 
-QT_BEGIN_NAMESPACE
+static void initResources()
+{
+    Q_INIT_RESOURCE(cursor);
+}
 
-static void *eglContextForContext(QOpenGLContext *context);
+QT_BEGIN_NAMESPACE
 
 QEglFSIntegration::QEglFSIntegration()
     : mFontDb(new QGenericUnixFontDatabase)
     , mServices(new QGenericUnixServices)
+    , mScreen(0)
     , mInputContext(0)
 {
-    QEglFSHooks::hooks()->platformInit();
-
-    EGLint major, minor;
-
-    if (!eglBindAPI(EGL_OPENGL_ES_API)) {
-        qWarning("Could not bind GL_ES API\n");
-        qFatal("EGL error");
-    }
-
-    mDisplay = eglGetDisplay(QEglFSHooks::hooks() ? QEglFSHooks::hooks()->platformDisplay() : EGL_DEFAULT_DISPLAY);
-    if (mDisplay == EGL_NO_DISPLAY) {
-        qWarning("Could not open egl display\n");
-        qFatal("EGL error");
-    }
-
-    if (!eglInitialize(mDisplay, &major, &minor)) {
-        qWarning("Could not initialize egl display\n");
-        qFatal("EGL error");
-    }
-
-    mScreen = new QEglFSScreen(mDisplay);
-    screenAdded(mScreen);
+    initResources();
 }
 
 QEglFSIntegration::~QEglFSIntegration()
 {
+    QEglFSCompositor::destroy();
     delete mScreen;
-
     eglTerminate(mDisplay);
     QEglFSHooks::hooks()->platformDestroy();
 }
@@ -131,9 +115,11 @@ bool QEglFSIntegration::hasCapability(QPlatformIntegration::Capability cap) cons
 
 QPlatformWindow *QEglFSIntegration::createPlatformWindow(QWindow *window) const
 {
+    QWindowSystemInterface::flushWindowSystemEvents();
     QEglFSWindow *w = new QEglFSWindow(window);
     w->create();
-    w->requestActivateWindow();
+    if (window->type() != Qt::ToolTip)
+        w->requestActivateWindow();
     return w;
 }
 
@@ -165,8 +151,37 @@ QAbstractEventDispatcher *QEglFSIntegration::createEventDispatcher() const
 
 void QEglFSIntegration::initialize()
 {
+    QEglFSHooks::hooks()->platformInit();
+
+    EGLint major, minor;
+
+    if (!eglBindAPI(EGL_OPENGL_ES_API)) {
+        qWarning("Could not bind GL_ES API\n");
+        qFatal("EGL error");
+    }
+
+    mDisplay = eglGetDisplay(QEglFSHooks::hooks() ? QEglFSHooks::hooks()->platformDisplay() : EGL_DEFAULT_DISPLAY);
+    if (mDisplay == EGL_NO_DISPLAY) {
+        qWarning("Could not open egl display\n");
+        qFatal("EGL error");
+    }
+
+    if (!eglInitialize(mDisplay, &major, &minor)) {
+        qWarning("Could not initialize egl display\n");
+        qFatal("EGL error");
+    }
+
+    mScreen = createScreen();
+    screenAdded(mScreen);
+
     mInputContext = QPlatformInputContextFactory::create();
+
     createInputHandlers();
+}
+
+QEglFSScreen *QEglFSIntegration::createScreen() const
+{
+    return new QEglFSScreen(mDisplay);
 }
 
 QVariant QEglFSIntegration::styleHint(QPlatformIntegration::StyleHint hint) const
@@ -263,15 +278,6 @@ void *QEglFSIntegration::nativeResourceForContext(const QByteArray &resource, QO
     return result;
 }
 
-QPlatformNativeInterface::NativeResourceForContextFunction QEglFSIntegration::nativeResourceFunctionForContext(const QByteArray &resource)
-{
-    QByteArray lowerCaseResource = resource.toLower();
-    if (lowerCaseResource == "get_egl_context")
-        return NativeResourceForContextFunction(eglContextForContext);
-
-    return 0;
-}
-
 static void *eglContextForContext(QOpenGLContext *context)
 {
     Q_ASSERT(context);
@@ -281,6 +287,15 @@ static void *eglContextForContext(QOpenGLContext *context)
         return 0;
 
     return handle->eglContext();
+}
+
+QPlatformNativeInterface::NativeResourceForContextFunction QEglFSIntegration::nativeResourceFunctionForContext(const QByteArray &resource)
+{
+    QByteArray lowerCaseResource = resource.toLower();
+    if (lowerCaseResource == "get_egl_context")
+        return NativeResourceForContextFunction(eglContextForContext);
+
+    return 0;
 }
 
 EGLConfig QEglFSIntegration::chooseConfig(EGLDisplay display, const QSurfaceFormat &format)

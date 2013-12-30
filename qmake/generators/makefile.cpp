@@ -43,6 +43,9 @@
 #include "option.h"
 #include "cachekeys.h"
 #include "meta.h"
+
+#include <ioutils.h>
+
 #include <qdir.h>
 #include <qfile.h>
 #include <qtextstream.h>
@@ -52,6 +55,7 @@
 #include <qbuffer.h>
 #include <qsettings.h>
 #include <qdatetime.h>
+
 #if defined(Q_OS_UNIX)
 #include <unistd.h>
 #else
@@ -92,7 +96,7 @@ bool MakefileGenerator::canExecute(const QStringList &cmdline, int *a) const
 
 QString MakefileGenerator::mkdir_p_asstring(const QString &dir, bool escape) const
 {
-    QString edir = escape ? escapeFilePath(dir) : dir;
+    QString edir = escape ? escapeFilePath(Option::fixPathToTargetOS(dir, false, false)) : dir;
     return "@" + makedir.arg(edir);
 }
 
@@ -2261,7 +2265,7 @@ QString MakefileGenerator::buildArgs()
 {
     QString ret;
 
-    foreach (const QString &arg, Option::qmake_args)
+    foreach (const QString &arg, Option::globals->qmake_args)
         ret += " " + escapeFilePath(arg);
     return ret;
 }
@@ -3240,7 +3244,8 @@ MakefileGenerator::writePkgConfigFile()
                 }
             }
         }
-        t << var << "=" << val << endl;
+        if (!val.isEmpty())
+            t << var << "=" << val << endl;
     }
 
     t << endl;
@@ -3269,7 +3274,11 @@ MakefileGenerator::writePkgConfigFile()
         }
     }
     t << "Description: " << desc << endl;
-    t << "Version: " << project->first("VERSION") << endl;
+    ProString version = project->first("QMAKE_PKGCONFIG_VERSION");
+    if (version.isEmpty())
+        version = project->first("VERSION");
+    if (!version.isEmpty())
+        t << "Version: " << version << endl;
 
     // libs
     t << "Libs: ";
@@ -3327,12 +3336,18 @@ MakefileGenerator::writePkgConfigFile()
     t << endl;
 }
 
+static QString windowsifyPath(const QString &str)
+{
+    // The paths are escaped in prl files, so every slash needs to turn into two backslashes.
+    // Then each backslash needs to be escaped for sed. And another level for C quoting here.
+    return QString(str).replace('/', "\\\\\\\\");
+}
+
 QString MakefileGenerator::installMetaFile(const ProKey &replace_rule, const QString &src, const QString &dst)
 {
     QString ret;
     if (project->isEmpty(replace_rule)
-        || project->isActiveConfig("no_sed_meta_install")
-        || project->isEmpty("QMAKE_STREAM_EDITOR")) {
+        || project->isActiveConfig("no_sed_meta_install")) {
         ret += "-$(INSTALL_FILE) \"" + src + "\" \"" + dst + "\"";
     } else {
         ret += "-$(SED)";
@@ -3340,12 +3355,22 @@ QString MakefileGenerator::installMetaFile(const ProKey &replace_rule, const QSt
         for (int r = 0; r < replace_rules.size(); ++r) {
             const ProString match = project->first(ProKey(replace_rules.at(r) + ".match")),
                         replace = project->first(ProKey(replace_rules.at(r) + ".replace"));
-            if (!match.isEmpty() /*&& match != replace*/)
-                ret += " -e \"s," + match + "," + replace + ",g\"";
+            if (!match.isEmpty() /*&& match != replace*/) {
+                ret += " -e " + shellQuote("s," + match + "," + replace + ",g");
+                if (isWindowsShell() && project->first(ProKey(replace_rules.at(r) + ".CONFIG")).contains("path"))
+                    ret += " -e " + shellQuote("s," + windowsifyPath(match.toQString())
+                                               + "," + windowsifyPath(replace.toQString()) + ",gi");
+            }
         }
         ret += " \"" + src + "\" >\"" + dst + "\"";
     }
     return ret;
+}
+
+QString MakefileGenerator::shellQuote(const QString &str)
+{
+    return isWindowsShell() ? QMakeInternal::IoUtils::shellQuoteWin(str)
+                            : QMakeInternal::IoUtils::shellQuoteUnix(str);
 }
 
 QT_END_NAMESPACE
