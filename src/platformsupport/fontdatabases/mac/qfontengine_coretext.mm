@@ -426,8 +426,9 @@ static void convertCGPathToQPainterPath(void *info, const CGPathElement *element
 }
 
 void QCoreTextFontEngine::addGlyphsToPath(glyph_t *glyphs, QFixedPoint *positions, int nGlyphs,
-                                          QPainterPath *path, QTextItem::RenderFlags)
+                                          QPainterPath *path, QTextItem::RenderFlags, bool isVertical)
 {
+    Q_UNUSED(isVertical)
     if (glyphFormat == QFontEngineGlyphCache::Raster_ARGB)
         return; // We can't convert color-glyphs to path
 

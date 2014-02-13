@@ -689,6 +689,7 @@ void QFontEngine::addBitmapFontToPath(qreal x, qreal y, const QGlyphLayout &glyp
 void QFontEngine::addGlyphsToPath(glyph_t *glyphs, QFixedPoint *positions, int nGlyphs,
                                   QPainterPath *path, QTextItem::RenderFlags flags, bool isVertical)
 {
+    Q_UNUSED(isVertical)
     qreal x = positions[0].x.toReal();
     qreal y = positions[0].y.toReal();
     QVarLengthGlyphLayoutArray g(nGlyphs);
