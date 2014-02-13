@@ -76,7 +76,7 @@ public:
     virtual QFixed averageCharWidth() const;
 
     virtual void addGlyphsToPath(glyph_t *glyphs, QFixedPoint *positions, int numGlyphs,
-                                 QPainterPath *path, QTextItem::RenderFlags);
+                                 QPainterPath *path, QTextItem::RenderFlags, const bool isVertical = false);
 
     virtual const char *name() const { return "QCoreTextFontEngine"; }
 
