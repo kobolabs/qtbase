@@ -97,7 +97,7 @@ static QVariant::Type qGetColumnType(const QString &tpName)
     if (typeName == QLatin1String("boolean")
         || typeName == QLatin1String("bool"))
         return QVariant::Bool;
-    return QVariant::String;
+    return QVariant::ByteArray;
 }
 
 static QSqlError qMakeError(sqlite3 *access, const QString &descr, QSqlError::ErrorType type,
@@ -226,7 +226,7 @@ void QSQLiteResultPrivate::initColumns(bool emptyResultset)
                 fieldType = QVariant::ByteArray;
                 break;
             case SQLITE_TEXT:
-                fieldType = QVariant::String;
+                fieldType = QVariant::ByteArray;
                 break;
             case SQLITE_NULL:
             default:
@@ -306,9 +306,9 @@ bool QSQLiteResultPrivate::fetchNext(QSqlCachedResult::ValueCache &values, int i
                 values[i + idx] = QVariant(QVariant::String);
                 break;
             default:
-                values[i + idx] = QString(reinterpret_cast<const QChar *>(
-                            sqlite3_column_text16(stmt, i)),
-                            sqlite3_column_bytes16(stmt, i) / sizeof(QChar));
+                values[i + idx] = QByteArray(reinterpret_cast<const char *>(
+                            sqlite3_column_text(stmt, i)),
+                            sqlite3_column_bytes(stmt, i));
                 break;
             }
         }
