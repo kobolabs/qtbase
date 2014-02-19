@@ -588,13 +588,22 @@ QSize QLabelPrivate::sizeForWidth(int w) const
         // Add indentation
         int m = indent;
 
-        if (m < 0 && q->frameWidth()) // no indent, but we do have a frame
-            m = fm.width(QLatin1Char('x')) - margin*2;
+        if (m < 0 && q->frameWidth()) {// no indent, but we do have a frame
+            m = fm.width(QLatin1Char('x')) / 2 - margin;
+        }
         if (m > 0) {
-            if ((align & Qt::AlignLeft) || (align & Qt::AlignRight))
+            if ((align & Qt::AlignLeft)) {
                 hextra += m;
-            if ((align & Qt::AlignTop) || (align & Qt::AlignBottom))
+            }
+            if ((align & Qt::AlignRight)) {
+                hextra += m;
+            }
+            if ((align & Qt::AlignTop)) {
                 vextra += m;
+            }
+            if ((align & Qt::AlignBottom)) {
+                vextra += m;
+            }
         }
 
         if (control) {
@@ -658,7 +667,7 @@ int QLabel::heightForWidth(int w) const
 {
     Q_D(const QLabel);
     if (d->isTextLabel)
-        return d->sizeForWidth(w).height();
+        return d->sizeForWidth(w - 1).height(); //decreased 1 pixel to match what contentsRect does
     return QWidget::heightForWidth(w);
 }
 
