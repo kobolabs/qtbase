@@ -103,6 +103,7 @@ public:
     qreal idealWidth() const;
 
     bool contentHasAlignment() const;
+    virtual QSizeF getEllipsisPos() const;
 
 protected:
     void documentChanged(int from, int oldLength, int length);

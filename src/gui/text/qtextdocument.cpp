@@ -1566,6 +1566,21 @@ QSizeF QTextDocument::pageSize() const
     return d->pageSize;
 }
 
+void QTextDocument::setEllipsisWidth(qreal width)
+{
+    Q_D(QTextDocument);
+    d->ellipsisWidth = width;
+    if (d->lout) {
+        d->lout->documentChanged(0, 0, d->length());
+    }
+}
+
+qreal QTextDocument::ellipsisWidth() const
+{
+     Q_D(const QTextDocument);
+     return d->ellipsisWidth;
+}
+
 /*!
   returns the number of pages in this document.
 */
