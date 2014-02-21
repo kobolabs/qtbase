@@ -799,6 +799,13 @@ QTextLine QTextLayout::createLine()
     return QTextLine(l, d);
 }
 
+void QTextLayout::removeLine()
+{
+    if (!d->lines.isEmpty()) {
+        d->lines.pop_back();
+    }
+}
+
 /*!
     Returns the number of lines in this text layout.
 

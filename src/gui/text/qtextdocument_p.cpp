@@ -218,6 +218,7 @@ QTextDocumentPrivate::QTextDocumentPrivate()
     needsEnsureMaximumBlockCount = false;
     unreachableCharacterCount = 0;
     lastBlockCount = 0;
+    ellipsisWidth = 0;
 }
 
 void QTextDocumentPrivate::init()

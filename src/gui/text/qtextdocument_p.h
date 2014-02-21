@@ -351,6 +351,7 @@ public:
     uint inContentsChange : 1;
     uint blockCursorAdjustment : 1;
     QSizeF pageSize;
+    qreal ellipsisWidth;
     QString title;
     QString url;
     qreal indentWidth;
