@@ -176,6 +176,12 @@ public:
     int pixelSize() const;
     void setPixelSize(int);
 
+    qreal csmThicknessOffset() const;
+    void setCSMThicknessOffset(qreal);
+
+    qreal csmSharpnessOffset() const;
+    void setCSMSharpnessOffset(qreal);
+
     int weight() const;
     void setWeight(int);
 

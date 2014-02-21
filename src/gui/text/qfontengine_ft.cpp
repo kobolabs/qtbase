@@ -53,6 +53,8 @@
 #include "qthreadstorage.h"
 #include <qmath.h>
 
+#include "qlibrary.h"
+
 #include <ft2build.h>
 #include FT_FREETYPE_H
 #include FT_OUTLINE_H
@@ -265,6 +267,8 @@ QFreetypeFace *QFreetypeFace::getFace(const QFontEngine::FaceId &face_id,
         newFreetype->matrix.yx = 0;
         newFreetype->unicode_map = 0;
         newFreetype->symbol_map = 0;
+        newFreetype->csmSharpnessOffset = 0;
+        newFreetype->csmThicknessOffset = 0;
 
         memset(newFreetype->cmapCache, 0, sizeof(newFreetype->cmapCache));
 
@@ -845,6 +849,19 @@ QFontEngineFT::Glyph *QFontEngineFT::loadGlyph(QGlyphSet *set, uint glyph,
     v.x = format == Format_Mono ? 0 : FT_Pos(subPixelPosition.toReal() * 64);
     v.y = 0;
     FT_Set_Transform(face, &freetype->matrix, &v);
+
+    static bool initialized = false;
+    typedef FT_Error (*FT_Set_CSM_Adjustments)(FT_Face, FT_Fixed, FT_Fixed, FT_Fixed, FT_Fixed);
+    static FT_Set_CSM_Adjustments ft_set_csm_adjustments = NULL;
+    if (!initialized) {
+        initialized = true;
+        ft_set_csm_adjustments = (FT_Set_CSM_Adjustments) QLibrary::resolve(QStringLiteral("freetype"), "FT_Set_CSM_Adjustments");
+        qDebug() << "Loading iType.." << (ft_set_csm_adjustments != NULL);
+    }
+
+    if (ft_set_csm_adjustments) {
+        ft_set_csm_adjustments(freetype->face, QFixed::fromReal(fontDef.csmSharpnessOffset).value(), 0.0, QFixed::fromReal(fontDef.csmThicknessOffset).value(), 0.0);
+    }
 
     FT_Error err = FT_Load_Glyph(face, glyph, load_flags);
     if (err && (load_flags & FT_LOAD_NO_BITMAP)) {

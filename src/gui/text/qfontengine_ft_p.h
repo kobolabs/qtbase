@@ -102,6 +102,9 @@ public:
     FT_CharMap unicode_map;
     FT_CharMap symbol_map;
 
+    FT_Fixed csmSharpnessOffset;
+    FT_Fixed csmThicknessOffset;
+
     enum { cmapCacheSize = 0x200 };
     glyph_t cmapCache[cmapCacheSize];
 

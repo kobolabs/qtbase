@@ -269,6 +269,9 @@ void QFontPrivate::resolve(uint mask, const QFontPrivate *other)
     if (! (mask & QFont::SizeResolved)) {
         request.pointSize = other->request.pointSize;
         request.pixelSize = other->request.pixelSize;
+
+        request.csmThicknessOffset = other->request.csmThicknessOffset;
+        request.csmSharpnessOffset = other->request.csmSharpnessOffset;
     }
 
     if (! (mask & QFont::StyleHintResolved))
@@ -1712,6 +1715,8 @@ bool QFont::operator==(const QFont &f) const
                 && f.d->letterSpacing == d->letterSpacing
                 && f.d->wordSpacing == d->wordSpacing
                 && f.d->request.forceLeading == d->request.forceLeading
+                && f.d->request.csmThicknessOffset == d->request.csmThicknessOffset
+                && f.d->request.csmSharpnessOffset == d->request.csmSharpnessOffset
             ));
 }
 
@@ -1746,6 +1751,9 @@ bool QFont::operator<(const QFont &f) const
     if (f.d->letterSpacingIsAbsolute != d->letterSpacingIsAbsolute) return f.d->letterSpacingIsAbsolute < d->letterSpacingIsAbsolute;
     if (f.d->letterSpacing != d->letterSpacing) return f.d->letterSpacing < d->letterSpacing;
     if (f.d->wordSpacing != d->wordSpacing) return f.d->wordSpacing < d->wordSpacing;
+
+    if (r1.csmThicknessOffset != r2.csmThicknessOffset) return r1.csmThicknessOffset < r2.csmThicknessOffset;
+    if (r1.csmSharpnessOffset != r2.csmSharpnessOffset) return r1.csmSharpnessOffset < r2.csmSharpnessOffset;
 
     int f1attrs = (f.d->underline << 3) + (f.d->overline << 2) + (f.d->strikeOut<<1) + f.d->kerning;
     int f2attrs = (d->underline << 3) + (d->overline << 2) + (d->strikeOut<<1) + d->kerning;
@@ -2996,5 +3004,37 @@ QDebug operator<<(QDebug stream, const QFont &font)
     return stream << "QFont(" << font.toString() << ')';
 }
 #endif
+
+void QFont::setCSMThicknessOffset(qreal thicknessOffset)
+{
+    const qreal offsetMax = 1.0;
+    const qreal offsetMin = -1.0;
+
+    detach();
+    thicknessOffset = qBound(offsetMin, thicknessOffset, offsetMax);
+    d->request.csmThicknessOffset = thicknessOffset;
+    resolve_mask |= QFont::SizeResolved;
+}
+
+qreal QFont::csmThicknessOffset() const
+{
+    return d->request.csmThicknessOffset;
+}
+
+void QFont::setCSMSharpnessOffset(qreal sharpnessOffset)
+{
+    const qreal offsetMax = 1.0;
+    const qreal offsetMin = -1.0;
+
+    detach();
+    sharpnessOffset = qBound(offsetMin, sharpnessOffset, offsetMax);
+    d->request.csmSharpnessOffset = sharpnessOffset;
+    resolve_mask |= QFont::SizeResolved;
+}
+
+qreal QFont::csmSharpnessOffset() const
+{
+    return d->request.csmSharpnessOffset;
+}
 
 QT_END_NAMESPACE
