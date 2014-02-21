@@ -302,6 +302,8 @@ public:
 
     void requestUpdate();
     virtual QSizeF getEllipsisPos() const { return QSizeF(); }
+    virtual int lineCount() const { return 0; }
+    virtual bool getElided() const { return false; }
 
 protected:
     void documentChanged(int from, int /*charsRemoved*/, int charsAdded);
