@@ -855,7 +855,7 @@ QFontEngineFT::Glyph *QFontEngineFT::loadGlyph(QGlyphSet *set, uint glyph,
     static FT_Set_CSM_Adjustments ft_set_csm_adjustments = NULL;
     if (!initialized) {
         initialized = true;
-        ft_set_csm_adjustments = (FT_Set_CSM_Adjustments) QLibrary::resolve(QStringLiteral("freetype"), "FT_Set_CSM_Adjustments");
+        ft_set_csm_adjustments = (FT_Set_CSM_Adjustments) QLibrary::resolve(QLatin1String("freetype"), "FT_Set_CSM_Adjustments");
         qDebug() << "Loading iType.." << (ft_set_csm_adjustments != NULL);
     }
 
