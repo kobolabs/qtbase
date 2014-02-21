@@ -74,7 +74,8 @@ struct QFontDef
           weight(50), fixedPitch(false), style(QFont::StyleNormal), stretch(100),
           hintingPreference(QFont::PreferDefaultHinting), ignorePitch(true),
           fixedPitchComputed(0), reserved(0),
-          forceLeading(-1)
+          forceLeading(-1),
+          csmThicknessOffset(0), csmSharpnessOffset(0)
     {
     }
 
@@ -99,6 +100,8 @@ struct QFontDef
     uint fixedPitchComputed : 1; // for Mac OS X only
     int reserved   : 14; // for future extensions
     int forceLeading;
+    qreal csmThicknessOffset;
+    qreal csmSharpnessOffset;
 
     bool exactMatch(const QFontDef &other) const;
     bool operator==(const QFontDef &other) const
@@ -114,6 +117,8 @@ struct QFontDef
                     && (styleName.isEmpty() || other.styleName.isEmpty() || styleName == other.styleName)
                     && hintingPreference == other.hintingPreference
                     && forceLeading == other.forceLeading
+                    && csmThicknessOffset == other.csmThicknessOffset
+                    && csmSharpnessOffset == other.csmSharpnessOffset
                           ;
     }
     inline bool operator<(const QFontDef &other) const
@@ -129,7 +134,8 @@ struct QFontDef
             return styleName < other.styleName;
         if (hintingPreference != other.hintingPreference) return hintingPreference < other.hintingPreference;
         if (forceLeading != other.forceLeading) return forceLeading < other.forceLeading;
-
+        if (csmThicknessOffset != other.csmThicknessOffset) return csmThicknessOffset < other.csmThicknessOffset;
+        if (csmSharpnessOffset != other.csmSharpnessOffset) return csmSharpnessOffset < other.csmSharpnessOffset;
 
         if (ignorePitch != other.ignorePitch) return ignorePitch < other.ignorePitch;
         if (fixedPitch != other.fixedPitch) return fixedPitch < other.fixedPitch;
