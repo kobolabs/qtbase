@@ -719,6 +719,8 @@ QRawFont QRawFont::fromFont(const QFont &font, QFontDatabase::WritingSystem writ
         rawFont.d.data()->fontEngine = fe;
         rawFont.d.data()->fontEngine->ref.ref();
         rawFont.d.data()->hintingPreference = font.hintingPreference();
+        rawFont.d.data()->fontEngine->fontDef.csmThicknessOffset = font.csmThicknessOffset();
+        rawFont.d.data()->fontEngine->fontDef.csmSharpnessOffset = font.csmSharpnessOffset();
     }
     return rawFont;
 }
