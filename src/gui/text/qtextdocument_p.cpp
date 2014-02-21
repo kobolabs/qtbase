@@ -219,6 +219,8 @@ QTextDocumentPrivate::QTextDocumentPrivate()
     unreachableCharacterCount = 0;
     lastBlockCount = 0;
     ellipsisWidth = 0;
+    suffixWidth = 0;
+    maxLines = 0 ;
 }
 
 void QTextDocumentPrivate::init()

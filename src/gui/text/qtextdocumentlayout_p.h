@@ -104,6 +104,8 @@ public:
 
     bool contentHasAlignment() const;
     virtual QSizeF getEllipsisPos() const;
+    virtual bool getElided() const;
+    virtual int lineCount() const;
 
 protected:
     void documentChanged(int from, int oldLength, int length);

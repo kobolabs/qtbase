@@ -1581,6 +1581,51 @@ qreal QTextDocument::ellipsisWidth() const
      return d->ellipsisWidth;
 }
 
+void QTextDocument::setSuffixWidth(qreal width)
+{
+    Q_D(QTextDocument);
+    d->suffixWidth = width;
+    if (d->lout) {
+        d->lout->documentChanged(0, 0, d->length());
+    }
+}
+
+qreal QTextDocument::suffixWidth() const
+{
+     Q_D(const QTextDocument);
+     return d->suffixWidth;
+}
+
+void QTextDocument::setSingleLinePages(bool single)
+{
+    Q_D(QTextDocument);
+    d->maxLines = (single ? 1 : 0);
+    if (d->lout) {
+        d->lout->documentChanged(0, 0, d->length());
+    }
+}
+
+bool QTextDocument::singleLinePages() const
+{
+     Q_D(const QTextDocument);
+     return (d->maxLines > 0) ? true : false;
+}
+
+void QTextDocument::setMaxLines(int lines)
+{
+    Q_D(QTextDocument);
+    d->maxLines = lines;
+    if (d->lout) {
+        d->lout->documentChanged(0, 0, d->length());
+    }
+}
+
+int QTextDocument::maxLines() const
+{
+     Q_D(const QTextDocument);
+     return d->maxLines;
+}
+
 /*!
   returns the number of pages in this document.
 */
