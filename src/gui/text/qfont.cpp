@@ -2082,7 +2082,10 @@ QString QFont::toString() const
         QString::number((int) underline()) + comma +
         QString::number((int) strikeOut()) + comma +
         QString::number((int)fixedPitch()) + comma +
-        QString::number((int)   rawMode());
+        QString::number((int)   rawMode()) + comma +
+        QString::number(csmSharpnessOffset()) + comma +
+        QString::number(csmThicknessOffset())
+        ;
 }
 
 
@@ -2107,7 +2110,7 @@ bool QFont::fromString(const QString &descrip)
     setFamily(l[0]);
     if (count > 1 && l[1].toDouble() > 0.0)
         setPointSizeF(l[1].toDouble());
-    if (count == 9) {
+    if (count == 11) {
         setStyleHint((StyleHint) l[2].toInt());
         setWeight(qMax(qMin(99, l[3].toInt()), 0));
         setItalic(l[4].toInt());
@@ -2115,6 +2118,8 @@ bool QFont::fromString(const QString &descrip)
         setStrikeOut(l[6].toInt());
         setFixedPitch(l[7].toInt());
         setRawMode(l[8].toInt());
+        setCSMSharpnessOffset(l[9].toFloat());
+        setCSMThicknessOffset(l[10].toFloat());
     } else if (count == 10) {
         if (l[2].toInt() > 0)
             setPixelSize(l[2].toInt());
