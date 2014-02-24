@@ -719,8 +719,8 @@ QRawFont QRawFont::fromFont(const QFont &font, QFontDatabase::WritingSystem writ
         rawFont.d.data()->fontEngine = fe;
         rawFont.d.data()->fontEngine->ref.ref();
         rawFont.d.data()->hintingPreference = font.hintingPreference();
-        rawFont.d.data()->fontEngine->fontDef.csmThicknessOffset = font.csmThicknessOffset();
-        rawFont.d.data()->fontEngine->fontDef.csmSharpnessOffset = font.csmSharpnessOffset();
+        rawFont.d.data()->thickness = font.csmThicknessOffset();
+        rawFont.d.data()->sharpness = font.csmSharpnessOffset();
     }
     return rawFont;
 }
@@ -737,8 +737,11 @@ void QRawFont::setPixelSize(qreal pixelSize)
     QFontEngine *oldFontEngine = d->fontEngine;
 
     d->fontEngine = d->fontEngine->cloneWithSize(pixelSize);
-    if (d->fontEngine != 0)
+    if (d->fontEngine != 0) {
         d->fontEngine->ref.ref();
+        d->fontEngine->fontDef.csmSharpnessOffset = d->sharpness;
+        d->fontEngine->fontDef.csmThicknessOffset = d->thickness;
+    }
 
     if (!oldFontEngine->ref.deref())
         delete oldFontEngine;

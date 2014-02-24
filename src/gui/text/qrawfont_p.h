@@ -71,11 +71,15 @@ public:
         : fontEngine(0)
         , hintingPreference(QFont::PreferDefaultHinting)
         , thread(0)
+        , sharpness(.0)
+        , thickness(.0)
     {}
 
     QRawFontPrivate(const QRawFontPrivate &other)
         : hintingPreference(other.hintingPreference)
         , thread(other.thread)
+        , sharpness(other.sharpness)
+        , thickness(other.thickness)
     {
         fontEngine = other.fontEngine;
         if (fontEngine != 0)
@@ -107,6 +111,8 @@ public:
     QThread *thread;
     QAtomicInt ref;
 
+    float sharpness;
+    float thickness;
 };
 
 QT_END_NAMESPACE
