@@ -101,7 +101,7 @@ void QBasicFontDatabase::populateFontDatabase()
     }
 
     QDir dir(fontpath);
-    dir.setNameFilters(QStringList() << QLatin1String("*.ttf")
+    dir.setNameFilters(QStringList() << QLatin1String("*.ttf") << QLatin1String("*.otf")
                        << QLatin1String("*.ttc") << QLatin1String("*.pfa")
                        << QLatin1String("*.pfb"));
     dir.refresh();
