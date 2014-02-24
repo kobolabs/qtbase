@@ -1416,6 +1416,7 @@ QByteArray::QByteArray(int size, char ch)
 
 QByteArray::QByteArray(int size, Qt::Initialization)
 {
+    size = qMax(size, 0);
     d = Data::allocate(uint(size) + 1u);
     Q_CHECK_PTR(d);
     d->size = size;
@@ -3950,6 +3951,7 @@ QByteArray QByteArray::number(double n, char f, int prec)
 
 QByteArray QByteArray::fromRawData(const char *data, int size)
 {
+    size = qMax(size, 0);
     Data *x;
     if (!data) {
         x = Data::sharedNull();
