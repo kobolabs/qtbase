@@ -68,6 +68,7 @@ public:
     QGesture *create(QObject *target);
     QGestureRecognizer::Result recognize(QGesture *state, QObject *watched, QEvent *event);
     void reset(QGesture *state);
+    virtual int maxGlobalTouchPoints();
 };
 
 class QPinchGestureRecognizer : public QGestureRecognizer
@@ -78,6 +79,7 @@ public:
     QGesture *create(QObject *target);
     QGestureRecognizer::Result recognize(QGesture *state, QObject *watched, QEvent *event);
     void reset(QGesture *state);
+    virtual int maxGlobalTouchPoints();
 };
 
 class QSwipeGestureRecognizer : public QGestureRecognizer
@@ -88,6 +90,7 @@ public:
     QGesture *create(QObject *target);
     QGestureRecognizer::Result recognize(QGesture *state, QObject *watched, QEvent *event);
     void reset(QGesture *state);
+    virtual int maxGlobalTouchPoints();
 };
 
 class QTapGestureRecognizer : public QGestureRecognizer
@@ -98,6 +101,7 @@ public:
     QGesture *create(QObject *target);
     QGestureRecognizer::Result recognize(QGesture *state, QObject *watched, QEvent *event);
     void reset(QGesture *state);
+    virtual int maxGlobalTouchPoints();
 };
 
 class QTapAndHoldGestureRecognizer : public QGestureRecognizer
@@ -108,6 +112,7 @@ public:
     QGesture *create(QObject *target);
     QGestureRecognizer::Result recognize(QGesture *state, QObject *watched, QEvent *event);
     void reset(QGesture *state);
+    virtual int maxGlobalTouchPoints();
 };
 
 QT_END_NAMESPACE
