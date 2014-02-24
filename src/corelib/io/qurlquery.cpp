@@ -161,7 +161,8 @@ public:
     QString recodeToUser(const QString &input, QUrl::ComponentFormattingOptions encoding) const;
 
     void setQuery(const QString &query);
-
+    void addEncodedQueryItem(const QString &key, const QString &value)
+    { itemList.append(qMakePair(key, value)); }
     void addQueryItem(const QString &key, const QString &value)
     { itemList.append(qMakePair(recodeFromUser(key), recodeFromUser(value))); }
     int findRecodedKey(const QString &key, int from = 0) const
@@ -646,6 +647,11 @@ bool QUrlQuery::hasQueryItem(const QString &key) const
     if (!d)
         return false;
     return d->findKey(key) != d->itemList.constEnd();
+}
+
+void QUrlQuery::addEncodedQueryItem(const QString &key, const QString &value)
+{
+    d->addEncodedQueryItem(key, value);
 }
 
 /*!

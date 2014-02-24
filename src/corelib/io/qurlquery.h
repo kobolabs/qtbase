@@ -90,6 +90,7 @@ public:
     QList<QPair<QString, QString> > queryItems(QUrl::ComponentFormattingOptions encoding = QUrl::PrettyDecoded) const;
 
     bool hasQueryItem(const QString &key) const;
+    void addEncodedQueryItem(const QString &key, const QString &value);
     void addQueryItem(const QString &key, const QString &value);
     void removeQueryItem(const QString &key);
     QString queryItemValue(const QString &key, QUrl::ComponentFormattingOptions encoding = QUrl::PrettyDecoded) const;
