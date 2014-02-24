@@ -3984,6 +3984,7 @@ bool QApplicationPrivate::translateRawTouchEvent(QWidget *window,
                                QApplication::keyboardModifiers(),
                                it.value().first,
                                it.value().second);
+        touchEvent.setGlobalTouchPointCount(touchPoints.count());
         updateTouchPointsForWidget(widget, &touchEvent);
         touchEvent.setTimestamp(timestamp);
         touchEvent.setWindow(window->windowHandle());

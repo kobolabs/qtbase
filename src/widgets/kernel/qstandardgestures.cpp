@@ -144,7 +144,30 @@ void QPanGestureRecognizer::reset(QGesture *state)
     QGestureRecognizer::reset(state);
 }
 
+int QPanGestureRecognizer::maxGlobalTouchPoints()
+{
+    return 1;
+}
 
+int QPinchGestureRecognizer::maxGlobalTouchPoints()
+{
+    return 2;
+}
+
+int QSwipeGestureRecognizer::maxGlobalTouchPoints()
+{
+    return 1;
+}
+
+int QTapGestureRecognizer::maxGlobalTouchPoints()
+{
+    return 1;
+}
+
+int QTapAndHoldGestureRecognizer::maxGlobalTouchPoints()
+{
+    return 1;
+}
 //
 // QPinchGestureRecognizer
 //
