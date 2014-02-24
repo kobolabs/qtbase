@@ -1421,7 +1421,7 @@ void QTextDocumentLayoutPrivate::drawListItem(const QPointF &offset, QPainter *p
     case QTextListFormat::ListSquare:
     case QTextListFormat::ListCircle:
     case QTextListFormat::ListDisc:
-        size.setWidth(fontMetrics.lineSpacing() / 3);
+        size.setWidth((fontMetrics.ascent() + fontMetrics.descent()) / 3);
         size.setHeight(size.width());
         break;
 
@@ -1435,7 +1435,7 @@ void QTextDocumentLayoutPrivate::drawListItem(const QPointF &offset, QPainter *p
     qreal xoff = fontMetrics.width(QLatin1Char(' '));
     if (dir == Qt::LeftToRight)
         xoff = -xoff - size.width();
-    r.translate( xoff, (fontMetrics.height() / 2) - (size.height() / 2));
+    r.translate( xoff, fontMetrics.leading() + (fontMetrics.height() - size.height()) / 2);
 
     painter->save();
 
