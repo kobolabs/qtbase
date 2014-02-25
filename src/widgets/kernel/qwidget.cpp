@@ -11560,6 +11560,14 @@ void QWidgetPrivate::syncUnifiedMode() {
 
 #endif // Q_WS_MAC
 
+void QWidget::removeFromDirtyList()
+{
+    Q_D(QWidget);
+    if (QWidgetBackingStore *bs = d->maybeBackingStore()) {
+        bs->removeDirtyWidget(this);
+    }
+}
+
 QT_END_NAMESPACE
 
 #include "moc_qwidget.cpp"
