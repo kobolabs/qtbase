@@ -1702,7 +1702,7 @@ static inline void addNextCluster(int &pos, int end, QScriptLine &line, int &gly
         if (!glyphs.attributes[glyphPosition].dontPrint)
             line.textWidth += glyphs.advances_x[glyphPosition];
         ++glyphPosition;
-    } while (glyphPosition < current.num_glyphs && !glyphs.attributes[glyphPosition].clusterStart);
+    } while (glyphPosition < current.num_glyphs && !glyphs.attributes[glyphPosition].clusterStart && glyphPosition < logClusters[pos]);
 
     Q_ASSERT((pos == end && glyphPosition == current.num_glyphs) || logClusters[pos] == glyphPosition);
 
