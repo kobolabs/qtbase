@@ -1769,11 +1769,12 @@ QStringList QTextHtmlStyleSelector::nodeNames(NodePtr node) const
 
 static inline int findAttribute(const QStringList &attributes, const QString &name)
 {
-    int idx = -1;
-    do {
-        idx = attributes.indexOf(name, idx + 1);
-    } while (idx != -1 && (idx % 2 == 1));
-    return idx;
+    QString lowerName(name.toLower());
+    int idx = 0;
+    while (idx < attributes.count() && attributes[idx].toLower() != lowerName) {
+        idx += 2;
+    }
+    return (idx < attributes.count()) ? idx : -1;
 }
 
 #ifndef QT_NO_CSSPARSER
