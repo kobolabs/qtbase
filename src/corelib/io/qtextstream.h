@@ -98,6 +98,10 @@ public:
     explicit QTextStream(QString *string, QIODevice::OpenMode openMode = QIODevice::ReadWrite);
     explicit QTextStream(QByteArray *array, QIODevice::OpenMode openMode = QIODevice::ReadWrite);
     explicit QTextStream(const QByteArray &array, QIODevice::OpenMode openMode = QIODevice::ReadOnly);
+#ifndef QT_NO_TEXTCODEC
+	explicit QTextStream(QByteArray *array, bool withMarkUpCodecAuto, QIODevice::OpenMode openMode = QIODevice::ReadWrite);
+	explicit QTextStream(const QByteArray &array, bool withMarkUpCodecAuto, QIODevice::OpenMode openMode = QIODevice::ReadOnly);
+#endif
     virtual ~QTextStream();
 
 #ifndef QT_NO_TEXTCODEC

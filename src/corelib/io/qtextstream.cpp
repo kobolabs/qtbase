@@ -985,6 +985,27 @@ QTextStream::QTextStream(QByteArray *array, QIODevice::OpenMode openMode)
     d->status = Ok;
 }
 
+#ifndef QT_NO_TEXTCODEC
+QTextStream::QTextStream(QByteArray *array, bool withMarkUpCodecAuto, QIODevice::OpenMode openMode)
+	: d_ptr(new QTextStreamPrivate(this))
+{
+#if defined (QTEXTSTREAM_DEBUG)
+	qDebug("QTextStream::QTextStream(QByteArray *array == *%p, openMode = %d)",
+		   array, int(openMode));
+#endif
+	Q_D(QTextStream);
+	d->device = new QBuffer(array);
+	d->device->open(openMode);
+	d->deleteDevice = true;
+#ifndef QT_NO_QOBJECT
+	d->deviceClosedNotifier.setupDevice(this, d->device);
+#endif
+	d->status = Ok;
+	if (withMarkUpCodecAuto)
+		d->codec = QTextCodec::codecForMarkup(*array);
+}
+#endif
+
 /*!
     Constructs a QTextStream that operates on \a array, using \a
     openMode to define the open mode. The array is accessed as
@@ -1014,6 +1035,30 @@ QTextStream::QTextStream(const QByteArray &array, QIODevice::OpenMode openMode)
 #endif
     d->status = Ok;
 }
+
+#ifndef QT_NO_TEXTCODEC
+QTextStream::QTextStream(const QByteArray &array, bool withMarkUpCodecAuto, QIODevice::OpenMode openMode)
+	: d_ptr(new QTextStreamPrivate(this))
+{
+#if defined (QTEXTSTREAM_DEBUG)
+	qDebug("QTextStream::QTextStream(const QByteArray &array == *(%p), openMode = %d)",
+		   &array, int(openMode));
+#endif
+	QBuffer *buffer = new QBuffer;
+	buffer->setData(array);
+	buffer->open(openMode);
+
+	Q_D(QTextStream);
+	d->device = buffer;
+	d->deleteDevice = true;
+#ifndef QT_NO_QOBJECT
+	d->deviceClosedNotifier.setupDevice(this, d->device);
+#endif
+	d->status = Ok;
+	if (withMarkUpCodecAuto)
+		d->codec = QTextCodec::codecForMarkup(array);
+}
+#endif
 
 /*!
     Constructs a QTextStream that operates on \a fileHandle, using \a

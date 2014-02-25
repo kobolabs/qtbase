@@ -77,6 +77,12 @@ public:
     static QTextCodec *codecForHtml(const QByteArray &ba);
     static QTextCodec *codecForHtml(const QByteArray &ba, QTextCodec *defaultCodec);
 
+	static QTextCodec *codecForXml(const QByteArray &ba);
+	static QTextCodec *codecForXml(const QByteArray &ba, QTextCodec *defaultCodec);
+
+	static QTextCodec *codecForMarkup(const QByteArray &ba);
+	static QTextCodec *codecForMarkup(const QByteArray &ba, QTextCodec *defaultCodec);
+
     static QTextCodec *codecForUtfText(const QByteArray &ba);
     static QTextCodec *codecForUtfText(const QByteArray &ba, QTextCodec *defaultCodec);
 
