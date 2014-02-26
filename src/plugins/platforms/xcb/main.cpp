@@ -61,7 +61,7 @@ public:
 
 QPlatformIntegration* QXcbIntegrationPlugin::create(const QString& system, const QStringList& parameters, int &argc, char **argv)
 {
-    if (!system.compare(QLatin1String("xcb"), Qt::CaseInsensitive))
+    if (!system.compare(QLatin1String("xcb"), Qt::CaseInsensitive)) {
         if (!m_xcbIntegration)
             m_xcbIntegration = new QXcbIntegration(parameters, argc, argv);
         return m_xcbIntegration;
