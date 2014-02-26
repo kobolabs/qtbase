@@ -454,10 +454,16 @@ bool QTextStreamPrivate::fillReadBuffer(qint64 maxBytes)
     if (!codec || autoDetectUnicode) {
         autoDetectUnicode = false;
 
-        codec = QTextCodec::codecForUtfText(QByteArray::fromRawData(buf, bytesRead), codec);
-        if (!codec) {
-            codec = QTextCodec::codecForLocale();
-            writeConverterState.flags |= QTextCodec::IgnoreHeader;
+        QByteArray byte_array = QByteArray::fromRawData(buf, bytesRead);
+        QTextCodec *work_codec = QTextCodec::codecForUtfText(byte_array, 0);
+        if (!work_codec) {
+            codec = QTextCodec::codecForMarkup(byte_array, codec);
+            if (!codec) {
+                codec = QTextCodec::codecForLocale();
+                writeConverterState.flags |= QTextCodec::IgnoreHeader;
+            }
+        } else {
+            codec = work_codec;
         }
     }
 #if defined (QTEXTSTREAM_DEBUG)
