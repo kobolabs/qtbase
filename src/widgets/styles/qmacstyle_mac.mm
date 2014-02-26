@@ -679,6 +679,18 @@ bool qt_macWindowIsTextured(const QWidget *window)
     return false;
 }
 
+static bool qt_macWindowMainWindow(const QWidget *window)
+{
+    if (QWindow *w = window->windowHandle()) {
+        if (w->handle()) {
+            if (NSWindow *nswindow = static_cast<NSWindow*>(QGuiApplication::platformNativeInterface()->nativeResourceForWindow(QByteArrayLiteral("nswindow"), w))) {
+                return [nswindow isMainWindow];
+            }
+        }
+    }
+    return false;
+}
+
 /*****************************************************************************
   QMacCGStyle globals
  *****************************************************************************/
@@ -2065,6 +2077,10 @@ int QMacStyle::pixelMetric(PixelMetric metric, const QStyleOption *opt, const QW
         ret = 0;
         break;
 
+    case PM_MenuBarPanelWidth:
+        ret = 0;
+        break;
+
     case QStyle::PM_MenuDesktopFrameWidth:
         ret = 5;
         break;
@@ -2191,7 +2207,6 @@ int QMacStyle::pixelMetric(PixelMetric metric, const QStyleOption *opt, const QW
             HIRect rect;
             ptrHIShapeGetBounds(region, &rect);
             ret = int(rect.size.height);
-            ret += 4;
         }
         break;
     case PM_TabBarTabVSpace:
@@ -2426,11 +2441,6 @@ int QMacStyle::pixelMetric(PixelMetric metric, const QStyleOption *opt, const QW
         break;
     case PM_ToolBarFrameWidth:
         ret = 1;
-        if (widget) {
-            if (QMainWindow * mainWindow = qobject_cast<QMainWindow *>(widget->parent()))
-                if (mainWindow->unifiedTitleAndToolBarOnMac())
-                    ret = 0;
-        }
         break;
     case PM_ScrollView_ScrollBarOverlap:
 #if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_7
@@ -3009,23 +3019,19 @@ void QMacStyle::drawPrimitive(PrimitiveElement pe, const QStyleOption *opt, QPai
             if (opt->state & State_Horizontal) {
                 while (y < opt->rect.height() - RectHeight - 5) {
                     path.moveTo(x, y);
-                    path.addRect(x, y, RectHeight, RectHeight);
+                    path.addEllipse(x, y, RectHeight, RectHeight);
                     y += 6;
                 }
             } else {
                 while (x < opt->rect.width() - RectHeight - 5) {
                     path.moveTo(x, y);
-                    path.addRect(x, y, RectHeight, RectHeight);
+                    path.addEllipse(x, y, RectHeight, RectHeight);
                     x += 6;
                 }
             }
             p->setPen(Qt::NoPen);
-            QColor dark = opt->palette.dark().color();
-            dark.setAlphaF(0.75);
-            QColor light = opt->palette.light().color();
-            light.setAlphaF(0.6);
-            p->fillPath(path, light);
-            p->translate(1, 1);
+            QColor dark = opt->palette.dark().color().darker();
+            dark.setAlphaF(0.50);
             p->fillPath(path, dark);
             p->restore();
 
@@ -3438,14 +3444,8 @@ void QMacStyle::drawControl(ControlElement ce, const QStyleOption *opt, QPainter
                         if (tb->toolButtonStyle != Qt::ToolButtonIconOnly) {
                             needText = true;
                             if (tb->toolButtonStyle == Qt::ToolButtonTextUnderIcon) {
-                                QMainWindow *mw = w ? qobject_cast<QMainWindow *>(w->window()) : 0;
-                                if (mw && mw->unifiedTitleAndToolBarOnMac()) {
-                                    pr.setHeight(pixmap.size().height() / pixmap.devicePixelRatio());
-                                    cr.adjust(0, pr.bottom() + 1, 0, 1);
-                                } else {
-                                    pr.setHeight(pixmap.size().height() / pixmap.devicePixelRatio() + 6);
-                                    cr.adjust(0, pr.bottom(), 0, -3);
-                                }
+                                pr.setHeight(pixmap.size().height() / pixmap.devicePixelRatio() + 6);
+                                cr.adjust(0, pr.bottom(), 0, -3);
                                 alignment |= Qt::AlignCenter;
                             } else {
                                 pr.setWidth(pixmap.width() / pixmap.devicePixelRatio() + 8);
@@ -3791,7 +3791,7 @@ void QMacStyle::drawControl(ControlElement ce, const QStyleOption *opt, QPainter
             } else if (!(tabOpt->state & State_Enabled)) {
                 tdi.style = kThemeTabNonFrontInactive;
             } else if (tabOpt->state & State_Sunken) {
-                tdi.style = kThemeTabFrontInactive; // (should be kThemeTabNonFrontPressed)
+                tdi.style = kThemeTabNonFrontPressed;
             }
             if (tabOpt->state & State_HasFocus)
                 tdi.adornment = kHIThemeTabAdornmentFocus;
@@ -3866,8 +3866,9 @@ void QMacStyle::drawControl(ControlElement ce, const QStyleOption *opt, QPainter
             ThemeTabDirection ttd = getTabDirection(myTab.shape);
             bool verticalTabs = ttd == kThemeTabWest || ttd == kThemeTabEast;
             bool selected = (myTab.state & QStyle::State_Selected);
+            bool usingModernOSX = QSysInfo::MacintoshVersion > QSysInfo::MV_10_6;
 
-            if (selected && !myTab.documentMode)
+            if (usingModernOSX && selected && !myTab.documentMode)
                 myTab.palette.setColor(QPalette::WindowText, QColor(Qt::white));
 
             // Check to see if we use have the same as the system font
@@ -3875,7 +3876,7 @@ void QMacStyle::drawControl(ControlElement ce, const QStyleOption *opt, QPainter
             // outside world, unless they read the source, in which case, it's
             // their own fault).
             bool nonDefaultFont = p->font() != qt_app_fonts_hash()->value("QComboMenuItem");
-            if (selected || verticalTabs || nonDefaultFont || !tab->icon.isNull()
+            if ((usingModernOSX && selected) || verticalTabs || nonDefaultFont || !tab->icon.isNull()
                 || !myTab.leftButtonSize.isNull() || !myTab.rightButtonSize.isNull()) {
                 int heightOffset = 0;
                 if (verticalTabs) {
@@ -3886,7 +3887,7 @@ void QMacStyle::drawControl(ControlElement ce, const QStyleOption *opt, QPainter
                 }
                 myTab.rect.setHeight(myTab.rect.height() + heightOffset);
 
-                if (myTab.documentMode || selected) {
+                if (myTab.documentMode || (usingModernOSX && selected)) {
                     p->save();
                     rotateTabPainter(p, myTab.shape, myTab.rect);
 
@@ -4442,12 +4443,34 @@ void QMacStyle::drawControl(ControlElement ce, const QStyleOption *opt, QPainter
         }
         break;
     case CE_ToolBar: {
-        // For unified tool bars, draw nothing.
-        if (w) {
+        const QStyleOptionToolBar *toolBar = qstyleoption_cast<const QStyleOptionToolBar *>(opt);
+
+        // Unified title and toolbar drawing. In this mode the cocoa platform plugin will
+        // fill the top toolbar area part with a background gradient that "unifies" with
+        // the title bar. The following code fills the toolBar area with transparent pixels
+        // to make that gradient visible.
+        if (w)  {
             if (QMainWindow * mainWindow = qobject_cast<QMainWindow *>(w->window())) {
-                if (mainWindow->unifiedTitleAndToolBarOnMac())
+                if (toolBar && toolBar->toolBarArea == Qt::TopToolBarArea && mainWindow->unifiedTitleAndToolBarOnMac()) {
+
+                    // fill with transparent pixels.
+                    p->save();
+                    p->setCompositionMode(QPainter::CompositionMode_Source);
+                    p->fillRect(opt->rect, Qt::transparent);
+                    p->restore();
+
+                    // drow horizontal sepearator line at toolBar bottom.
+                    SInt32 margin;
+                    GetThemeMetric(kThemeMetricSeparatorSize, &margin);
+                    CGRect separatorRect = CGRectMake(opt->rect.left(), opt->rect.bottom(), opt->rect.width(), margin);
+                    HIThemeSeparatorDrawInfo separatorDrawInfo;
+                    separatorDrawInfo.version = 0;
+                    separatorDrawInfo.state = qt_macWindowMainWindow(mainWindow) ? kThemeStateActive : kThemeStateInactive;
+                    QMacCGContext cg(p);
+                    HIThemeDrawSeparator(&separatorRect, &separatorDrawInfo, cg, kHIThemeOrientationNormal);
                     break;
                 }
+            }
         }
 
         // draw background gradient
@@ -6240,19 +6263,11 @@ QSize QMacStyle::sizeFromContents(ContentsType ct, const QStyleOption *opt,
             sz = QSize(w, h);
         }
         break;
+    case CT_MenuBarItem:
+        if (!sz.isEmpty())
+            sz += QSize(12, 4); // Constants from QWindowsStyle
+        break;
     case CT_ToolButton:
-        if (widget && qobject_cast<const QToolBar *>(widget->parentWidget())) {
-            if (QMainWindow * mainWindow = qobject_cast<QMainWindow *>(widget->parent())) {
-                if (mainWindow->unifiedTitleAndToolBarOnMac()) {
-                    sz.rwidth() += 4;
-                    if (sz.height() <= 32) {
-                        // Workaround strange HIToolBar bug when getting constraints.
-                        sz.rheight() += 1;
-                    }
-                    return sz;
-                }
-            }
-        }
         sz.rwidth() += 10;
         sz.rheight() += 10;
         return sz;

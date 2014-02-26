@@ -3,7 +3,7 @@
 ** Copyright (C) 2013 Digia Plc and/or its subsidiary(-ies).
 ** Contact: http://www.qt-project.org/legal
 **
-** This file is part of the QtWidgets module of the Qt Toolkit.
+** This file is part of the test suite of the Qt Toolkit.
 **
 ** $QT_BEGIN_LICENSE:LGPL$
 ** Commercial License Usage
@@ -39,31 +39,12 @@
 **
 ****************************************************************************/
 
-//
-//  W A R N I N G
-//  -------------
-//
-// This file is not part of the Qt API.  It exists purely as an
-// implementation detail.  This header file may change from version to
-// version without notice, or even be removed.
-//
-// We mean it.
-//
+#include <windows.h>
 
-#include "qmacdefines_mac.h"
-#import <Cocoa/Cocoa.h>
-
-QT_BEGIN_NAMESPACE
-class QMainWindowLayout;
-class QToolBar;
-QT_END_NAMESPACE
-
-@class NSToolbarItem;
-
-@interface QT_MANGLE_NAMESPACE(QCocoaToolBarDelegate) : NSObject {
-    QT_PREPEND_NAMESPACE(QMainWindowLayout) *mainWindowLayout;
-    NSToolbarItem *toolbarItem;
+int main()
+{
+    DWORD mode = PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT;
+    if (SetNamedPipeHandleState(GetStdHandle(STD_INPUT_HANDLE), &mode, NULL, NULL))
+        return 0;
+    return GetLastError();
 }
-
-- (id)initWithMainWindowLayout:(QT_PREPEND_NAMESPACE(QMainWindowLayout) *)layout;
-@end

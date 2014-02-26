@@ -49,32 +49,41 @@
 
 static inline void bindApi(const QSurfaceFormat &format)
 {
-    if (format.renderableType() == QSurfaceFormat::OpenVG)
+    switch (format.renderableType()) {
+    case QSurfaceFormat::OpenVG:
         eglBindAPI(EGL_OPENVG_API);
+        break;
 #ifdef EGL_VERSION_1_4
-    else if (format.renderableType() == QSurfaceFormat::OpenGL)
+#  if !defined(QT_OPENGL_ES_2)
+    case QSurfaceFormat::DefaultRenderableType:
+#  endif
+    case QSurfaceFormat::OpenGL:
         eglBindAPI(EGL_OPENGL_API);
+        break;
 #endif
-    else
+    case QSurfaceFormat::OpenGLES:
+    default:
         eglBindAPI(EGL_OPENGL_ES_API);
+        break;
+    }
 }
 
 QEGLPlatformContext::QEGLPlatformContext(const QSurfaceFormat &format, QPlatformOpenGLContext *share, EGLDisplay display,
                                          EGLenum eglApi)
     : m_eglDisplay(display)
-    , m_eglApi(eglApi)
     , m_eglConfig(q_configFromGLFormat(display, format))
 {
     init(format, share);
+    Q_UNUSED(eglApi);
 }
 
 QEGLPlatformContext::QEGLPlatformContext(const QSurfaceFormat &format, QPlatformOpenGLContext *share, EGLDisplay display,
                                          EGLConfig config, EGLenum eglApi)
     : m_eglDisplay(display)
-    , m_eglApi(eglApi)
     , m_eglConfig(config)
 {
     init(format, share);
+    Q_UNUSED(eglApi);
 }
 
 void QEGLPlatformContext::init(const QSurfaceFormat &format, QPlatformOpenGLContext *share)

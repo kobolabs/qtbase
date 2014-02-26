@@ -150,7 +150,7 @@ public:
     ~QFontEngineData();
 
     QAtomicInt ref;
-    QFontCache *fontCache;
+    const int fontCacheId;
 
     QFontEngine *engines[QChar::ScriptCount];
 
@@ -216,6 +216,8 @@ public:
     QFontCache();
     ~QFontCache();
 
+    int id() const { return m_id; }
+
     void clear();
 
     struct Key {
@@ -273,6 +275,7 @@ private:
     uint current_timestamp;
     bool fast;
     int timer_id;
+    const int m_id;
 };
 
 Q_GUI_EXPORT int qt_defaultDpiX();

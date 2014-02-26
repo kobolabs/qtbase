@@ -204,11 +204,12 @@
 
 - (void)displayLayer:(CALayer *)layer
 {
-    QRect geometry = fromCGRect(layer.frame).toRect();
-    Q_ASSERT(m_qioswindow->geometry() == geometry);
+    QSize bounds = fromCGRect(layer.bounds).toRect().size();
+
+    Q_ASSERT(m_qioswindow->geometry().size() == bounds);
     Q_ASSERT(self.hidden == !m_qioswindow->window()->isVisible());
 
-    QRegion region = self.hidden ? QRegion() : QRect(QPoint(), geometry.size());
+    QRegion region = self.hidden ? QRegion() : QRect(QPoint(), bounds);
     QWindowSystemInterface::handleExposeEvent(m_qioswindow->window(), region);
     QWindowSystemInterface::flushWindowSystemEvents();
 }
@@ -446,10 +447,18 @@ QT_BEGIN_NAMESPACE
 QIOSWindow::QIOSWindow(QWindow *window)
     : QPlatformWindow(window)
     , m_view([[QUIView alloc] initWithQIOSWindow:this])
-    , m_normalGeometry(QPlatformWindow::geometry())
     , m_windowLevel(0)
 {
     setParent(QPlatformWindow::parent());
+
+    // Resolve default window geometry in case it was not set before creating the
+    // platform window. This picks up eg. minimum-size if set, and defaults to
+    // the "maxmized" geometry (even though we're not in that window state).
+    // FIXME: Detect if we apply a maximized geometry and send a window state
+    // change event in that case.
+    m_normalGeometry = initialGeometry(window, QPlatformWindow::geometry(),
+        screen()->availableGeometry().width(), screen()->availableGeometry().height());
+
     setWindowState(window->windowState());
 }
 
@@ -575,6 +584,11 @@ void QIOSWindow::applyGeometry(const QRect &rect)
 
     if (window()->inherits("QWidgetWindow"))
         [m_view layoutIfNeeded];
+}
+
+bool QIOSWindow::isExposed() const
+{
+    return window()->isVisible() && !window()->geometry().isEmpty();
 }
 
 void QIOSWindow::setWindowState(Qt::WindowState state)

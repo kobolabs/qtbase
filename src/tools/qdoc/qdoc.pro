@@ -1,3 +1,9 @@
+!force_bootstrap {
+    load(qfeatures)
+    requires(!contains(QT_DISABLED_FEATURES, xmlstreamwriter))
+    requires(!contains(QT_DISABLED_FEATURES, dom))
+}
+
 option(host_build)
 QT = core xml
 

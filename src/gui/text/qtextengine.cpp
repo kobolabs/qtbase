@@ -954,12 +954,12 @@ void QTextEngine::shapeText(int item) const
                 itemBoundaries.append(i);
                 itemBoundaries.append(glyph_pos);
 
-                lastEngine = engineIdx;
                 QFontEngine *actualFontEngine = static_cast<QFontEngineMulti *>(fontEngine)->engine(engineIdx);
                 si.ascent = qMax(actualFontEngine->ascent(), si.ascent);
                 si.descent = qMax(actualFontEngine->descent(), si.descent);
                 si.leading = qMax(actualFontEngine->leading(), si.leading);
             }
+            lastEngine = engineIdx;
             if (QChar::isHighSurrogate(string[i]) && i + 1 < itemLength && QChar::isLowSurrogate(string[i + 1]))
                 ++i;
         }
@@ -1098,7 +1098,7 @@ int QTextEngine::shapeTextWithHarfbuzzNG(const QScriptItem &si, const ushort *st
         hb_buffer_set_segment_properties(buffer, &props);
         hb_buffer_guess_segment_properties(buffer);
 
-        uint buffer_flags = HB_BUFFER_FLAG_DEFAULT;
+        uint buffer_flags = 0; // HB_BUFFER_FLAG_DEFAULT
         // Symbol encoding used to encode various crap in the 32..255 character code range,
         // and thus might override U+00AD [SHY]; avoid hiding default ignorables
         if (actualFontEngine->symbol)
@@ -1124,7 +1124,7 @@ int QTextEngine::shapeTextWithHarfbuzzNG(const QScriptItem &si, const ushort *st
             hb_qt_font_set_use_design_metrics(hb_font, option.useDesignMetrics() ? uint(QFontEngine::DesignMetrics) : 0); // ###
 
             const hb_feature_t features[1] = {
-                { HB_TAG('k','e','r','n'), !!kerningEnabled, 0, static_cast<unsigned int>(-1) }
+                { HB_TAG('k','e','r','n'), !!kerningEnabled, 0, uint(-1) }
             };
             const int num_features = 1;
             shapedOk = hb_shape_full(hb_font, buffer, features, num_features, 0);
@@ -2878,6 +2878,10 @@ QFixed QTextEngine::calculateTabWidth(int item, QFixed x) const
                         if (item.position > tabSectionEnd || item.position <= si.position)
                             continue;
                         shape(i); // first, lets make sure relevant text is already shaped
+                        if (item.analysis.flags == QScriptAnalysis::Object) {
+                            length += item.width;
+                            continue;
+                        }
                         QGlyphLayout glyphs = this->shapedGlyphs(&item);
                         const int end = qMin(item.position + item.num_glyphs, tabSectionEnd) - item.position;
                         for (int i=0; i < end; i++)

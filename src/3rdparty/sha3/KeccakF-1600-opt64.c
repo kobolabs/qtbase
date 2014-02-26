@@ -19,12 +19,16 @@ http://creativecommons.org/publicdomain/zero/1.0/
 typedef unsigned char UINT8;
 typedef unsigned long long int UINT64;
 
+#if defined(UseSSE) || defined(UseXOP)
 #if defined(__GNUC__)
 #define ALIGN __attribute__ ((aligned(32)))
 #elif defined(_MSC_VER)
 #define ALIGN __declspec(align(32))
-#else
-#define ALIGN
+#endif
+#endif
+
+#ifndef ALIGN
+# define ALIGN
 #endif
 
 #if defined(UseSSE)
@@ -324,7 +328,7 @@ static void KeccakPermutation(unsigned char *state)
     KeccakPermutationOnWords((UINT64*)state);
 }
 
-#if 0 // Unused in the Qt configuration
+#if (PLATFORM_BYTE_ORDER == IS_BIG_ENDIAN)
 static void fromBytesToWord(UINT64 *word, const UINT8 *bytes)
 {
     unsigned int i;
@@ -445,7 +449,7 @@ static void KeccakAbsorb(unsigned char *state, const unsigned char *data, unsign
 #endif
 }
 
-#if 0 // Unused in the Qt configuration
+#if (PLATFORM_BYTE_ORDER == IS_BIG_ENDIAN)
 static void fromWordToBytes(UINT8 *bytes, const UINT64 word)
 {
     unsigned int i;

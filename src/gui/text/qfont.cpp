@@ -209,7 +209,7 @@ QFontEngine *QFontPrivate::engineForScript(int script, bool force) const
     QMutexLocker locker(qt_fontdatabase_mutex());
     if (script <= QChar::Script_Latin)
         script = QChar::Script_Common;
-    if ((engineData && engineData->fontCache != QFontCache::instance()) || (engineData && force)) {
+    if ((engineData && engineData->fontCacheId != QFontCache::instance()->id()) || (engineData && force)) {
         // throw out engineData that came from a different thread
         if (!engineData->ref.deref())
             delete engineData;
@@ -323,7 +323,7 @@ void QFontPrivate::resolve(uint mask, const QFontPrivate *other)
 
 
 QFontEngineData::QFontEngineData()
-    : ref(0), fontCache(QFontCache::instance())
+    : ref(0), fontCacheId(QFontCache::instance()->id())
 {
     memset(engines, 0, QChar::ScriptCount * sizeof(QFontEngine *));
 }
@@ -2661,9 +2661,12 @@ void QFontCache::cleanup()
 }
 #endif // QT_NO_THREAD
 
+QBasicAtomicInt font_cache_id = Q_BASIC_ATOMIC_INITIALIZER(1);
+
 QFontCache::QFontCache()
     : QObject(), total_cost(0), max_cost(min_cost),
-      current_timestamp(0), fast(false), timer_id(-1)
+      current_timestamp(0), fast(false), timer_id(-1),
+      m_id(font_cache_id.fetchAndAddRelaxed(1))
 {
 }
 

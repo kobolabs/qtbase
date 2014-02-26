@@ -42,8 +42,7 @@
 #include "qcocoaaccessibility.h"
 #include "qcocoahelpers.h"
 
-#include <QAccessible>
-#include <QtGui/private/qaccessible2_p.h>
+#include <QtGui/qaccessible.h>
 
 #import <AppKit/NSAccessibility.h>
 
@@ -241,7 +240,10 @@
 // misc
 
 - (BOOL)accessibilityIsIgnored {
-    return QCocoaAccessible::shouldBeIgnored(QAccessible::accessibleInterface(axid));
+    QAccessibleInterface *iface = QAccessible::accessibleInterface(axid);
+    if (!iface || !iface->isValid())
+        return true;
+    return QCocoaAccessible::shouldBeIgnored(iface);
 }
 
 - (id)accessibilityHitTest:(NSPoint)point {

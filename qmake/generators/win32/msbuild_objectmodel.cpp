@@ -44,6 +44,7 @@
 #include "msvc_objectmodel.h"
 #include "msvc_vcproj.h"
 #include "msvc_vcxproj.h"
+#include <qscopedpointer.h>
 #include <qstringlist.h>
 #include <qfileinfo.h>
 
@@ -909,13 +910,15 @@ static inline QString toString(compileAsManagedOptions option)
     return QString();
 }
 
-static inline QString toString(debugOption option)
+static inline QString toString(debugOption option, DotNET compilerVersion)
 {
     switch (option) {
     case debugUnknown:
     case debugLineInfoOnly:
         break;
     case debugDisabled:
+        if (compilerVersion <= NET2010)
+            break;
         return "None";
     case debugOldStyleInfo:
         return "OldStyle";
@@ -1400,7 +1403,8 @@ void VCXProjectWriter::write(XmlOutput &xml, const VCCLCompilerTool &tool)
             << attrTagS(_CompileAsManaged, toString(tool.CompileAsManaged))
             << attrTagT(_CompileAsWinRT, tool.CompileAsWinRT)
             << attrTagT(_CreateHotpatchableImage, tool.CreateHotpatchableImage)
-            << attrTagS(_DebugInformationFormat, toString(tool.DebugInformationFormat))
+            << attrTagS(_DebugInformationFormat, toString(tool.DebugInformationFormat,
+                                                          tool.config->CompilerVersion))
             << attrTagT(_DisableLanguageExtensions, tool.DisableLanguageExtensions)
             << attrTagX(_DisableSpecificWarnings, tool.DisableSpecificWarnings, ";")
             << attrTagS(_EnableEnhancedInstructionSet, toString(tool.EnableEnhancedInstructionSet))
@@ -1756,11 +1760,11 @@ void VCXProjectWriter::addFilters(VCProject &project, XmlOutput &xmlFilter, cons
 // outputs a given filter for all existing configurations of a project
 void VCXProjectWriter::outputFilter(VCProject &project, XmlOutput &xml, XmlOutput &xmlFilter, const QString &filtername)
 {
-    XNode *root;
+    QScopedPointer<XNode> root;
     if (project.SingleProjects.at(0).flat_files)
-        root = new XFlatNode;
+        root.reset(new XFlatNode);
     else
-        root = new XTreeNode;
+        root.reset(new XTreeNode);
 
     for (int i = 0; i < project.SingleProjects.count(); ++i) {
         VCFilter filter;

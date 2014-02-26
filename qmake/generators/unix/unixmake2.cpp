@@ -403,6 +403,8 @@ UnixMakefileGenerator::writeMakeParts(QTextStream &t)
                 QString incr_lflags = var("QMAKE_LFLAGS_SHLIB") + " ";
                 if(project->isActiveConfig("debug"))
                     incr_lflags += var("QMAKE_LFLAGS_DEBUG");
+                else if (project->isActiveConfig("debug_info"))
+                    incr_lflags += var("QMAKE_LFLAGS_RELEASE_WITH_DEBUGINFO");
                 else
                     incr_lflags += var("QMAKE_LFLAGS_RELEASE");
                 t << incr_target_dir << ": $(INCREMENTAL_OBJECTS)\n\t";
@@ -498,6 +500,8 @@ UnixMakefileGenerator::writeMakeParts(QTextStream &t)
                     incr_lflags += var("QMAKE_LFLAGS_INCREMENTAL") + " ";
                 if(project->isActiveConfig("debug"))
                     incr_lflags += var("QMAKE_LFLAGS_DEBUG");
+                else if (project->isActiveConfig("debug_info"))
+                    incr_lflags += var("QMAKE_LFLAGS_RELEASE_WITH_DEBUGINFO");
                 else
                     incr_lflags += var("QMAKE_LFLAGS_RELEASE");
                 t << incr_target_dir << ": $(INCREMENTAL_OBJECTS)\n\t";
@@ -718,11 +722,15 @@ UnixMakefileGenerator::writeMakeParts(QTextStream &t)
                    QString::fromLatin1("????") : project->first("QMAKE_PKGINFO_TYPEINFO").left(4)) << ",g\" ";
         if(project->first("TEMPLATE") == "app") {
             QString icon = fileFixify(var("ICON"));
+            QString bundleIdentifier = "com.yourcompany." + var("QMAKE_BUNDLE");
+            if (bundleIdentifier.endsWith(".app"))
+                bundleIdentifier.chop(4);
             t << "@$(DEL_FILE) " << info_plist_out << "\n\t"
               << "@sed ";
             foreach (const ProString &arg, commonSedArgs)
                 t << arg;
             t << "-e \"s,@ICON@," << icon.section(Option::dir_sep, -1) << ",g\" "
+              << "-e \"s,@BUNDLEIDENTIFIER@," << bundleIdentifier << ",g\" "
               << "-e \"s,@EXECUTABLE@," << var("QMAKE_ORIG_TARGET") << ",g\" "
               << "-e \"s,@TYPEINFO@,"<< (project->isEmpty("QMAKE_PKGINFO_TYPEINFO") ?
                          QString::fromLatin1("????") : project->first("QMAKE_PKGINFO_TYPEINFO").left(4)) << ",g\" "
@@ -920,7 +928,7 @@ UnixMakefileGenerator::writeMakeParts(QTextStream &t)
         t << "\t-$(DEL_FILE) " << destdir << "$(TARGET0) " << destdir << "$(TARGET1) "
           << destdir << "$(TARGET2) $(TARGETA)\n";
     } else {
-        t << "\t-$(DEL_FILE) $(TARGET) \n";
+        t << "\t-$(DEL_FILE) " << destdir << "$(TARGET) \n";
     }
     t << varGlue("QMAKE_DISTCLEAN","\t-$(DEL_FILE) "," ","\n");
     {

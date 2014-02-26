@@ -1888,13 +1888,28 @@ bool QApplication::event(QEvent *e)
     \obsolete
 */
 
+// ### FIXME: topLevelWindows does not contain QWidgets without a parent
+// until create_sys is called. So we have to override the
+// QGuiApplication::notifyLayoutDirectionChange
+// to do the right thing.
 void QApplicationPrivate::notifyLayoutDirectionChange()
 {
-    QWidgetList list = QApplication::topLevelWidgets();
+    const QWidgetList list = QApplication::topLevelWidgets();
+    QWindowList windowList = QGuiApplication::topLevelWindows();
+
+    // send to all top-level QWidgets
     for (int i = 0; i < list.size(); ++i) {
         QWidget *w = list.at(i);
+        windowList.removeAll(w->windowHandle());
         QEvent ev(QEvent::ApplicationLayoutDirectionChange);
         QCoreApplication::sendEvent(w, &ev);
+    }
+
+    // in case there are any plain QWindows in this QApplication-using
+    // application, also send the notification to them
+    for (int i = 0; i < windowList.size(); ++i) {
+        QEvent ev(QEvent::ApplicationLayoutDirectionChange);
+        QCoreApplication::sendEvent(windowList.at(i), &ev);
     }
 }
 
@@ -3761,6 +3776,16 @@ void QApplicationPrivate::giveFocusAccordingToFocusPolicy(QWidget *widget, QEven
         }
         if (focusWidget->isWindow())
             break;
+
+        // find out whether this widget (or its proxy) already has focus
+        QWidget *f = focusWidget;
+        if (focusWidget->d_func()->extra && focusWidget->d_func()->extra->focus_proxy)
+            f = focusWidget->d_func()->extra->focus_proxy;
+        // if it has, stop here.
+        // otherwise a click on the focused widget would remove its focus if ClickFocus isn't set
+        if (f->hasFocus())
+            break;
+
         localPos += focusWidget->pos();
         focusWidget = focusWidget->parentWidget();
     }

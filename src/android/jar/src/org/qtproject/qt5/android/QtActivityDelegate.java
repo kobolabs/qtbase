@@ -139,9 +139,41 @@ public class QtActivityDelegate
         if (m_fullScreen = enterFullScreen) {
             m_activity.getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
             m_activity.getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FORCE_NOT_FULLSCREEN);
+            if (Build.VERSION.SDK_INT >= 19) {
+                try {
+                    int ui_flag_immersive_sticky = View.class.getDeclaredField("SYSTEM_UI_FLAG_IMMERSIVE_STICKY").getInt(null);
+                    int ui_flag_layout_stable = View.class.getDeclaredField("SYSTEM_UI_FLAG_LAYOUT_STABLE").getInt(null);
+                    int ui_flag_layout_hide_navigation = View.class.getDeclaredField("SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION").getInt(null);
+                    int ui_flag_layout_fullscreen = View.class.getDeclaredField("SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN").getInt(null);
+                    int ui_flag_hide_navigation = View.class.getDeclaredField("SYSTEM_UI_FLAG_HIDE_NAVIGATION").getInt(null);
+                    int ui_flag_fullscreen = View.class.getDeclaredField("SYSTEM_UI_FLAG_FULLSCREEN").getInt(null);
+
+                    Method m = View.class.getMethod("setSystemUiVisibility", int.class);
+                    m.invoke(m_activity.getWindow().getDecorView(),
+                             ui_flag_layout_stable
+                             | ui_flag_layout_hide_navigation
+                             | ui_flag_layout_fullscreen
+                             | ui_flag_hide_navigation
+                             | ui_flag_fullscreen
+                             | ui_flag_immersive_sticky
+                             | View.INVISIBLE);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
         } else {
             m_activity.getWindow().addFlags(WindowManager.LayoutParams.FLAG_FORCE_NOT_FULLSCREEN);
             m_activity.getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+            if (Build.VERSION.SDK_INT >= 19) {
+                try {
+                    int ui_flag_visible = View.class.getDeclaredField("SYSTEM_UI_FLAG_VISIBLE").getInt(null);
+                    Method m = View.class.getMethod("setSystemUiVisibility", int.class);
+                    m.invoke(m_activity.getWindow().getDecorView(),
+                             ui_flag_visible);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
         }
     }
 
@@ -210,49 +242,55 @@ public class QtActivityDelegate
         int imeOptions = android.view.inputmethod.EditorInfo.IME_ACTION_DONE;
         int inputType = android.text.InputType.TYPE_CLASS_TEXT;
 
-        if ((inputHints & ImhMultiLine) != 0) {
-            inputType = android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_FLAG_MULTI_LINE;
-            imeOptions = android.view.inputmethod.EditorInfo.IME_FLAG_NO_ENTER_ACTION;
-        }
-
-        if (((inputHints & ImhNoAutoUppercase) != 0 || (inputHints & ImhPreferUppercase) != 0)
-                && (inputHints & ImhLowercaseOnly) == 0) {
-            initialCapsMode = android.text.TextUtils.CAP_MODE_SENTENCES;
-        }
-
-        if ((inputHints & ImhUppercaseOnly) != 0)
-            initialCapsMode = android.text.TextUtils.CAP_MODE_CHARACTERS;
-
-        if ((inputHints & ImhHiddenText) != 0)
-            inputType = android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD;
-
-        if ((inputHints & ImhPreferNumbers) != 0)
+        if ((inputHints & (ImhPreferNumbers | ImhDigitsOnly | ImhFormattedNumbersOnly)) != 0) {
             inputType = android.text.InputType.TYPE_CLASS_NUMBER;
+            if ((inputHints & ImhFormattedNumbersOnly) != 0) {
+                inputType |= (android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL
+                              | android.text.InputType.TYPE_NUMBER_FLAG_SIGNED);
+            }
 
-        if ((inputHints & ImhDigitsOnly) != 0)
-            inputType = android.text.InputType.TYPE_CLASS_NUMBER;
-
-        if ((inputHints & ImhFormattedNumbersOnly) != 0) {
-            inputType = android.text.InputType.TYPE_CLASS_NUMBER
-                        | android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL
-                        | android.text.InputType.TYPE_NUMBER_FLAG_SIGNED;
-        }
-
-        if ((inputHints & ImhDialableCharactersOnly) != 0)
+            if (Build.VERSION.SDK_INT > 10 && (inputHints & ImhHiddenText) != 0)
+                inputType |= 0x10;
+        } else if ((inputHints & ImhDialableCharactersOnly) != 0) {
             inputType = android.text.InputType.TYPE_CLASS_PHONE;
+        } else if ((inputHints & (ImhDate | ImhTime)) != 0) {
+            inputType = android.text.InputType.TYPE_CLASS_DATETIME;
+            if ((inputHints & ImhDate) != 0)
+                inputType |= android.text.InputType.TYPE_DATETIME_VARIATION_DATE;
+            if ((inputHints & ImhTime) != 0)
+                inputType |= android.text.InputType.TYPE_DATETIME_VARIATION_TIME;
+        } else { // CLASS_TEXT
+            if ((inputHints & ImhHiddenText) != 0) {
+                inputType |= android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD;
+            } else if ((inputHints & (ImhNoAutoUppercase | ImhNoPredictiveText | ImhSensitiveData)) != 0) {
+                inputType |= android.text.InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD;
+            }
 
-        if ((inputHints & ImhEmailCharactersOnly) != 0)
-            inputType = android.text.InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS;
+            if ((inputHints & ImhEmailCharactersOnly) != 0)
+                inputType |= android.text.InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS;
 
-        if ((inputHints & ImhUrlCharactersOnly) != 0) {
-            inputType = android.text.InputType.TYPE_TEXT_VARIATION_URI;
-            imeOptions = android.view.inputmethod.EditorInfo.IME_ACTION_GO;
+            if ((inputHints & ImhUrlCharactersOnly) != 0) {
+                inputType |= android.text.InputType.TYPE_TEXT_VARIATION_URI;
+                imeOptions = android.view.inputmethod.EditorInfo.IME_ACTION_GO;
+            }
+
+            if ((inputHints & ImhMultiLine) != 0)
+                inputType |= android.text.InputType.TYPE_TEXT_FLAG_MULTI_LINE;
+
+            if ((inputHints & ImhUppercaseOnly) != 0) {
+                initialCapsMode |= android.text.TextUtils.CAP_MODE_CHARACTERS;
+                inputType |= android.text.InputType.TYPE_TEXT_FLAG_CAP_CHARACTERS;
+            } else if ((inputHints & ImhLowercaseOnly) == 0 && (inputHints & ImhNoAutoUppercase) == 0) {
+                initialCapsMode |= android.text.TextUtils.CAP_MODE_SENTENCES;
+                inputType |= android.text.InputType.TYPE_TEXT_FLAG_CAP_SENTENCES;
+            }
+
+            if ((inputHints & ImhNoPredictiveText) != 0 || (inputHints & ImhSensitiveData) != 0)
+                inputType |= android.text.InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS;
         }
 
-        if ((inputHints & ImhNoPredictiveText) != 0) {
-            //android.text.InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS | android.text.InputType.TYPE_CLASS_TEXT;
-            inputType = android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD;
-        }
+        if ((inputHints & ImhMultiLine) != 0)
+            imeOptions = android.view.inputmethod.EditorInfo.IME_FLAG_NO_ENTER_ACTION;
 
         m_editText.setInitialCapsMode(initialCapsMode);
         m_editText.setImeOptions(imeOptions);
@@ -348,6 +386,7 @@ public class QtActivityDelegate
         }
 
         m_activity = activity;
+        setActionBarVisibility(false);
         QtNative.setActivity(m_activity, this);
         QtNative.setClassLoader(classLoader);
         if (loaderParams.containsKey(STATIC_INIT_CLASSES_KEY)) {
@@ -412,7 +451,6 @@ public class QtActivityDelegate
             m_applicationParameters = loaderParams.getString(APPLICATION_PARAMETERS_KEY);
         else
             m_applicationParameters = "";
-        setActionBarVisibility(false);
 
         return true;
     }
@@ -696,6 +734,12 @@ public class QtActivityDelegate
                 QtNative.updateApplicationState(ApplicationActive);
                 QtNative.clearLostActions();
                 QtNative.updateWindow();
+
+                if (m_fullScreen) {
+                    // Suspending the app clears the immersive mode, so we need to set it again.
+                    m_fullScreen = false; // Force the setFullScreen() call below to actually do something
+                    setFullScreen(true);
+                }
             }
         }
     }
@@ -816,8 +860,7 @@ public class QtActivityDelegate
     {
         m_opionsMenuIsVisible = true;
         boolean res = QtNative.onPrepareOptionsMenu(menu);
-        if (!res || menu.size() == 0)
-            setActionBarVisibility(false);
+        setActionBarVisibility(res && menu.size() > 0);
         return res;
     }
 
@@ -834,7 +877,6 @@ public class QtActivityDelegate
 
     public void resetOptionsMenu()
     {
-        setActionBarVisibility(true);
         if (Build.VERSION.SDK_INT > 10) {
             try {
                 Activity.class.getMethod("invalidateOptionsMenu").invoke(m_activity);

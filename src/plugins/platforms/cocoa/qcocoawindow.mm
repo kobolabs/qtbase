@@ -160,9 +160,7 @@ static bool isMouseEvent(NSEvent *ev)
 
     // Only tool or dialog windows should become key:
     if (m_cocoaPlatformWindow
-        && (m_cocoaPlatformWindow->m_overrideBecomeKey ||
-            m_cocoaPlatformWindow->window()->type() == Qt::Tool ||
-            m_cocoaPlatformWindow->window()->type() == Qt::Dialog))
+        && (m_cocoaPlatformWindow->window()->type() == Qt::Tool || m_cocoaPlatformWindow->window()->type() == Qt::Dialog))
         return YES;
     return NO;
 }
@@ -217,9 +215,11 @@ QCocoaWindow::QCocoaWindow(QWindow *tlw)
     , m_isExposed(false)
     , m_registerTouchCount(0)
     , m_resizableTransientParent(false)
-    , m_overrideBecomeKey(false)
     , m_alertRequest(NoAlertRequest)
     , monitor(nil)
+    , m_drawContentBorderGradient(false)
+    , m_topContentBorderThickness(0)
+    , m_bottomContentBorderThickness(0)
 {
 #ifdef QT_COCOA_ENABLE_WINDOW_DEBUG
     qDebug() << "QCocoaWindow::QCocoaWindow" << this;
@@ -264,6 +264,7 @@ QCocoaWindow::~QCocoaWindow()
     [m_contentView release];
     [m_nsWindow release];
     [m_nsWindowDelegate release];
+    [m_windowCursor release];
 }
 
 QSurfaceFormat QCocoaWindow::format() const
@@ -389,6 +390,8 @@ void QCocoaWindow::setVisible(bool visible)
             [m_contentView setHidden:NO];
     } else {
         // qDebug() << "close" << this;
+        if (m_glContext)
+            m_glContext->windowWasHidden();
         if (m_nsWindow) {
             if (m_hasModalSession) {
                 QCocoaEventDispatcher *cocoaEventDispatcher = qobject_cast<QCocoaEventDispatcher *>(QGuiApplication::instance()->eventDispatcher());
@@ -500,6 +503,9 @@ NSUInteger QCocoaWindow::windowStyleMask(Qt::WindowFlags flags)
         }
     }
 
+    if (m_drawContentBorderGradient)
+        styleMask |= NSTexturedBackgroundWindowMask;
+
 #ifdef QT_COCOA_ENABLE_WINDOW_DEBUG
     qDebug("windowStyleMask of '%s': flags %X -> styleMask %lX", qPrintable(window()->title()), (int)flags, styleMask);
 #endif
@@ -523,6 +529,20 @@ void QCocoaWindow::setWindowFlags(Qt::WindowFlags flags)
         if (!(styleMask & NSBorderlessWindowMask)) {
             setWindowTitle(window()->title());
         }
+
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_7
+        if (QSysInfo::QSysInfo::MacintoshVersion >= QSysInfo::MV_10_7) {
+            Qt::WindowType type = window()->type();
+            if ((type & Qt::Popup) != Qt::Popup && (type & Qt::Dialog) != Qt::Dialog) {
+                NSWindowCollectionBehavior behavior = [m_nsWindow collectionBehavior];
+                if (flags & Qt::WindowFullscreenButtonHint)
+                    behavior |= NSWindowCollectionBehaviorFullScreenPrimary;
+                else
+                    behavior &= ~NSWindowCollectionBehaviorFullScreenPrimary;
+                [m_nsWindow setCollectionBehavior:behavior];
+            }
+        }
+#endif
     }
 
     m_windowFlags = flags;
@@ -683,8 +703,6 @@ bool QCocoaWindow::setKeyboardGrabEnabled(bool grab)
     if (!m_nsWindow)
         return false;
 
-    m_overrideBecomeKey = grab;
-
     if (grab && ![m_nsWindow isKeyWindow])
         [m_nsWindow makeKeyWindow];
     else if (!grab && [m_nsWindow isKeyWindow])
@@ -696,8 +714,6 @@ bool QCocoaWindow::setMouseGrabEnabled(bool grab)
 {
     if (!m_nsWindow)
         return false;
-
-    m_overrideBecomeKey = grab;
 
     if (grab && ![m_nsWindow isKeyWindow])
         [m_nsWindow makeKeyWindow];
@@ -872,8 +888,6 @@ NSWindow * QCocoaWindow::createNSWindow()
                                                     // before the window is shown and needs a proper window.).
         if ((type & Qt::Popup) == Qt::Popup)
             [window setHasShadow:YES];
-        else
-            setWindowShadow(flags);
         [window setHidesOnDeactivate: NO];
 
 #if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_7
@@ -895,14 +909,6 @@ NSWindow * QCocoaWindow::createNSWindow()
                                          defer:NO]; // Deferring window creation breaks OpenGL (the GL context is set up
                                                     // before the window is shown and needs a proper window.).
         window->m_cocoaPlatformWindow = this;
-        setWindowShadow(flags);
-
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_7
-        if (QSysInfo::QSysInfo::MacintoshVersion >= QSysInfo::MV_10_7) {
-            if (flags & Qt::WindowFullscreenButtonHint)
-                [window setCollectionBehavior:NSWindowCollectionBehaviorFullScreenPrimary];
-        }
-#endif
 
         createdWindow = window;
     }
@@ -921,6 +927,9 @@ NSWindow * QCocoaWindow::createNSWindow()
     }
 
     m_windowModality = window()->modality();
+
+    applyContentBorderThickness(createdWindow);
+
     return createdWindow;
 }
 
@@ -936,10 +945,11 @@ void QCocoaWindow::setNSWindow(NSWindow *window)
     [window setReleasedWhenClosed : NO];
 
 
-    [[NSNotificationCenter defaultCenter] addObserver:m_contentView
-                                          selector:@selector(windowNotification:)
-                                          name:nil // Get all notifications
-                                          object:m_nsWindow];
+    if (m_qtView)
+        [[NSNotificationCenter defaultCenter] addObserver:m_qtView
+                                              selector:@selector(windowNotification:)
+                                              name:nil // Get all notifications
+                                              object:m_nsWindow];
 
     [m_contentView setPostsFrameChangedNotifications: NO];
     [window setContentView:m_contentView];
@@ -1050,7 +1060,10 @@ void QCocoaWindow::setWindowCursor(NSCursor *cursor)
         [cursor set];
     // or we can set the cursor on mouse enter/leave using tracking
     // areas. This is done in QNSView, save the cursor:
-    m_windowCursor = cursor;
+    if (m_windowCursor != cursor) {
+        [m_windowCursor release];
+        m_windowCursor = [cursor retain];
+    }
 }
 
 void QCocoaWindow::registerTouch(bool enable)
@@ -1061,6 +1074,38 @@ void QCocoaWindow::registerTouch(bool enable)
     else if (m_registerTouchCount == 0)
         [m_contentView setAcceptsTouchEvents:NO];
 }
+
+void QCocoaWindow::setContentBorderThickness(int topThickness, int bottomThickness)
+{
+    m_topContentBorderThickness = topThickness;
+    m_bottomContentBorderThickness = bottomThickness;
+    bool enable = (topThickness > 0 || bottomThickness > 0);
+    m_drawContentBorderGradient = enable;
+
+    applyContentBorderThickness(m_nsWindow);
+}
+
+void QCocoaWindow::applyContentBorderThickness(NSWindow *window)
+{
+    if (!window)
+        return;
+
+    if (m_drawContentBorderGradient)
+        [window setStyleMask:[window styleMask] | NSTexturedBackgroundWindowMask];
+    else
+        [window setStyleMask:[window styleMask] & ~NSTexturedBackgroundWindowMask];
+
+    if (m_topContentBorderThickness > 0) {
+        [window setContentBorderThickness:m_topContentBorderThickness forEdge:NSMaxYEdge];
+        [window setAutorecalculatesContentBorderThickness:NO forEdge:NSMaxYEdge];
+    }
+
+    if (m_bottomContentBorderThickness > 0) {
+        [window setContentBorderThickness:m_topContentBorderThickness forEdge:NSMinYEdge];
+        [window setAutorecalculatesContentBorderThickness:NO forEdge:NSMinYEdge];
+    }
+}
+
 
 qreal QCocoaWindow::devicePixelRatio() const
 {

@@ -1281,6 +1281,11 @@ QDate QDate::fromString(const QString& string, Qt::DateFormat format)
         }
 #endif // QT_NO_TEXTDATE
     case Qt::ISODate: {
+        // Semi-strict parsing, must be long enough and have non-numeric separators
+        if (string.size() < 10 || string.at(4).isDigit() || string.at(7).isDigit()
+            || (string.size() > 10 && string.at(10).isDigit())) {
+            return QDate();
+        }
         const int year = string.mid(0, 4).toInt();
         if (year <= 0 || year > 9999)
             return QDate();
@@ -2763,6 +2768,15 @@ void QDateTimePrivate::refreshDateTime()
         m_offsetFromUtc = 0;
         return;
     }
+
+#ifndef QT_BOOTSTRAPPED
+    // If not valid time zone then is invalid
+    if (m_spec == Qt::TimeZone && !m_timeZone.isValid()) {
+        clearValidDateTime();
+        m_offsetFromUtc = 0;
+        return;
+    }
+#endif // QT_BOOTSTRAPPED
 
     // We have a valid date and time and a Qt::LocalTime or Qt::TimeZone that needs calculating
     // LocalTime and TimeZone might fall into "missing" DaylightTime transition hour

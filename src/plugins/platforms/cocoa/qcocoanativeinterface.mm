@@ -123,6 +123,8 @@ QPlatformNativeInterface::NativeResourceForIntegrationFunction QCocoaNativeInter
         return NativeResourceForIntegrationFunction(QCocoaNativeInterface::registerTouchWindow);
     if (resource.toLower() == "setembeddedinforeignview")
         return NativeResourceForIntegrationFunction(QCocoaNativeInterface::setEmbeddedInForeignView);
+    if (resource.toLower() == "setcontentborderthickness")
+        return NativeResourceForIntegrationFunction(QCocoaNativeInterface::setContentBorderThickness);
 
     return 0;
 }
@@ -207,12 +209,12 @@ void *QCocoaNativeInterface::nsOpenGLContextForContext(QOpenGLContext* context)
 
 void QCocoaNativeInterface::addToMimeList(void *macPasteboardMime)
 {
-    qt_mac_addToGlobalMimeList(reinterpret_cast<QMacPasteboardMime *>(macPasteboardMime));
+    qt_mac_addToGlobalMimeList(reinterpret_cast<QMacInternalPasteboardMime *>(macPasteboardMime));
 }
 
 void QCocoaNativeInterface::removeFromMimeList(void *macPasteboardMime)
 {
-    qt_mac_removeFromGlobalMimeList(reinterpret_cast<QMacPasteboardMime *>(macPasteboardMime));
+    qt_mac_removeFromGlobalMimeList(reinterpret_cast<QMacInternalPasteboardMime *>(macPasteboardMime));
 }
 
 void QCocoaNativeInterface::registerDraggedTypes(const QStringList &types)
@@ -268,14 +270,19 @@ void QCocoaNativeInterface::registerTouchWindow(QWindow *window,  bool enable)
     if (!window)
         return;
 
-    // Make sure the QCocoaWindow is created when enabling. Disabling might
-    // happen on window destruction, don't (re)create the QCocoaWindow then.
-    if (enable)
-        window->create();
-
     QCocoaWindow *cocoaWindow = static_cast<QCocoaWindow *>(window->handle());
     if (cocoaWindow)
         cocoaWindow->registerTouch(enable);
+}
+
+void QCocoaNativeInterface::setContentBorderThickness(QWindow *window, int topThickness, int bottomThickness)
+{
+    if (!window)
+        return;
+
+    QCocoaWindow *cocoaWindow = static_cast<QCocoaWindow *>(window->handle());
+    if (cocoaWindow)
+        cocoaWindow->setContentBorderThickness(topThickness, bottomThickness);
 }
 
 QT_END_NAMESPACE

@@ -44,11 +44,12 @@
 
 #include <qpa/qplatformcursor.h>
 
+struct gbm_device;
+struct gbm_bo;
+
 QT_BEGIN_NAMESPACE
 
 class QKmsScreen;
-class gbm_device;
-class gbm_bo;
 
 class QKmsCursor : public QPlatformCursor
 {

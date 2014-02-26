@@ -149,8 +149,10 @@ DotNET which_dotnet_version()
             const QString productPath = installPaths.value(dotNetCombo[i].version);
             if (productPath.isEmpty())
                 continue;
-            if (path.startsWith(productPath, Qt::CaseInsensitive))
-                return dotNetCombo[i].version;
+            if (path.startsWith(productPath, Qt::CaseInsensitive)) {
+                current_version = dotNetCombo[i].version;
+                return current_version;
+            }
         }
     }
 
@@ -932,7 +934,7 @@ void VcprojGenerator::initConfiguration()
     if(projectTarget == StaticLib)
         initLibrarianTool();
     else {
-        conf.linker.GenerateDebugInformation = isDebug ? _True : _False;
+        conf.linker.GenerateDebugInformation = project->isActiveConfig("debug_info") ? _True : _False;
         initLinkerTool();
     }
     initManifestTool();

@@ -32,6 +32,9 @@ import java.io.OutputStream;
 import java.io.InputStream;
 import java.io.FileOutputStream;
 import java.io.FileInputStream;
+import java.io.DataOutputStream;
+import java.io.DataInputStream;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -50,6 +53,7 @@ import android.content.ServiceConnection;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
+import android.content.pm.PackageInfo;
 import android.content.res.Configuration;
 import android.content.res.Resources.Theme;
 import android.content.res.AssetManager;
@@ -382,6 +386,9 @@ public class QtActivity extends Activity
         InputStream inputStream = assetsManager.open(source);
         OutputStream outputStream = new FileOutputStream(destinationFile);
         copyFile(inputStream, outputStream);
+
+        inputStream.close();
+        outputStream.close();
     }
 
     private static void createBundledBinary(String source, String destination)
@@ -401,12 +408,65 @@ public class QtActivity extends Activity
         InputStream inputStream = new FileInputStream(source);
         OutputStream outputStream = new FileOutputStream(destinationFile);
         copyFile(inputStream, outputStream);
+
+        inputStream.close();
+        outputStream.close();
     }
 
-    private void extractBundledPluginsAndImports(String localPrefix)
+    private boolean cleanCacheIfNecessary(String pluginsPrefix, long packageVersion)
+    {
+        File versionFile = new File(pluginsPrefix + "cache.version");
+
+        long cacheVersion = 0;
+        if (versionFile.exists() && versionFile.canRead()) {
+            try {
+                DataInputStream inputStream = new DataInputStream(new FileInputStream(versionFile));
+                cacheVersion = inputStream.readLong();
+                inputStream.close();
+             } catch (Exception e) {
+                e.printStackTrace();
+             }
+        }
+
+        if (cacheVersion != packageVersion) {
+            deleteRecursively(new File(pluginsPrefix));
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    private void extractBundledPluginsAndImports(String pluginsPrefix)
         throws IOException
     {
         ArrayList<String> libs = new ArrayList<String>();
+
+        String dataDir = getApplicationInfo().dataDir + "/";
+
+        long packageVersion = -1;
+        try {
+            PackageInfo packageInfo = getPackageManager().getPackageInfo(getPackageName(), 0);
+            packageVersion = packageInfo.lastUpdateTime;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        if (!cleanCacheIfNecessary(pluginsPrefix, packageVersion))
+            return;
+
+        {
+            File versionFile = new File(pluginsPrefix + "cache.version");
+
+            File parentDirectory = versionFile.getParentFile();
+            if (!parentDirectory.exists())
+                parentDirectory.mkdirs();
+
+            versionFile.createNewFile();
+
+            DataOutputStream outputStream = new DataOutputStream(new FileOutputStream(versionFile));
+            outputStream.writeLong(packageVersion);
+            outputStream.close();
+        }
 
         {
             String key = BUNDLED_IN_LIB_RESOURCE_ID_KEY;
@@ -416,8 +476,8 @@ public class QtActivity extends Activity
 
                 for (String bundledImportBinary : list) {
                     String[] split = bundledImportBinary.split(":");
-                    String sourceFileName = localPrefix + "lib/" + split[0];
-                    String destinationFileName = localPrefix + split[1];
+                    String sourceFileName = dataDir + "lib/" + split[0];
+                    String destinationFileName = pluginsPrefix + split[1];
                     createBundledBinary(sourceFileName, destinationFileName);
                 }
             }
@@ -431,11 +491,50 @@ public class QtActivity extends Activity
                 for (String fileName : list) {
                     String[] split = fileName.split(":");
                     String sourceFileName = split[0];
-                    String destinationFileName = localPrefix + split[1];
+                    String destinationFileName = pluginsPrefix + split[1];
                     copyAsset(sourceFileName, destinationFileName);
                 }
             }
 
+        }
+    }
+
+    private void deleteRecursively(File directory)
+    {
+        File[] files = directory.listFiles();
+        if (files != null) {
+            for (File file : files) {
+                if (file.isDirectory())
+                    deleteRecursively(file);
+                else
+                    file.delete();
+            }
+
+            directory.delete();
+        }
+    }
+
+    private void cleanOldCacheIfNecessary(String oldLocalPrefix, String localPrefix)
+    {
+        File newCache = new File(localPrefix);
+        if (!newCache.exists()) {
+            {
+                File oldPluginsCache = new File(oldLocalPrefix + "plugins/");
+                if (oldPluginsCache.exists() && oldPluginsCache.isDirectory())
+                    deleteRecursively(oldPluginsCache);
+            }
+
+            {
+                File oldImportsCache = new File(oldLocalPrefix + "imports/");
+                if (oldImportsCache.exists() && oldImportsCache.isDirectory())
+                    deleteRecursively(oldImportsCache);
+            }
+
+            {
+                File oldQmlCache = new File(oldLocalPrefix + "qml/");
+                if (oldQmlCache.exists() && oldQmlCache.isDirectory())
+                    deleteRecursively(oldQmlCache);
+            }
         }
     }
 
@@ -464,11 +563,15 @@ public class QtActivity extends Activity
                 if (m_activityInfo.metaData.containsKey("android.app.libs_prefix"))
                     localPrefix = m_activityInfo.metaData.getString("android.app.libs_prefix");
 
+                String pluginsPrefix = localPrefix;
+
                 boolean bundlingQtLibs = false;
                 if (m_activityInfo.metaData.containsKey("android.app.bundle_local_qt_libs")
                     && m_activityInfo.metaData.getInt("android.app.bundle_local_qt_libs") == 1) {
                     localPrefix = getApplicationInfo().dataDir + "/";
-                    extractBundledPluginsAndImports(localPrefix);
+                    pluginsPrefix = localPrefix + "qt-reserved-files/";
+                    cleanOldCacheIfNecessary(localPrefix, pluginsPrefix);
+                    extractBundledPluginsAndImports(pluginsPrefix);
                     bundlingQtLibs = true;
                 }
 
@@ -484,8 +587,12 @@ public class QtActivity extends Activity
                 if (m_activityInfo.metaData.containsKey("android.app.load_local_libs")) {
                     String[] extraLibs = m_activityInfo.metaData.getString("android.app.load_local_libs").split(":");
                     for (String lib : extraLibs) {
-                        if (lib.length() > 0)
-                            libraryList.add(localPrefix + lib);
+                        if (lib.length() > 0) {
+                            if (lib.startsWith("lib/"))
+                                libraryList.add(localPrefix + lib);
+                            else
+                                libraryList.add(pluginsPrefix + lib);
+                        }
                     }
                 }
 
@@ -513,9 +620,9 @@ public class QtActivity extends Activity
                 }
                 loaderParams.putStringArrayList(NATIVE_LIBRARIES_KEY, libraryList);
                 loaderParams.putString(ENVIRONMENT_VARIABLES_KEY, ENVIRONMENT_VARIABLES
-                                                                  + "\tQML2_IMPORT_PATH=" + localPrefix + "/qml"
-                                                                  + "\tQML_IMPORT_PATH=" + localPrefix + "/imports"
-                                                                  + "\tQT_PLUGIN_PATH=" + localPrefix + "/plugins");
+                                                                  + "\tQML2_IMPORT_PATH=" + pluginsPrefix + "/qml"
+                                                                  + "\tQML_IMPORT_PATH=" + pluginsPrefix + "/imports"
+                                                                  + "\tQT_PLUGIN_PATH=" + pluginsPrefix + "/plugins");
 
                 Intent intent = getIntent();
                 if (intent != null) {
@@ -710,6 +817,21 @@ public class QtActivity extends Activity
     public void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
+
+        try {
+            m_activityInfo = getPackageManager().getActivityInfo(getComponentName(), PackageManager.GET_META_DATA);
+            for (Field f : Class.forName("android.R$style").getDeclaredFields()) {
+                if (f.getInt(null) == m_activityInfo.getThemeResource()) {
+                    QT_ANDROID_THEMES = new String[] {f.getName()};
+                    QT_ANDROID_DEFAULT_THEME = f.getName();
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            finish();
+            return;
+        }
+
         try {
             setTheme(Class.forName("android.R$style").getDeclaredField(QT_ANDROID_DEFAULT_THEME).getInt(null));
         } catch (Exception e) {
@@ -733,14 +855,6 @@ public class QtActivity extends Activity
 
         ENVIRONMENT_VARIABLES += "\tQT_ANDROID_THEME=" + QT_ANDROID_DEFAULT_THEME
                               + "/\tQT_ANDROID_THEME_DISPLAY_DPI=" + getResources().getDisplayMetrics().densityDpi + "\t";
-
-        try {
-            m_activityInfo = getPackageManager().getActivityInfo(getComponentName(), PackageManager.GET_META_DATA);
-        } catch (NameNotFoundException e) {
-            e.printStackTrace();
-            finish();
-            return;
-        }
 
         if (null == getLastNonConfigurationInstance()) {
             // if splash screen is defined, then show it

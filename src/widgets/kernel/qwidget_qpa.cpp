@@ -70,7 +70,7 @@ void q_createNativeChildrenAndSetParent(const QWidget *parentWidget)
             const QWidget *childWidget = qobject_cast<const QWidget *>(children.at(i));
             if (childWidget) { // should not be necessary
                 if (childWidget->testAttribute(Qt::WA_NativeWindow)) {
-                    if (!childWidget->windowHandle())
+                    if (!childWidget->internalWinId())
                         childWidget->winId();
                     if (childWidget->windowHandle()) {
                         QWindow *parentWindow = childWidget->nativeParentWidget()->windowHandle();
@@ -118,11 +118,12 @@ void QWidgetPrivate::create_sys(WId window, bool initializeWindow, bool destroyO
         win->resize(q->size());
     win->setScreen(QGuiApplication::screens().value(topData()->screenIndex, 0));
 
-    if (q->testAttribute(Qt::WA_TranslucentBackground)) {
-        QSurfaceFormat format;
+    QSurfaceFormat format = win->requestedFormat();
+    if ((flags & Qt::Window) && win->surfaceType() != QSurface::OpenGLSurface
+            && q->testAttribute(Qt::WA_TranslucentBackground)) {
         format.setAlphaBufferSize(8);
-        win->setFormat(format);
     }
+    win->setFormat(format);
 
     if (QWidget *nativeParent = q->nativeParentWidget()) {
         if (nativeParent->windowHandle()) {
@@ -148,10 +149,12 @@ void QWidgetPrivate::create_sys(WId window, bool initializeWindow, bool destroyO
     QBackingStore *store = q->backingStore();
 
     if (!store) {
-        if (win && q->windowType() != Qt::Desktop)
-            q->setBackingStore(new QBackingStore(win));
-        else
+        if (win && q->windowType() != Qt::Desktop) {
+            if (q->isTopLevel())
+                q->setBackingStore(new QBackingStore(win));
+        } else {
             q->setAttribute(Qt::WA_PaintOnScreen, true);
+        }
     }
 
     setWindowModified_helper();

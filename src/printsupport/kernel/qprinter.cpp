@@ -48,17 +48,13 @@
 #include <qpa/qplatformprintersupport.h>
 
 #include "qprintengine.h"
-#include "qprinterinfo.h"
 #include "qlist.h"
 #include <qcoreapplication.h>
 #include <qfileinfo.h>
 
 #include <private/qpagedpaintdevice_p.h>
 
-
-#ifndef QT_NO_PDF
 #include "qprintengine_pdf_p.h"
-#endif
 
 #include <qpicture.h>
 #include <private/qpaintengine_preview_p.h>
@@ -96,7 +92,7 @@ static const float qt_paperSizes[][2] = {
     {125, 176}, // B6
     {88, 125}, // B7
     {62, 88}, // B8
-    {33, 62}, // B9
+    {44, 62}, // B9
     {163, 229}, // C5E
     {105, 241}, // US Common
     {110, 220}, // DLE
@@ -166,10 +162,39 @@ Q_PRINTSUPPORT_EXPORT QSizeF qt_printerPaperSize(QPrinter::Orientation orientati
                   (qt_paperSizes[paperSize][height_index] * 72 / 25.4) / multiplier);
 }
 
-void QPrinterPrivate::createDefaultEngines()
+QPrinterInfo QPrinterPrivate::findValidPrinter(const QPrinterInfo &printer)
 {
-    QPlatformPrinterSupport *ps = QPlatformPrinterSupportPlugin::get();
-    if (outputFormat == QPrinter::NativeFormat && ps) {
+    // Try find a valid printer to use, either the one given, the default or the first available
+    QPrinterInfo printerToUse = printer;
+    if (printerToUse.isNull()) {
+        printerToUse = QPrinterInfo::defaultPrinter();
+        if (printerToUse.isNull()) {
+            QList<QPrinterInfo> availablePrinters = QPrinterInfo::availablePrinters();
+            if (!availablePrinters.isEmpty())
+                printerToUse = availablePrinters.at(0);
+        }
+    }
+    return printerToUse;
+}
+
+void QPrinterPrivate::initEngines(QPrinter::OutputFormat format, const QPrinterInfo &printer)
+{
+    // Default to PdfFormat
+    outputFormat = QPrinter::PdfFormat;
+    QPlatformPrinterSupport *ps = 0;
+    QString printerName;
+
+    // Only set NativeFormat if we have a valid plugin and printer to use
+    if (format == QPrinter::NativeFormat) {
+        ps = QPlatformPrinterSupportPlugin::get();
+        QPrinterInfo printerToUse = findValidPrinter(printer);
+        if (ps && !printerToUse.isNull()) {
+            outputFormat = QPrinter::NativeFormat;
+            printerName = printerToUse.printerName();
+        }
+    }
+
+    if (outputFormat == QPrinter::NativeFormat) {
         printEngine = ps->createNativePrintEngine(printerMode);
         paintEngine = ps->createPaintEngine(printEngine, printerMode);
     } else {
@@ -177,8 +202,38 @@ void QPrinterPrivate::createDefaultEngines()
         paintEngine = pdfEngine;
         printEngine = pdfEngine;
     }
+
     use_default_engine = true;
     had_default_engines = true;
+    setProperty(QPrintEngine::PPK_PrinterName, printerName);
+    validPrinter = true;
+}
+
+void QPrinterPrivate::changeEngines(QPrinter::OutputFormat format, const QPrinterInfo &printer)
+{
+    QPrintEngine *oldPrintEngine = printEngine;
+    const bool def_engine = use_default_engine;
+
+    initEngines(format, printer);
+
+    if (oldPrintEngine) {
+        foreach (QPrintEngine::PrintEnginePropertyKey key, m_properties.values()) {
+            QVariant prop;
+            // PPK_NumberOfCopies need special treatmeant since it in most cases
+            // will return 1, disregarding the actual value that was set
+            // PPK_PrinterName also needs special treatment as initEngines has set it already
+            if (key == QPrintEngine::PPK_NumberOfCopies)
+                prop = QVariant(q_ptr->copyCount());
+            else if (key != QPrintEngine::PPK_PrinterName)
+                prop = oldPrintEngine->property(key);
+
+            if (prop.isValid())
+                setProperty(key, prop);
+        }
+    }
+
+    if (def_engine)
+        delete oldPrintEngine;
 }
 
 #ifndef QT_NO_PRINTPREVIEWWIDGET
@@ -208,13 +263,12 @@ void QPrinterPrivate::setPreviewMode(bool enable)
 }
 #endif // QT_NO_PRINTPREVIEWWIDGET
 
-void QPrinterPrivate::addToManualSetList(QPrintEngine::PrintEnginePropertyKey key)
+void QPrinterPrivate::setProperty(QPrintEngine::PrintEnginePropertyKey key, const QVariant &value)
 {
-    for (int c = 0; c < manualSetList.size(); ++c) {
-        if (manualSetList[c] == key) return;
-    }
-    manualSetList.append(key);
+    printEngine->setProperty(key, value);
+    m_properties.insert(key);
 }
+
 
 
 /*!
@@ -394,7 +448,7 @@ void QPrinterPrivate::addToManualSetList(QPrintEngine::PrintEnginePropertyKey ke
   \value B6 125 x 176 mm
   \value B7 88 x 125 mm
   \value B8 62 x 88 mm
-  \value B9 33 x 62 mm
+  \value B9 44 x 62 mm
   \value B10 31 x 44 mm
   \value C5E 163 x 229 mm
   \value Comm10E 105 x 241 mm, U.S. Common 10 Envelope
@@ -513,13 +567,7 @@ QPrinter::QPrinter(PrinterMode mode)
     : QPagedPaintDevice(),
       d_ptr(new QPrinterPrivate(this))
 {
-    d_ptr->init(mode);
-    QPrinterInfo defPrn(QPrinterInfo::defaultPrinter());
-    if (!defPrn.isNull()) {
-        setPrinterName(defPrn.printerName());
-    } else if (QPrinterInfo::availablePrinters().isEmpty()) {
-        setOutputFormat(QPrinter::PdfFormat);
-    }
+    d_ptr->init(QPrinterInfo(), mode);
 }
 
 /*!
@@ -531,11 +579,10 @@ QPrinter::QPrinter(const QPrinterInfo& printer, PrinterMode mode)
     : QPagedPaintDevice(),
       d_ptr(new QPrinterPrivate(this))
 {
-    d_ptr->init(mode);
-    setPrinterName(printer.printerName());
+    d_ptr->init(printer, mode);
 }
 
-void QPrinterPrivate::init(QPrinter::PrinterMode mode)
+void QPrinterPrivate::init(const QPrinterInfo &printer, QPrinter::PrinterMode mode)
 {
     if (!QCoreApplication::instance()) {
         qFatal("QPrinter: Must construct a QCoreApplication before a QPrinter");
@@ -543,14 +590,8 @@ void QPrinterPrivate::init(QPrinter::PrinterMode mode)
     }
 
     printerMode = mode;
-    outputFormat = QPrinter::NativeFormat;
-    createDefaultEngines();
 
-#ifndef QT_NO_PRINTPREVIEWWIDGET
-    previewEngine = 0;
-#endif
-    realPrintEngine = 0;
-    realPaintEngine = 0;
+    initEngines(QPrinter::NativeFormat, printer);
 }
 
 /*!
@@ -615,45 +656,30 @@ QPrinter::~QPrinter()
     \since 4.1
 
     Sets the output format for this printer to \a format.
+
+    If \a format is the same value as currently set then no change will be made.
+
+    If \a format is NativeFormat then the printerName will be set to the default
+    printer.  If there are no valid printers configured then no change will be made.
+    If you want to set NativeFormat with a specific printerName then use
+    setPrinterName().
+
+    \sa setPrinterName()
 */
 void QPrinter::setOutputFormat(OutputFormat format)
 {
-
-#ifndef QT_NO_PDF
     Q_D(QPrinter);
-    if (d->validPrinter && d->outputFormat == format)
+
+    if (d->outputFormat == format)
         return;
-    d->outputFormat = format;
 
-    QPrintEngine *oldPrintEngine = d->printEngine;
-    const bool def_engine = d->use_default_engine;
-    d->printEngine = 0;
-
-    d->createDefaultEngines();
-
-    if (oldPrintEngine) {
-        for (int i = 0; i < d->manualSetList.size(); ++i) {
-            QPrintEngine::PrintEnginePropertyKey key = d->manualSetList[i];
-            QVariant prop;
-            // PPK_NumberOfCopies need special treatmeant since it in most cases
-            // will return 1, disregarding the actual value that was set
-            if (key == QPrintEngine::PPK_NumberOfCopies)
-                prop = QVariant(copyCount());
-            else
-                prop = oldPrintEngine->property(key);
-            if (prop.isValid())
-                d->printEngine->setProperty(key, prop);
-        }
+    if (format == QPrinter::NativeFormat) {
+        QPrinterInfo printerToUse = d->findValidPrinter();
+        if (!printerToUse.isNull())
+            d->changeEngines(format, printerToUse);
+    } else {
+        d->changeEngines(format, QPrinterInfo());
     }
-
-    if (def_engine)
-        delete oldPrintEngine;
-
-    if (d->outputFormat == QPrinter::PdfFormat)
-        d->validPrinter = true;
-#else
-    Q_UNUSED(format);
-#endif
 }
 
 /*!
@@ -691,30 +717,37 @@ QString QPrinter::printerName() const
 /*!
     Sets the printer name to \a name.
 
-    \sa printerName(), isValid()
+    If the \a name is empty then the output format will be set to PdfFormat.
+
+    If the \a name is not a valid printer then no change will be made.
+
+    If the \a name is a valid printer then the output format will be set to NativeFormat.
+
+    \sa printerName(), isValid(), setOutputFormat()
 */
 void QPrinter::setPrinterName(const QString &name)
 {
     Q_D(QPrinter);
     ABORT_IF_ACTIVE("QPrinter::setPrinterName");
 
-    QList<QPrinterInfo> prnList = QPrinterInfo::availablePrinters();
+    if (printerName() == name)
+        return;
+
     if (name.isEmpty()) {
-        d->validPrinter = d->outputFormat == QPrinter::PdfFormat;
-    } else {
-        d->validPrinter = false;
-        for (int i = 0; i < prnList.size(); ++i) {
-            if (prnList[i].printerName() == name) {
-                d->validPrinter = true;
-                break;
-            }
-        }
+        setOutputFormat(QPrinter::PdfFormat);
+        return;
     }
 
-    d->printEngine->setProperty(QPrintEngine::PPK_PrinterName, name);
-    d->addToManualSetList(QPrintEngine::PPK_PrinterName);
-}
+    QPrinterInfo printerToUse = QPrinterInfo::printerInfo(name);
+    if (printerToUse.isNull())
+        return;
 
+    if (outputFormat() == QPrinter::PdfFormat) {
+        d->changeEngines(QPrinter::NativeFormat, printerToUse);
+    } else {
+        d->setProperty(QPrintEngine::PPK_PrinterName, name);
+    }
+}
 
 /*!
   \since 4.4
@@ -782,8 +815,7 @@ void QPrinter::setOutputFileName(const QString &fileName)
     else if (fileName.isEmpty())
         setOutputFormat(QPrinter::NativeFormat);
 
-    d->printEngine->setProperty(QPrintEngine::PPK_OutputFileName, fileName);
-    d->addToManualSetList(QPrintEngine::PPK_OutputFileName);
+    d->setProperty(QPrintEngine::PPK_OutputFileName, fileName);
 }
 
 
@@ -818,8 +850,7 @@ void QPrinter::setPrintProgram(const QString &printProg)
 {
     Q_D(QPrinter);
     ABORT_IF_ACTIVE("QPrinter::setPrintProgram");
-    d->printEngine->setProperty(QPrintEngine::PPK_PrinterProgram, printProg);
-    d->addToManualSetList(QPrintEngine::PPK_PrinterProgram);
+    d->setProperty(QPrintEngine::PPK_PrinterProgram, printProg);
 }
 
 
@@ -849,8 +880,7 @@ void QPrinter::setDocName(const QString &name)
 {
     Q_D(QPrinter);
     ABORT_IF_ACTIVE("QPrinter::setDocName");
-    d->printEngine->setProperty(QPrintEngine::PPK_DocumentName, name);
-    d->addToManualSetList(QPrintEngine::PPK_DocumentName);
+    d->setProperty(QPrintEngine::PPK_DocumentName, name);
 }
 
 
@@ -880,8 +910,7 @@ void QPrinter::setCreator(const QString &creator)
 {
     Q_D(QPrinter);
     ABORT_IF_ACTIVE("QPrinter::setCreator");
-    d->printEngine->setProperty(QPrintEngine::PPK_Creator, creator);
-    d->addToManualSetList(QPrintEngine::PPK_Creator);
+    d->setProperty(QPrintEngine::PPK_Creator, creator);
 }
 
 
@@ -918,8 +947,7 @@ QPrinter::Orientation QPrinter::orientation() const
 void QPrinter::setOrientation(Orientation orientation)
 {
     Q_D(QPrinter);
-    d->printEngine->setProperty(QPrintEngine::PPK_Orientation, orientation);
-    d->addToManualSetList(QPrintEngine::PPK_Orientation);
+    d->setProperty(QPrintEngine::PPK_Orientation, orientation);
 }
 
 
@@ -987,8 +1015,7 @@ void QPrinter::setPageSize(PageSize newPageSize)
         qWarning("QPrinter::setPaperSize: Illegal paper size %d", newPageSize);
         return;
     }
-    d->printEngine->setProperty(QPrintEngine::PPK_PaperSize, newPageSize);
-    d->addToManualSetList(QPrintEngine::PPK_PaperSize);
+    d->setProperty(QPrintEngine::PPK_PaperSize, newPageSize);
     d->hasUserSetPageSize = true;
 }
 
@@ -1018,8 +1045,7 @@ void QPrinter::setPageSizeMM(const QSizeF &size)
     QPagedPaintDevice::setPageSizeMM(size);
 
     QSizeF s = size * 72./25.4;
-    d->printEngine->setProperty(QPrintEngine::PPK_CustomPaperSize, s);
-    d->addToManualSetList(QPrintEngine::PPK_CustomPaperSize);
+    d->setProperty(QPrintEngine::PPK_CustomPaperSize, s);
     d->hasUserSetPageSize = true;
 }
 
@@ -1059,8 +1085,7 @@ void QPrinter::setPaperName(const QString &paperName)
     Q_D(QPrinter);
     if (d->paintEngine->type() != QPaintEngine::Pdf)
         ABORT_IF_ACTIVE("QPrinter::setPaperName");
-    d->printEngine->setProperty(QPrintEngine::PPK_PaperName, paperName);
-    d->addToManualSetList(QPrintEngine::PPK_PaperName);
+    d->setProperty(QPrintEngine::PPK_PaperName, paperName);
 }
 
 /*!
@@ -1096,8 +1121,7 @@ void QPrinter::setPageOrder(PageOrder pageOrder)
 
     Q_D(QPrinter);
     ABORT_IF_ACTIVE("QPrinter::setPageOrder");
-    d->printEngine->setProperty(QPrintEngine::PPK_PageOrder, pageOrder);
-    d->addToManualSetList(QPrintEngine::PPK_PageOrder);
+    d->setProperty(QPrintEngine::PPK_PageOrder, pageOrder);
 }
 
 
@@ -1125,8 +1149,7 @@ void QPrinter::setColorMode(ColorMode newColorMode)
 {
     Q_D(QPrinter);
     ABORT_IF_ACTIVE("QPrinter::setColorMode");
-    d->printEngine->setProperty(QPrintEngine::PPK_ColorMode, newColorMode);
-    d->addToManualSetList(QPrintEngine::PPK_ColorMode);
+    d->setProperty(QPrintEngine::PPK_ColorMode, newColorMode);
 }
 
 
@@ -1205,8 +1228,7 @@ void QPrinter::setNumCopies(int numCopies)
 {
     Q_D(QPrinter);
     ABORT_IF_ACTIVE("QPrinter::setNumCopies");
-    d->printEngine->setProperty(QPrintEngine::PPK_NumberOfCopies, numCopies);
-    d->addToManualSetList(QPrintEngine::PPK_NumberOfCopies);
+    d->setProperty(QPrintEngine::PPK_NumberOfCopies, numCopies);
 }
 
 /*!
@@ -1224,8 +1246,7 @@ void QPrinter::setCopyCount(int count)
 {
     Q_D(QPrinter);
     ABORT_IF_ACTIVE("QPrinter::setCopyCount;");
-    d->printEngine->setProperty(QPrintEngine::PPK_CopyCount, count);
-    d->addToManualSetList(QPrintEngine::PPK_CopyCount);
+    d->setProperty(QPrintEngine::PPK_CopyCount, count);
 }
 
 /*!
@@ -1294,8 +1315,7 @@ void QPrinter::setCollateCopies(bool collate)
 {
     Q_D(QPrinter);
     ABORT_IF_ACTIVE("QPrinter::setCollateCopies");
-    d->printEngine->setProperty(QPrintEngine::PPK_CollateCopies, collate);
-    d->addToManualSetList(QPrintEngine::PPK_CollateCopies);
+    d->setProperty(QPrintEngine::PPK_CollateCopies, collate);
 }
 
 
@@ -1324,8 +1344,7 @@ void QPrinter::setCollateCopies(bool collate)
 void QPrinter::setFullPage(bool fp)
 {
     Q_D(QPrinter);
-    d->printEngine->setProperty(QPrintEngine::PPK_FullPage, fp);
-    d->addToManualSetList(QPrintEngine::PPK_FullPage);
+    d->setProperty(QPrintEngine::PPK_FullPage, fp);
 }
 
 
@@ -1363,8 +1382,7 @@ void QPrinter::setResolution(int dpi)
 {
     Q_D(QPrinter);
     ABORT_IF_ACTIVE("QPrinter::setResolution");
-    d->printEngine->setProperty(QPrintEngine::PPK_Resolution, dpi);
-    d->addToManualSetList(QPrintEngine::PPK_Resolution);
+    d->setProperty(QPrintEngine::PPK_Resolution, dpi);
 }
 
 
@@ -1393,8 +1411,7 @@ int QPrinter::resolution() const
 void QPrinter::setPaperSource(PaperSource source)
 {
     Q_D(QPrinter);
-    d->printEngine->setProperty(QPrintEngine::PPK_PaperSource, source);
-    d->addToManualSetList(QPrintEngine::PPK_PaperSource);
+    d->setProperty(QPrintEngine::PPK_PaperSource, source);
 }
 
 /*!
@@ -1420,8 +1437,7 @@ QPrinter::PaperSource QPrinter::paperSource() const
 void QPrinter::setFontEmbeddingEnabled(bool enable)
 {
     Q_D(QPrinter);
-    d->printEngine->setProperty(QPrintEngine::PPK_FontEmbedding, enable);
-    d->addToManualSetList(QPrintEngine::PPK_FontEmbedding);
+    d->setProperty(QPrintEngine::PPK_FontEmbedding, enable);
 }
 
 /*!
@@ -1492,8 +1508,7 @@ bool QPrinter::doubleSidedPrinting() const
 void QPrinter::setDuplex(DuplexMode duplex)
 {
     Q_D(QPrinter);
-    d->printEngine->setProperty(QPrintEngine::PPK_Duplex, duplex);
-    d->addToManualSetList(QPrintEngine::PPK_Duplex);
+    d->setProperty(QPrintEngine::PPK_Duplex, duplex);
 }
 
 /*!
@@ -1621,8 +1636,7 @@ void QPrinter::setMargins(const Margins &m)
     QList<QVariant> margins;
     margins << (m.left * multiplier) << (m.top * multiplier)
             << (m.right * multiplier) << (m.bottom * multiplier);
-    d->printEngine->setProperty(QPrintEngine::PPK_PageMargins, margins);
-    d->addToManualSetList(QPrintEngine::PPK_PageMargins);
+    d->setProperty(QPrintEngine::PPK_PageMargins, margins);
     d->hasCustomPageMargins = true;
 }
 
@@ -1693,8 +1707,7 @@ void QPrinter::setWinPageSize(int pageSize)
 {
     Q_D(QPrinter);
     ABORT_IF_ACTIVE("QPrinter::setWinPageSize");
-    d->printEngine->setProperty(QPrintEngine::PPK_WindowsPageSize, pageSize);
-    d->addToManualSetList(QPrintEngine::PPK_WindowsPageSize);
+    d->setProperty(QPrintEngine::PPK_WindowsPageSize, pageSize);
 }
 
 /*!
@@ -1842,8 +1855,7 @@ QString QPrinter::printerSelectionOption() const
 void QPrinter::setPrinterSelectionOption(const QString &option)
 {
     Q_D(QPrinter);
-    d->printEngine->setProperty(QPrintEngine::PPK_SelectionOption, option);
-    d->addToManualSetList(QPrintEngine::PPK_SelectionOption);
+    d->setProperty(QPrintEngine::PPK_SelectionOption, option);
 }
 #endif
 

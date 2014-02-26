@@ -485,9 +485,12 @@ void QToolBarAreaLayoutInfo::moveToolBar(QToolBar *toolbar, int pos)
 
 QList<int> QToolBarAreaLayoutInfo::gapIndex(const QPoint &pos, int *minDistance) const
 {
-    int p = pick(o, pos);
-
     if (rect.contains(pos)) {
+        // <pos> is in QToolBarAreaLayout coordinates.
+        // <item.pos> is in local dockarea coordinates (see ~20 lines below)
+        // Since we're comparing p with item.pos, we put them in the same coordinate system.
+        const int p = pick(o, pos - rect.topLeft());
+
         for (int j = 0; j < lines.count(); ++j) {
             const QToolBarAreaLayoutLine &line = lines.at(j);
             if (line.skip())
@@ -652,9 +655,7 @@ QRect QToolBarAreaLayout::fitLayout()
     docks[QInternal::BottomDock].rect = QRect(rect.left(), center.bottom() + 1,
                                     rect.width(), bottom_hint.height());
 
-    if (!mainWindow->unifiedTitleAndToolBarOnMac()) {
-        docks[QInternal::TopDock].fitLayout();
-    }
+    docks[QInternal::TopDock].fitLayout();
     docks[QInternal::LeftDock].fitLayout();
     docks[QInternal::RightDock].fitLayout();
     docks[QInternal::BottomDock].fitLayout();
@@ -1304,8 +1305,6 @@ bool QToolBarAreaLayout::restoreState(QDataStream &stream, const QList<QToolBar*
     QList<QToolBar*> toolBars = _toolBars;
     int lines;
     stream >> lines;
-	if (!testing)
-	testing = mainWindow->unifiedTitleAndToolBarOnMac();
 
     for (int j = 0; j < lines; ++j) {
         int pos;
@@ -1316,7 +1315,7 @@ bool QToolBarAreaLayout::restoreState(QDataStream &stream, const QList<QToolBar*
         stream >> cnt;
 
         QToolBarAreaLayoutInfo &dock = docks[pos];
-		const bool applyingLayout = !testing && !(pos == QInternal::TopDock && mainWindow->unifiedTitleAndToolBarOnMac());
+        const bool applyingLayout = !testing;
         QToolBarAreaLayoutLine line(dock.o);
 
         for (int k = 0; k < cnt; ++k) {

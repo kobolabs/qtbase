@@ -264,25 +264,25 @@ QXcbConnection::QXcbConnection(QXcbNativeInterface *nativeInterface, bool canGra
     , has_input_shape(false)
     , has_touch_without_mouse_emulation(false)
     , has_xkb(false)
+    , debug_xinput_devices(false)
+    , debug_xinput(false)
     , m_buttons(0)
     , m_focusWindow(0)
     , m_systemTrayTracker(0)
 {
+#ifdef XCB_USE_EGL
+    EGLNativeDisplayType dpy = EGL_DEFAULT_DISPLAY;
+#elif defined(XCB_USE_XLIB)
+    Display *dpy;
+#endif
 #ifdef XCB_USE_XLIB
-    Display *dpy = XOpenDisplay(m_displayName.constData());
+    dpy = XOpenDisplay(m_displayName.constData());
     if (dpy) {
         m_primaryScreen = DefaultScreen(dpy);
         m_connection = XGetXCBConnection(dpy);
         XSetEventQueueOwner(dpy, XCBOwnsEventQueue);
         XSetErrorHandler(nullErrorHandler);
         m_xlib_display = dpy;
-#ifdef XCB_USE_EGL
-        EGLDisplay eglDisplay = eglGetDisplay(dpy);
-        m_egl_display = eglDisplay;
-        EGLint major, minor;
-        eglBindAPI(EGL_OPENGL_ES_API);
-        m_has_egl = eglInitialize(eglDisplay,&major,&minor);
-#endif //XCB_USE_EGL
     }
 #else
     m_connection = xcb_connect(m_displayName.constData(), &m_primaryScreen);
@@ -290,6 +290,13 @@ QXcbConnection::QXcbConnection(QXcbNativeInterface *nativeInterface, bool canGra
 
     if (!m_connection || xcb_connection_has_error(m_connection))
         qFatal("QXcbConnection: Could not connect to display %s", m_displayName.constData());
+
+#ifdef XCB_USE_EGL
+    EGLDisplay eglDisplay = eglGetDisplay(dpy);
+    m_egl_display = eglDisplay;
+    EGLint major, minor;
+    m_has_egl = eglInitialize(eglDisplay, &major, &minor);
+#endif //XCB_USE_EGL
 
     m_reader = new QXcbEventReader(this);
     m_reader->start();
@@ -750,6 +757,8 @@ void QXcbConnection::handleButtonPress(xcb_generic_event_t *ev)
     // the rest we need to manage ourselves
     m_buttons = (m_buttons & ~0x7) | translateMouseButtons(event->state);
     m_buttons |= translateMouseButton(event->detail);
+    if (Q_UNLIKELY(debug_xinput))
+        qDebug("xcb: pressed mouse button %d, button state %X", event->detail, static_cast<unsigned int>(m_buttons));
 }
 
 void QXcbConnection::handleButtonRelease(xcb_generic_event_t *ev)
@@ -760,6 +769,8 @@ void QXcbConnection::handleButtonRelease(xcb_generic_event_t *ev)
     // the rest we need to manage ourselves
     m_buttons = (m_buttons & ~0x7) | translateMouseButtons(event->state);
     m_buttons &= ~translateMouseButton(event->detail);
+    if (Q_UNLIKELY(debug_xinput))
+        qDebug("xcb: released mouse button %d, button state %X", event->detail, static_cast<unsigned int>(m_buttons));
 }
 
 #ifndef QT_NO_XKB
@@ -815,6 +826,10 @@ void QXcbConnection::handleXcbEvent(xcb_generic_event_t *event)
             handleButtonRelease(event);
             HANDLE_PLATFORM_WINDOW_EVENT(xcb_button_release_event_t, event, handleButtonReleaseEvent);
         case XCB_MOTION_NOTIFY:
+            if (Q_UNLIKELY(debug_xinput)) {
+                xcb_motion_notify_event_t *mev = (xcb_motion_notify_event_t *)event;
+                qDebug("xcb: moved mouse to %4d, %4d; button state %X", mev->event_x, mev->event_y, static_cast<unsigned int>(m_buttons));
+            }
 #ifdef QT_NO_XKB
             m_keyboard->updateXKBStateFromCore(((xcb_motion_notify_event_t *)event)->state);
 #endif

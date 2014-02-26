@@ -1633,8 +1633,8 @@ void QWindowsFileDialogHelper::selectFile(const QUrl &fileName)
     if (QWindowsContext::verboseDialogs)
         qDebug("%s %s" , __FUNCTION__, qPrintable(fileName.toString()));
 
-    if (QWindowsNativeFileDialogBase *nfd = nativeFileDialog())
-        nfd->selectFile(fileName.toLocalFile()); // ## should use QUrl::fileName() once it exists
+    if (hasNativeDialog()) // Might be invoked from the QFileDialog constructor.
+        nativeFileDialog()->selectFile(fileName.toLocalFile()); // ## should use QUrl::fileName() once it exists
 }
 
 QList<QUrl> QWindowsFileDialogHelper::selectedFiles() const
@@ -2132,6 +2132,9 @@ bool useHelper(QPlatformTheme::DialogType type)
         break;
 #endif
     case QPlatformTheme::FontDialog:
+    case QPlatformTheme::MessageDialog:
+        break;
+    default:
         break;
     }
     return false;
@@ -2160,6 +2163,9 @@ QPlatformDialogHelper *createHelper(QPlatformTheme::DialogType type)
         break;
 #endif
     case QPlatformTheme::FontDialog:
+    case QPlatformTheme::MessageDialog:
+        break;
+    default:
         break;
     }
     return 0;

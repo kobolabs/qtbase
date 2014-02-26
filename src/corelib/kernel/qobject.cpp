@@ -194,9 +194,15 @@ QMetaObject *QObjectData::dynamicMetaObject() const
 QObjectPrivate::QObjectPrivate(int version)
     : threadData(0), connectionLists(0), senders(0), currentSender(0), currentChildBeingDeleted(0)
 {
+#ifdef QT_BUILD_INTERNAL
+    // Don't check the version parameter in internal builds.
+    // This allows incompatible versions to be loaded, possibly for testing.
+    Q_UNUSED(version);
+#else
     if (version != QObjectPrivateVersion)
         qFatal("Cannot mix incompatible Qt library (version 0x%x) with this library (version 0x%x)",
                 version, QObjectPrivateVersion);
+#endif
 
     // QObjectData initialization
     q_ptr = 0;
@@ -4173,7 +4179,7 @@ QDebug operator<<(QDebug dbg, const QObject *o) {
     \macro Q_INVOKABLE
     \relates QObject
 
-    Apply this macro to definitions of member functions to allow them to
+    Apply this macro to declarations of member functions to allow them to
     be invoked via the meta-object system. The macro is written before
     the return type, as shown in the following example:
 
@@ -4190,7 +4196,7 @@ QDebug operator<<(QDebug dbg, const QObject *o) {
     \macro Q_REVISION
     \relates QObject
 
-    Apply this macro to definitions of member functions to tag them with a
+    Apply this macro to declarations of member functions to tag them with a
     revision number in the meta-object system. The macro is written before
     the return type, as shown in the following example:
 

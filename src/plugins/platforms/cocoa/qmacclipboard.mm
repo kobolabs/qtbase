@@ -68,7 +68,7 @@ QT_BEGIN_NAMESPACE
 QMacPasteboard::QMacPasteboard(PasteboardRef p, uchar mt)
 {
     mac_mime_source = false;
-    mime_type = mt ? mt : uchar(QMacPasteboardMime::MIME_ALL);
+    mime_type = mt ? mt : uchar(QMacInternalPasteboardMime::MIME_ALL);
     paste = p;
     CFRetain(paste);
 }
@@ -76,7 +76,7 @@ QMacPasteboard::QMacPasteboard(PasteboardRef p, uchar mt)
 QMacPasteboard::QMacPasteboard(uchar mt)
 {
     mac_mime_source = false;
-    mime_type = mt ? mt : uchar(QMacPasteboardMime::MIME_ALL);
+    mime_type = mt ? mt : uchar(QMacInternalPasteboardMime::MIME_ALL);
     paste = 0;
     OSStatus err = PasteboardCreate(0, &paste);
     if (err == noErr) {
@@ -89,7 +89,7 @@ QMacPasteboard::QMacPasteboard(uchar mt)
 QMacPasteboard::QMacPasteboard(CFStringRef name, uchar mt)
 {
     mac_mime_source = false;
-    mime_type = mt ? mt : uchar(QMacPasteboardMime::MIME_ALL);
+    mime_type = mt ? mt : uchar(QMacInternalPasteboardMime::MIME_ALL);
     paste = 0;
     OSStatus err = PasteboardCreate(name, &paste);
     if (err == noErr) {
@@ -105,7 +105,8 @@ QMacPasteboard::~QMacPasteboard()
     for (int i = 0; i < promises.count(); ++i) {
         const Promise &promise = promises.at(i);
         QCFString flavor = QCFString(promise.convertor->flavorFor(promise.mime));
-        promiseKeeper(paste, (PasteboardItemID)promise.itemId, flavor, this);
+        NSInteger pbItemId = promise.itemId;
+        promiseKeeper(paste, reinterpret_cast<PasteboardItemID>(pbItemId), flavor, this);
     }
 
     if (paste)
@@ -286,7 +287,7 @@ QMacPasteboard::setMimeData(QMimeData *mime_src)
     delete mime;
     mime = mime_src;
 
-    QList<QMacPasteboardMime*> availableConverters = QMacPasteboardMime::all(mime_type);
+    QList<QMacInternalPasteboardMime*> availableConverters = QMacInternalPasteboardMime::all(mime_type);
     if (mime != 0) {
         clear_helper();
         QStringList formats = mime_src->formats();
@@ -303,17 +304,17 @@ QMacPasteboard::setMimeData(QMimeData *mime_src)
         }
         for (int f = 0; f < formats.size(); ++f) {
             QString mimeType = formats.at(f);
-            for (QList<QMacPasteboardMime *>::Iterator it = availableConverters.begin(); it != availableConverters.end(); ++it) {
-                QMacPasteboardMime *c = (*it);
+            for (QList<QMacInternalPasteboardMime *>::Iterator it = availableConverters.begin(); it != availableConverters.end(); ++it) {
+                QMacInternalPasteboardMime *c = (*it);
                 QString flavor(c->flavorFor(mimeType));
                 if (!flavor.isEmpty()) {
                     QVariant mimeData = static_cast<QMacMimeData*>(mime_src)->variantData(mimeType);
 
                     int numItems = c->count(mime_src);
                     for (int item = 0; item < numItems; ++item) {
-                        const int itemID = item+1; //id starts at 1
+                        const NSInteger itemID = item+1; //id starts at 1
                         promises.append(QMacPasteboard::Promise(itemID, c, mimeType, mimeData, item));
-                        PasteboardPutItemFlavor(paste, (PasteboardItemID)itemID, QCFString(flavor), 0, kPasteboardFlavorNoFlags);
+                        PasteboardPutItemFlavor(paste, reinterpret_cast<PasteboardItemID>(itemID), QCFString(flavor), 0, kPasteboardFlavorNoFlags);
 #ifdef DEBUG_PASTEBOARD
                         qDebug(" -  adding %d %s [%s] <%s> [%d]",
                                itemID, qPrintable(mimeType), qPrintable(flavor), qPrintable(c->convertorName()), item);
@@ -357,7 +358,7 @@ QMacPasteboard::formats() const
 #ifdef DEBUG_PASTEBOARD
             qDebug(" -%s", qPrintable(QString(flavor)));
 #endif
-            QString mimeType = QMacPasteboardMime::flavorToMime(mime_type, flavor);
+            QString mimeType = QMacInternalPasteboardMime::flavorToMime(mime_type, flavor);
             if (!mimeType.isEmpty() && !ret.contains(mimeType)) {
 #ifdef DEBUG_PASTEBOARD
                 qDebug("   -<%d> %s [%s]", ret.size(), qPrintable(mimeType), qPrintable(QString(flavor)));
@@ -400,7 +401,7 @@ QMacPasteboard::hasFormat(const QString &format) const
 #ifdef DEBUG_PASTEBOARD
             qDebug(" -%s [0x%x]", qPrintable(QString(flavor)), mime_type);
 #endif
-            QString mimeType = QMacPasteboardMime::flavorToMime(mime_type, flavor);
+            QString mimeType = QMacInternalPasteboardMime::flavorToMime(mime_type, flavor);
 #ifdef DEBUG_PASTEBOARD
             if (!mimeType.isEmpty())
                 qDebug("   - %s", qPrintable(mimeType));
@@ -427,9 +428,9 @@ QMacPasteboard::retrieveData(const QString &format, QVariant::Type) const
 #ifdef DEBUG_PASTEBOARD
     qDebug("Pasteboard: retrieveData [%s]", qPrintable(format));
 #endif
-    const QList<QMacPasteboardMime *> mimes = QMacPasteboardMime::all(mime_type);
+    const QList<QMacInternalPasteboardMime *> mimes = QMacInternalPasteboardMime::all(mime_type);
     for (int mime = 0; mime < mimes.size(); ++mime) {
-        QMacPasteboardMime *c = mimes.at(mime);
+        QMacInternalPasteboardMime *c = mimes.at(mime);
         QString c_flavor = c->flavorFor(format);
         if (!c_flavor.isEmpty()) {
             // Handle text/plain a little differently. Try handling Unicode first.

@@ -50,6 +50,7 @@
 #include <qtextformat.h>
 #include <private/qiconloader_p.h>
 #include <private/qguiapplication_p.h>
+#include <qpa/qplatformintegration.h>
 
 
 QT_BEGIN_NAMESPACE
@@ -140,6 +141,8 @@ QT_BEGIN_NAMESPACE
 
     \value DialogSnapToDefaultButton (bool) Whether the mouse should snap to the default button when a dialog
                                      becomes visible.
+
+    \value ContextMenuOnMouseRelease (bool) Whether the context menu should be shown on mouse release.
 
     \sa themeHint(), QStyle::pixelMetric()
 */
@@ -399,7 +402,32 @@ QPixmap QPlatformTheme::fileIconPixmap(const QFileInfo &fileInfo, const QSizeF &
 
 QVariant QPlatformTheme::themeHint(ThemeHint hint) const
 {
-    return QPlatformTheme::defaultThemeHint(hint);
+    // For theme hints which mirror platform integration style hints, query
+    // the platform integration. The base QPlatformIntegration::styleHint()
+    // function will in turn query QPlatformTheme::defaultThemeHint() if there
+    // is no custom value.
+    switch (hint) {
+    case QPlatformTheme::CursorFlashTime:
+        return QGuiApplicationPrivate::platformIntegration()->styleHint(QPlatformIntegration::CursorFlashTime);
+    case QPlatformTheme::KeyboardInputInterval:
+        return QGuiApplicationPrivate::platformIntegration()->styleHint(QPlatformIntegration::KeyboardInputInterval);
+    case QPlatformTheme::KeyboardAutoRepeatRate:
+        return QGuiApplicationPrivate::platformIntegration()->styleHint(QPlatformIntegration::KeyboardAutoRepeatRate);
+    case QPlatformTheme::MouseDoubleClickInterval:
+        return QGuiApplicationPrivate::platformIntegration()->styleHint(QPlatformIntegration::MouseDoubleClickInterval);
+    case QPlatformTheme::StartDragDistance:
+        return QGuiApplicationPrivate::platformIntegration()->styleHint(QPlatformIntegration::StartDragDistance);
+    case QPlatformTheme::StartDragTime:
+        return QGuiApplicationPrivate::platformIntegration()->styleHint(QPlatformIntegration::StartDragTime);
+    case QPlatformTheme::StartDragVelocity:
+        return QGuiApplicationPrivate::platformIntegration()->styleHint(QPlatformIntegration::StartDragVelocity);
+    case QPlatformTheme::PasswordMaskDelay:
+        return QGuiApplicationPrivate::platformIntegration()->styleHint(QPlatformIntegration::PasswordMaskDelay);
+    case QPlatformTheme::PasswordMaskCharacter:
+        return QGuiApplicationPrivate::platformIntegration()->styleHint(QPlatformIntegration::PasswordMaskCharacter);
+    default:
+        return QPlatformTheme::defaultThemeHint(hint);
+    }
 }
 
 QVariant QPlatformTheme::defaultThemeHint(ThemeHint hint)
@@ -461,6 +489,7 @@ QVariant QPlatformTheme::defaultThemeHint(ThemeHint hint)
     case IconPixmapSizes:
         return QVariant::fromValue(QList<int>());
     case DialogSnapToDefaultButton:
+    case ContextMenuOnMouseRelease:
         return QVariant(false);
     }
     return QVariant();

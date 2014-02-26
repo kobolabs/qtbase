@@ -42,6 +42,7 @@
 #include "qsql_sqlite_p.h"
 
 #include <qcoreapplication.h>
+#include <qdatetime.h>
 #include <qvariant.h>
 #include <qsqlerror.h>
 #include <qsqlfield.h>
@@ -447,6 +448,20 @@ bool QSQLiteResult::exec()
                 case QVariant::LongLong:
                     res = sqlite3_bind_int64(d->stmt, i + 1, value.toLongLong());
                     break;
+                case QVariant::DateTime: {
+                    const QDateTime dateTime = value.toDateTime();
+                    const QString str = dateTime.toString(QStringLiteral("yyyy-MM-ddThh:mm:ss.zzz"));
+                    res = sqlite3_bind_text16(d->stmt, i + 1, str.utf16(),
+                                              str.size() * sizeof(ushort), SQLITE_TRANSIENT);
+                    break;
+                }
+                case QVariant::Time: {
+                    const QTime time = value.toTime();
+                    const QString str = time.toString(QStringLiteral("hh:mm:ss.zzz"));
+                    res = sqlite3_bind_text16(d->stmt, i + 1, str.utf16(),
+                                              str.size() * sizeof(ushort), SQLITE_TRANSIENT);
+                    break;
+                }
                 case QVariant::String: {
                     // lifetime of string == lifetime of its qvariant
                     const QString *str = static_cast<const QString*>(value.constData());
@@ -584,23 +599,31 @@ bool QSQLiteDriver::open(const QString & db, const QString &, const QString &, c
 
     if (db.isEmpty())
         return false;
+
+    int timeOut = 5000;
     bool sharedCache = false;
-    int openMode = SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, timeOut=5000;
-    QStringList opts=QString(conOpts).remove(QLatin1Char(' ')).split(QLatin1Char(';'));
-    foreach(const QString &option, opts) {
+    bool openReadOnlyOption = false;
+    bool openUriOption = false;
+
+    const QStringList opts = QString(conOpts).remove(QLatin1Char(' ')).split(QLatin1Char(';'));
+    foreach (const QString &option, opts) {
         if (option.startsWith(QLatin1String("QSQLITE_BUSY_TIMEOUT="))) {
             bool ok;
-            int nt = option.mid(21).toInt(&ok);
+            const int nt = option.mid(21).toInt(&ok);
             if (ok)
                 timeOut = nt;
-        }
-        if (option == QLatin1String("QSQLITE_OPEN_READONLY"))
-            openMode = SQLITE_OPEN_READONLY;
-        if (option == QLatin1String("QSQLITE_OPEN_URI"))
-            openMode |= SQLITE_OPEN_URI;
-        if (option == QLatin1String("QSQLITE_ENABLE_SHARED_CACHE"))
+        } else if (option == QLatin1String("QSQLITE_OPEN_READONLY")) {
+            openReadOnlyOption = true;
+        } else if (option == QLatin1String("QSQLITE_OPEN_URI")) {
+            openUriOption = true;
+        } else if (option == QLatin1String("QSQLITE_ENABLE_SHARED_CACHE")) {
             sharedCache = true;
+        }
     }
+
+    int openMode = (openReadOnlyOption ? SQLITE_OPEN_READONLY : (SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE));
+    if (openUriOption)
+        openMode |= SQLITE_OPEN_URI;
 
     sqlite3_enable_shared_cache(sharedCache);
 

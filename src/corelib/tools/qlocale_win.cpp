@@ -82,6 +82,9 @@ static QString winIso3116CtryName(LCID id = LOCALE_USER_DEFAULT);
 #ifndef LOCALE_SNATIVECOUNTRYNAME
 #  define LOCALE_SNATIVECOUNTRYNAME 0x00000008
 #endif
+#ifndef LOCALE_SSHORTTIME
+#  define LOCALE_SSHORTTIME 0x00000079
+#endif
 
 struct QSystemLocalePrivate
 {
@@ -258,7 +261,9 @@ QVariant QSystemLocalePrivate::timeFormat(QLocale::FormatType type)
 {
     switch (type) {
     case QLocale::ShortFormat:
-        return winToQtFormat(getLocaleInfo(LOCALE_STIMEFORMAT)); //###
+        if (QSysInfo::windowsVersion() >= QSysInfo::WV_WINDOWS7)
+            return winToQtFormat(getLocaleInfo(LOCALE_SSHORTTIME));
+        // fall through
     case QLocale::LongFormat:
         return winToQtFormat(getLocaleInfo(LOCALE_STIMEFORMAT));
     case QLocale::NarrowFormat:
@@ -274,6 +279,9 @@ QVariant QSystemLocalePrivate::dateTimeFormat(QLocale::FormatType type)
 
 QVariant QSystemLocalePrivate::dayName(int day, QLocale::FormatType type)
 {
+    if (day < 1 || day > 7)
+        return QString();
+
     static const LCTYPE short_day_map[]
         = { LOCALE_SABBREVDAYNAME1, LOCALE_SABBREVDAYNAME2,
             LOCALE_SABBREVDAYNAME3, LOCALE_SABBREVDAYNAME4, LOCALE_SABBREVDAYNAME5,
@@ -341,7 +349,7 @@ QVariant QSystemLocalePrivate::toString(const QDate &date, QLocale::FormatType t
     return QString();
 }
 
-QVariant QSystemLocalePrivate::toString(const QTime &time, QLocale::FormatType)
+QVariant QSystemLocalePrivate::toString(const QTime &time, QLocale::FormatType type)
 {
     SYSTEMTIME st;
     memset(&st, 0, sizeof(SYSTEMTIME));
@@ -351,6 +359,9 @@ QVariant QSystemLocalePrivate::toString(const QTime &time, QLocale::FormatType)
     st.wMilliseconds = 0;
 
     DWORD flags = 0;
+    // keep the same conditional as timeFormat() above
+    if (type == QLocale::ShortFormat && QSysInfo::windowsVersion() >= QSysInfo::WV_WINDOWS7)
+        flags = TIME_NOSECONDS;
 
     wchar_t buf[255];
     if (GetTimeFormat(lcid, flags, &st, NULL, buf, 255)) {

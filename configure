@@ -595,6 +595,7 @@ CFG_XVIDEO=auto
 CFG_XINERAMA=runtime
 CFG_XFIXES=runtime
 CFG_ZLIB=auto
+CFG_MTDEV=auto
 CFG_SQLITE=qt
 CFG_GIF=auto
 CFG_PNG=yes
@@ -611,7 +612,6 @@ CFG_OPENVG_LC_INCLUDES=no
 CFG_OPENVG_SHIVA=auto
 CFG_OPENVG_ON_OPENGL=auto
 CFG_EGL=auto
-CFG_SSE=auto
 CFG_FONTCONFIG=auto
 CFG_FREETYPE=auto
 CFG_HARFBUZZ=no
@@ -647,6 +647,7 @@ CFG_XINPUT=runtime
 CFG_XKB=auto
 CFG_XKBCOMMON=auto
 CFG_XCB=auto
+CFG_XCB_XLIB=auto
 CFG_XCB_GLX=no
 CFG_EGLFS=auto
 CFG_DIRECTFB=auto
@@ -684,6 +685,7 @@ CFG_MIPS_DSP=auto
 CFG_MIPS_DSPR2=auto
 CFG_CLOCK_GETTIME=auto
 CFG_CLOCK_MONOTONIC=auto
+CFG_POSIX_FALLOCATE=auto
 CFG_MREMAP=auto
 CFG_GETADDRINFO=auto
 CFG_IPV6IFNAME=auto
@@ -693,6 +695,7 @@ CFG_EVENTFD=auto
 CFG_RPATH=yes
 CFG_FRAMEWORK=auto
 DEFINES=
+INCLUDES=
 D_FLAGS=
 I_FLAGS=
 L_FLAGS=
@@ -776,6 +779,14 @@ QT_LIBS_GLIB=
 # default qpa platform
 QT_QPA_DEFAULT_PLATFORM=
 
+# Android vars
+CFG_DEFAULT_ANDROID_NDK_ROOT=$ANDROID_NDK_ROOT
+CFG_DEFAULT_ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT
+CFG_DEFAULT_ANDROID_PLATFORM=android-9
+CFG_DEFAULT_ANDROID_TARGET_ARCH=armeabi-v7a
+CFG_DEFAULT_ANDROID_NDK_TOOLCHAIN_VERSION=4.8
+CFG_DEFAULT_ANDROID_NDK_HOST=$ANDROID_NDK_HOST
+
 #-------------------------------------------------------------------------------
 # check SQL drivers available in this package
 #-------------------------------------------------------------------------------
@@ -786,15 +797,6 @@ CFG_SQL_oci=no
 CFG_SQL_db2=no
 
 CFG_SQL_AVAILABLE=
-
-# Android vars
-CFG_DEFAULT_ANDROID_NDK_ROOT=$ANDROID_NDK_ROOT
-CFG_DEFAULT_ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT
-CFG_DEFAULT_ANDROID_PLATFORM=android-9
-CFG_DEFAULT_ANDROID_TARGET_ARCH=armeabi-v7a
-CFG_DEFAULT_ANDROID_NDK_TOOLCHAIN_VERSION=4.8
-CFG_DEFAULT_ANDROID_NDK_HOST=$ANDROID_NDK_HOST
-
 if [ -d "$relpath/src/plugins/sqldrivers" ]; then
   for a in "$relpath/src/plugins/sqldrivers/"*; do
      if [ -d "$a" ]; then
@@ -1156,13 +1158,6 @@ while [ "$#" -gt 0 ]; do
     libexecdir)
         QT_INSTALL_LIBEXECS="$VAL"
         ;;
-    sse)
-        if [ "$VAL" = "yes" ] || [ "$VAL" = "no" ]; then
-            CFG_SSE="$VAL"
-        else
-            UNKNOWN_OPT=yes
-        fi
-	;;
     opengl)
         if  [ "$VAL" = "auto" ] || [ "$VAL" = "desktop" ] ||
             [ "$VAL" = "yes" ] || [ "$VAL" = "no" ] ||
@@ -1594,6 +1589,13 @@ while [ "$#" -gt 0 ]; do
         # No longer supported:
         #[ "$VAL" = "no" ] && CFG_LIBPNG=no
         ;;
+    mtdev)
+        if [ "$VAL" = "yes" ] || [ "$VAL" = "no" ]; then
+            CFG_MTDEV="$VAL"
+        else
+            UNKNOWN_OPT=yes
+        fi
+        ;;
     sqlite)
         if [ "$VAL" = "system" ]; then
             CFG_SQLITE=system
@@ -1687,6 +1689,13 @@ while [ "$#" -gt 0 ]; do
             if [ "$VAL" = "yes" ]; then
                 CFG_XCB="system"
             fi
+        else
+            UNKNOWN_OPT=yes
+        fi
+        ;;
+    xcb-xlib)
+        if [ "$VAL" = "yes" ] || [ "$VAL" = "no" ]; then
+            CFG_XCB_XLIB="$VAL"
         else
             UNKNOWN_OPT=yes
         fi
@@ -1985,6 +1994,7 @@ while [ "$#" -gt 0 ]; do
         D_FLAGS="$D_FLAGS -D\"$VAL\""
         ;;
     add_ipath)
+        INCLUDES="$INCLUDES \"$VAL\""
         I_FLAGS="$I_FLAGS -I\"${VAL}\""
         ;;
     add_lpath)
@@ -2294,6 +2304,9 @@ Third Party Libraries:
  +  -system-zlib ....... Use zlib from the operating system.
                          See http://www.gzip.org/zlib
 
+    -no-mtdev .........  Do not compile mtdev support.
+ +  -mtdev ............. Enable mtdev support.
+
     -no-gif ............ Do not compile GIF reading support.
 
     -no-libpng ......... Do not compile PNG support.
@@ -2335,6 +2348,9 @@ Third Party Libraries:
 
     -no-xinput2 ........ Do not compile XInput2 support.
  *  -xinput2 ........... Compile XInput2 support.
+
+    -no-xcb-xlib........ Do not compile Xcb-Xlib support.
+ *  -xcb-xlib........... Compile Xcb-Xlib support.
 
     -no-glib ........... Do not compile Glib support.
  +  -glib .............. Compile Glib support.
@@ -2419,7 +2435,7 @@ Additional options:
  *  -xcb ............... Compile Xcb support.
 
     -no-eglfs .......... Do not compile EGLFS (EGL Full Screen/Single Surface) support.
- *  -eglfs ............. Compile EGLFS support (Requires OpenGL ES 2 support).
+ *  -eglfs ............. Compile EGLFS support.
 
     -no-directfb ....... Do not compile DirectFB support.
  *  -directfb .......... Compile DirectFB support.
@@ -2428,7 +2444,7 @@ Additional options:
  *  -linuxfb ........... Compile Linux Framebuffer support.
 
     -no-kms ............ Do not compile KMS support.
- *  -kms ............... Compile KMS support (Requires EGL and OpenGL ES 2 support).
+ *  -kms ............... Compile KMS support (Requires EGL).
 
     -qpa <name> ......... Sets the default QPA platform (e.g xcb, cocoa, windows).
 
@@ -2679,8 +2695,10 @@ fi
 
 [ -z "$XPLATFORM" ] && XPLATFORM="$PLATFORM"
 
-case `basename "$XPLATFORM"` in win32-g++*) XPLATFORM_MINGW=yes;; esac
 case "$XPLATFORM" in
+    *win32-g++*)
+        XPLATFORM_MINGW=yes
+        ;;
     *-maemo*)
         XPLATFORM_MAEMO=yes
         ;;
@@ -4135,7 +4153,7 @@ compileTest()
 
 # Use config.tests/arch/arch.pro to have the compiler tell us what the target architecture is
 OUTFILE=$outpath/arch.result
-"$unixtests/arch.test" "$XQMAKESPEC" $OPT_VERBOSE "$relpath" "$outpath" "$OUTFILE" "target"
+"$unixtests/arch.test" "$XQMAKESPEC" $OPT_VERBOSE "$relpath" "$outpath" "$OUTFILE" "target" $I_FLAGS $D_FLAGS $L_FLAGS
 if [ $? -eq 0 ]; then
     eval `cat "$OUTFILE"`
 else
@@ -4148,7 +4166,7 @@ rm -f "$OUTFILE" 2>/dev/null
 
 if [ "$QMAKESPEC" != "$XQMAKESPEC" ]; then
     # Do the same test again, using the host compiler
-    SYSROOT_FLAG= "$unixtests/arch.test" "$QMAKESPEC" $OPT_VERBOSE "$relpath" "$outpath" "$OUTFILE" "host"
+    SYSROOT_FLAG= "$unixtests/arch.test" "$QMAKESPEC" $OPT_VERBOSE "$relpath" "$outpath" "$OUTFILE" "host" $I_FLAGS $D_FLAGS $L_FLAGS
     if [ $? -eq 0 ]; then
         eval `cat "$OUTFILE"`
     else
@@ -4211,6 +4229,9 @@ if [ "${CFG_SSE2}" = "auto" ]; then
 fi
 
 # detect sse3 support
+if [ "${CFG_SSE2}" = "no" ]; then
+    CFG_SSE3=no
+fi
 if [ "${CFG_SSE3}" = "auto" ]; then
     if compileTest common/sse3 "sse3"; then
        CFG_SSE3=yes
@@ -4220,6 +4241,9 @@ if [ "${CFG_SSE3}" = "auto" ]; then
 fi
 
 # detect ssse3 support
+if [ "${CFG_SSE3}" = "no" ]; then
+    CFG_SSSE3=no
+fi
 if [ "${CFG_SSSE3}" = "auto" ]; then
     if compileTest common/ssse3 "ssse3"; then
        CFG_SSSE3=yes
@@ -4229,6 +4253,9 @@ if [ "${CFG_SSSE3}" = "auto" ]; then
 fi
 
 # detect sse4.1 support
+if [ "${CFG_SSSE3}" = "no" ]; then
+    CFG_SSE4_1=no
+fi
 if [ "${CFG_SSE4_1}" = "auto" ]; then
     if compileTest common/sse4_1 "sse4_1"; then
        CFG_SSE4_1=yes
@@ -4238,6 +4265,9 @@ if [ "${CFG_SSE4_1}" = "auto" ]; then
 fi
 
 # detect sse4.2 support
+if [ "${CFG_SSE4_1}" = "no" ]; then
+    CFG_SSE4_2=no
+fi
 if [ "${CFG_SSE4_2}" = "auto" ]; then
     if compileTest common/sse4_2 "sse4_2"; then
        CFG_SSE4_2=yes
@@ -4247,6 +4277,9 @@ if [ "${CFG_SSE4_2}" = "auto" ]; then
 fi
 
 # detect avx support
+if [ "${CFG_SSE4_2}" = "no" ]; then
+    CFG_AVX=no
+fi
 if [ "${CFG_AVX}" = "auto" ]; then
     if compileTest common/avx "avx"; then
        case "$XQMAKESPEC" in
@@ -4374,6 +4407,17 @@ if [ "$CFG_ZLIB" = "auto" ]; then
     fi
 fi
 
+if [ "$CFG_MTDEV" != "no" ]; then
+    if compileTest unix/mtdev "mtdev"; then
+        CFG_MTDEV=yes
+    else
+        CFG_MTDEV=no
+    fi
+fi
+if [ "$CFG_MTDEV" = "no" ]; then
+    QMakeVar add DEFINES QT_NO_MTDEV
+fi
+
 if [ "$CFG_LARGEFILE" = "auto" ]; then
     #Large files should be enabled for all Linux systems
     CFG_LARGEFILE=yes
@@ -4423,21 +4467,12 @@ if [ "$CFG_EGLFS" = "yes" ]; then
         echo "The EGLFS plugin requires EGL support and cannot be built"
         exit 101
     fi
-    if [ "$CFG_OPENGL" != "es2" ]; then
-        echo "The EGLFS plugin requires OpenGL ES 2 support and cannot be built"
-        exit 101
-    fi
-    CFG_OPENGL="es2"
     CFG_EGL=yes
 fi
 
 if [ "$CFG_KMS" = "yes" ]; then
     if [ "$CFG_EGL" = "no" ]; then
         echo "The KMS plugin requires EGL support and cannot be built"
-        exit 101
-    fi
-    if [ "$CFG_OPENGL" != "es2" ]; then
-        echo "The KMS plugin requires OpenGL ES 2 support and cannot be built"
         exit 101
     fi
 fi
@@ -5130,8 +5165,13 @@ if [ "$CFG_XCB" != "no" ]; then
             fi
         fi
 
-        if compileTest qpa/xcb-xlib "xcb-xlib" $QMAKE_CFLAGS_XCB $QMAKE_LIBS_XCB; then
-            QT_CONFIG="$QT_CONFIG xcb-xlib"
+        if [ "$CFG_XCB_XLIB" != "no" ]; then
+            if compileTest qpa/xcb-xlib "xcb-xlib" $QMAKE_CFLAGS_XCB $QMAKE_LIBS_XCB; then
+                QT_CONFIG="$QT_CONFIG xcb-xlib"
+                CFG_XCB_XLIB=yes
+            else
+                CFG_XCB_XLIB=no
+            fi
         fi
 
         if [ "$CFG_SM" != "no" ] && [ -n "$PKG_CONFIG" ]; then
@@ -5269,18 +5309,13 @@ elif [ "$CFG_XKBCOMMON" = "no" ]; then
 fi
 
 # EGL Support
-if [ "$CFG_OPENGL" != "es2" ]; then
-    if [ "$CFG_EGL" = "yes" ] && [ "$CFG_OPENGL" = "desktop" ]; then
-        echo "EGL support was requested but Qt is being configured for desktop OpenGL."
-        echo "Either disable EGL support or enable OpenGL ES support."
-        exit 101
-    elif [ "$CFG_EGL" = "yes" ] && [ "$CFG_OPENGL" = "no" ]; then
-        echo "EGL support was requested but OpenGL ES support is disabled."
-        echo "Either disable EGL support or enable OpenGL ES support."
+if [ "$CFG_EGL" != "no" ]; then
+    if [ "$CFG_EGL" = "yes" ] && [ "$CFG_OPENGL" = "no" ]; then
+        echo "EGL support was requested but OpenGL support is disabled."
+        echo "Either disable EGL support or enable OpenGL support."
         exit 101
     fi
-    CFG_EGL=no
-elif [ "$CFG_EGL" != "no" ]; then
+
     if [ -n "$PKG_CONFIG" ] && $PKG_CONFIG --exists egl 2>/dev/null; then
         QMAKE_INCDIR_EGL=`$PKG_CONFIG --cflags-only-I egl 2>/dev/null | sed -e 's,^-I,,g' -e 's, -I, ,g'`
         QMAKE_LIBS_EGL=`$PKG_CONFIG --libs egl 2>/dev/null`
@@ -5302,7 +5337,7 @@ elif [ "$CFG_EGL" != "no" ]; then
 fi
 
 if [ "$CFG_EGLFS" != "no" ]; then
-    if [ "$CFG_OPENGL" = "es2" ] && [ "$XPLATFORM_QNX" = "no" ]; then
+    if [ "$XPLATFORM_QNX" = "no" ]; then
         CFG_EGLFS="$CFG_EGL"
     else
         CFG_EGLFS="no"
@@ -5310,7 +5345,7 @@ if [ "$CFG_EGLFS" != "no" ]; then
 fi
 
 if [ "$CFG_KMS" = "yes" ]; then
-    if [ "$CFG_OPENGL" = "es2" ] && [ "$CFG_EGL" = "yes" ]; then
+    if [ "$CFG_EGL" = "yes" ]; then
         CFG_KMS="yes"
     else
         CFG_KMS="no"
@@ -5430,6 +5465,15 @@ if [ "$CFG_CLOCK_GETTIME" = "yes" ] && [ "$CFG_CLOCK_MONOTONIC" = "auto" ]; then
     fi
 elif [ "$CFG_CLOCK_GETTIME" = "no" ]; then
     CFG_CLOCK_MONOTONIC=no
+fi
+
+# detect posix_fallocate
+if [ "$CFG_POSIX_FALLOCATE" = "auto" ]; then
+    if compileTest unix/posix_fallocate "posix_fallocate"; then
+        CFG_POSIX_FALLOCATE=yes
+    else
+        CFG_POSIX_FALLOCATE=no
+    fi
 fi
 
 # detect mremap
@@ -5694,11 +5738,7 @@ else
 fi
 
 if [ "$CFG_OPENGL" = "es2" ]; then
-    QCONFIG_FLAGS="$QCONFIG_FLAGS QT_OPENGL_ES"
-fi
-
-if [ "$CFG_OPENGL" = "es2" ]; then
-    QCONFIG_FLAGS="$QCONFIG_FLAGS QT_OPENGL_ES_2"
+    QCONFIG_FLAGS="$QCONFIG_FLAGS QT_OPENGL_ES QT_OPENGL_ES_2"
     QT_CONFIG="$QT_CONFIG opengles2"
 fi
 
@@ -5752,6 +5792,9 @@ if [ "$CFG_CLOCK_GETTIME" = "yes" ]; then
 fi
 if [ "$CFG_CLOCK_MONOTONIC" = "yes" ]; then
     QT_CONFIG="$QT_CONFIG clock-monotonic"
+fi
+if [ "$CFG_POSIX_FALLOCATE" = "yes" ]; then
+    QT_CONFIG="$QT_CONFIG posix_fallocate"
 fi
 if [ "$CFG_MREMAP" = "yes" ]; then
     QT_CONFIG="$QT_CONFIG mremap"
@@ -5836,6 +5879,7 @@ elif [ "$CFG_ZLIB" = "system" ]; then
     QT_CONFIG="$QT_CONFIG system-zlib"
 fi
 
+[ "$CFG_MTDEV" = "yes" ] && QT_CONFIG="$QT_CONFIG mtdev"
 [ "$CFG_NIS" = "yes" ] && QT_CONFIG="$QT_CONFIG nis"
 [ "$CFG_CUPS" = "yes" ] && QT_CONFIG="$QT_CONFIG cups"
 [ "$CFG_ICONV" = "yes" ] && QT_CONFIG="$QT_CONFIG iconv"
@@ -5852,6 +5896,7 @@ fi
 [ "$CFG_DIRECTWRITE" = "yes" ] && QT_CONFIG="$QT_CONFIG directwrite"
 
 [ '!' -z "$DEFINES" ] && QMakeVar add DEFINES "$DEFINES"
+[ '!' -z "$INCLUDES" ] && QMakeVar add INCLUDEPATH "$INCLUDES"
 [ '!' -z "$L_FLAGS" ] && QMakeVar add LIBS "$L_FLAGS"
 
 if [ "$XPLATFORM_MAC" = "yes" ] && [ "$QT_CROSS_COMPILE" = "no" ]; then
@@ -5877,12 +5922,6 @@ else
 fi
 if [ "$CFG_RPATH" = "yes" ]; then
     QT_CONFIG="$QT_CONFIG rpath"
-fi
-
-if [ '!' -z "$I_FLAGS" ]; then
-    # add the user define include paths
-    QMakeVar add QMAKE_CFLAGS "$I_FLAGS"
-    QMakeVar add QMAKE_CXXFLAGS "$I_FLAGS"
 fi
 
 if [ '!' -z "$W_FLAGS" ]; then
@@ -6232,6 +6271,7 @@ QMakeVar set sql-plugins "$SQL_PLUGINS"
 [ "$CFG_GLIB" != "yes" ]     && QCONFIG_FLAGS="$QCONFIG_FLAGS QT_NO_GLIB"
 [ "$CFG_QGTKSTYLE" != "yes" ] && QCONFIG_FLAGS="$QCONFIG_FLAGS QT_NO_STYLE_GTK"
 [ "$CFG_CLOCK_MONOTONIC" = "no" ] && QCONFIG_FLAGS="$QCONFIG_FLAGS QT_NO_CLOCK_MONOTONIC"
+[ "$CFG_POSIX_FALLOCATE" = "no" ] && QCONFIG_FLAGS="$QCONFIG_FLAGS QT_NO_POSIX_FALLOCATE"
 [ "$CFG_MREMAP" = "no" ]     && QCONFIG_FLAGS="$QCONFIG_FLAGS QT_NO_MREMAP"
 [ "$CFG_GETADDRINFO" = "no" ]&& QCONFIG_FLAGS="$QCONFIG_FLAGS QT_NO_GETADDRINFO"
 [ "$CFG_IPV6IFNAME" = "no" ] && QCONFIG_FLAGS="$QCONFIG_FLAGS QT_NO_IPV6IFNAME"
@@ -6680,6 +6720,7 @@ report_support_plugin "    PNG .................." "$CFG_PNG" "$CFG_LIBPNG" QtGu
 report_support "  Glib ..................." "$CFG_GLIB"
 report_support "  GTK theme .............." "$CFG_QGTKSTYLE"
 report_support "  Large File ............." "$CFG_LARGEFILE"
+report_support "  mtdev .................." "$CFG_MTDEV" yes "system library"
 report_support "  Networking:"
 [ "$XPLATFORM_MAC" = "yes" ] && \
     report_support "    CoreWlan ............." "$CFG_COREWLAN"
@@ -6705,6 +6746,7 @@ report_support "    LinuxFB .............." "$CFG_LINUXFB"
 report_support "    XCB .................." "$CFG_XCB" system "system library" qt "bundled copy"
 if [ "$CFG_XCB" != "no" ]; then
     report_support "      MIT-SHM ............" "$CFG_MITSHM"
+    report_support "      Xcb-Xlib ..........." "$CFG_XCB_XLIB"
     report_support "      Xcursor ............" "$CFG_XCURSOR" runtime "loaded at runtime"
     report_support "      Xfixes ............." "$CFG_XFIXES" runtime "loaded at runtime"
     report_support "      Xi ................." "$CFG_XINPUT" runtime "loaded at runtime"
