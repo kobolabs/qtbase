@@ -57,14 +57,16 @@ static void loadAdvancesForGlyphs(CTFontRef ctfont,
                                   const QFontDef &fontDef)
 {
     Q_UNUSED(flags);
-    QVarLengthArray<CGSize> advances(len);
-    CTFontGetAdvancesForGlyphs(ctfont, kCTFontHorizontalOrientation, cgGlyphs.data(), advances.data(), len);
+    QVarLengthArray<CGSize> advancesHorizontal(len);
+    QVarLengthArray<CGSize> advancesVertical(len);
+    CTFontGetAdvancesForGlyphs(ctfont, kCTFontHorizontalOrientation, cgGlyphs.data(), advancesHorizontal.data(), len);
+    CTFontGetAdvancesForGlyphs(ctfont, kCTFontVerticalOrientation, cgGlyphs.data(), advancesVertical.data(), len);
 
     for (int i = 0; i < len; ++i) {
         if (glyphs->glyphs[i] & 0xff000000)
             continue;
-        glyphs->advances_x[i] = QFixed::fromReal(advances[i].width);
-        glyphs->advances_y[i] = QFixed::fromReal(advances[i].height);
+        glyphs->advances_x[i] = QFixed::fromReal(advancesHorizontal[i].width);
+        glyphs->advances_y[i] = QFixed::fromReal(advancesVertical[i].width);
     }
 
     if (fontDef.styleStrategy & QFont::ForceIntegerMetrics) {
