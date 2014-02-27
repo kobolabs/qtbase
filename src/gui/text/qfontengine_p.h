@@ -195,7 +195,7 @@ public:
     virtual QImage *lockedAlphaMapForGlyph(glyph_t glyph, QFixed subPixelPosition,
                                            GlyphFormat neededFormat,
                                            const QTransform &t = QTransform(),
-                                           QPoint *offset = 0);
+                                           QPoint *offset = 0, bool isVertical = false);
     virtual void unlockAlphaMapForGlyph();
     virtual bool hasInternalCaching() const { return false; }
 

@@ -263,7 +263,7 @@ private:
                                                 QFontEngine::GlyphFormat format);
     virtual QImage *lockedAlphaMapForGlyph(glyph_t glyph, QFixed subPixelPosition,
                                            GlyphFormat neededFormat, const QTransform &t,
-                                           QPoint *offset);
+                                           QPoint *offset, bool isVertical = false);
     virtual bool hasInternalCaching() const { return cacheEnabled; }
     virtual void unlockAlphaMapForGlyph();
 

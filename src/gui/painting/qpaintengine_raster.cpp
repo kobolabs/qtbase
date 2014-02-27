@@ -2787,7 +2787,7 @@ void QRasterPaintEngine::alphaPenBlt(const void* src, int bpl, int depth, int rx
     \internal
 */
 bool QRasterPaintEngine::drawCachedGlyphs(int numGlyphs, const glyph_t *glyphs,
-                                          const QFixedPoint *positions, QFontEngine *fontEngine)
+                                          const QFixedPoint *positions, QFontEngine *fontEngine, bool isVertical)
 {
     Q_D(QRasterPaintEngine);
     QRasterPaintEngineState *s = state();
@@ -2806,7 +2806,7 @@ bool QRasterPaintEngine::drawCachedGlyphs(int numGlyphs, const glyph_t *glyphs,
 
             QPoint offset;
             QImage *alphaMap = fontEngine->lockedAlphaMapForGlyph(glyphs[i], spp, neededFormat, s->matrix,
-                                                                  &offset);
+                                                                  &offset, isVertical);
             if (alphaMap == 0 || alphaMap->isNull())
                 continue;
 
@@ -3033,7 +3033,7 @@ void QRasterPaintEngine::drawStaticTextItem(QStaticTextItem *textItem, bool isVe
     QFontEngine *fontEngine = textItem->fontEngine();
     if (shouldDrawCachedGlyphs(fontEngine, matrix)) {
         drawCachedGlyphs(textItem->numGlyphs, textItem->glyphs, textItem->glyphPositions,
-                         fontEngine);
+                         fontEngine, isVertical);
     } else if (matrix.type() < QTransform::TxProject) {
         bool invertible;
         QTransform invMat = matrix.inverted(&invertible);
