@@ -649,6 +649,7 @@ QRasterPaintEngineState::QRasterPaintEngineState()
     flags.fast_pen = true;
     flags.antialiased = false;
     flags.bilinear = false;
+    flags.dither = false;
     flags.legacy_rounding = false;
     flags.fast_text = true;
     flags.int_xform = true;
@@ -934,6 +935,7 @@ void QRasterPaintEngine::renderHintsChanged()
 
     s->flags.antialiased = bool(s->renderHints & QPainter::Antialiasing);
     s->flags.bilinear = bool(s->renderHints & QPainter::SmoothPixmapTransform);
+    s->flags.dither = bool(s->renderHints & QPainter::Dithering);
     s->flags.legacy_rounding = !bool(s->renderHints & QPainter::Antialiasing) && bool(s->renderHints & QPainter::Qt4CompatiblePainting);
 
     if (was_aa != s->flags.antialiased)
@@ -1091,9 +1093,10 @@ void QRasterPaintEnginePrivate::updateMatrixData(QSpanData *spanData, const QBru
 
     Q_Q(QRasterPaintEngine);
     bool bilinear = q->state()->flags.bilinear;
+    bool dither = q->state()->flags.dither;
 
     if (b.d->transform.type() > QTransform::TxNone) { // FALCON: optimize
-        spanData->setupMatrix(b.transform() * m, bilinear);
+        spanData->setupMatrix(b.transform() * m, bilinear, dither);
     } else {
         if (m.type() <= QTransform::TxTranslate) {
             // specialize setupMatrix for translation matrices
@@ -1109,10 +1112,11 @@ void QRasterPaintEnginePrivate::updateMatrixData(QSpanData *spanData, const QBru
             spanData->dy = -m.dy();
             spanData->txop = m.type();
             spanData->bilinear = bilinear;
+            spanData->dither = dither;
             spanData->fast_matrix = qAbs(m.dx()) < 1e4 && qAbs(m.dy()) < 1e4;
             spanData->adjustSpanMethods();
         } else {
-            spanData->setupMatrix(m, bilinear);
+            spanData->setupMatrix(m, bilinear, dither);
         }
     }
 }
@@ -2342,7 +2346,7 @@ void QRasterPaintEngine::drawImage(const QRectF &r, const QImage &img, const QRe
         }
     }
 
-    if (s->matrix.type() > QTransform::TxTranslate || stretch_sr) {
+    if (s->matrix.type() > QTransform::TxTranslate || stretch_sr || s->flags.dither) {
 
         QRectF targetBounds = s->matrix.mapRect(r);
         bool exceedsPrecision = targetBounds.width() > 0xffff
@@ -2396,7 +2400,7 @@ void QRasterPaintEngine::drawImage(const QRectF &r, const QImage &img, const QRe
         d->image_filler_xform.initTexture(&img, s->intOpacity, QTextureData::Plain, toAlignedRect_positive(sr));
         if (!d->image_filler_xform.blend)
             return;
-        d->image_filler_xform.setupMatrix(copy, s->flags.bilinear);
+        d->image_filler_xform.setupMatrix(copy, s->flags.bilinear, s->flags.dither);
 
         if (!s->flags.antialiased && s->matrix.type() == QTransform::TxScale) {
             QRectF rr = s->matrix.mapRect(r);
@@ -2504,7 +2508,7 @@ void QRasterPaintEngine::drawTiledPixmap(const QRectF &r, const QPixmap &pixmap,
         d->image_filler_xform.initTexture(&image, s->intOpacity, QTextureData::Tiled);
         if (!d->image_filler_xform.blend)
             return;
-        d->image_filler_xform.setupMatrix(copy, s->flags.bilinear);
+        d->image_filler_xform.setupMatrix(copy, s->flags.bilinear, s->flags.dither);
 
 #ifdef QT_FAST_SPANS
         ensureRasterState();
@@ -4440,6 +4444,7 @@ void QSpanData::init(QRasterBuffer *rb, const QRasterPaintEngine *pe)
     type = None;
     txop = 0;
     bilinear = false;
+    dither = false;
     m11 = m22 = m33 = 1.;
     m12 = m13 = m21 = m23 = dx = dy = 0.0;
     clip = pe ? pe->d_func()->clip() : 0;
@@ -4600,7 +4605,7 @@ void QSpanData::adjustSpanMethods()
     }
 }
 
-void QSpanData::setupMatrix(const QTransform &matrix, int bilin)
+void QSpanData::setupMatrix(const QTransform &matrix, int bilin, int dith)
 {
     QTransform delta;
     // make sure we round off correctly in qdrawhelper.cpp
@@ -4618,6 +4623,7 @@ void QSpanData::setupMatrix(const QTransform &matrix, int bilin)
     dy = inv.dy();
     txop = inv.type();
     bilinear = bilin;
+    dither = dith;
 
     const bool affine = inv.isAffine();
     fast_matrix = affine

@@ -1418,6 +1418,8 @@ void QPainterPrivate::updateState(QPainterState *newState)
     by slightly less than half a pixel. Also will treat default constructed pens
     as cosmetic. Potentially useful when porting a Qt 4 application to Qt 5.
 
+    \value Dithering Enables 3x3 ordered dithering
+
     \sa renderHints(), setRenderHint(), {QPainter#Rendering
     Quality}{Rendering Quality}, {Concentric Circles Example}
 
