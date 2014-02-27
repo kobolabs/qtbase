@@ -67,8 +67,13 @@
 #include <private/qmath_p.h>
 #include <private/qguiapplication_p.h>
 #include <qmath.h>
+#include "libdivide.h"
 
 QT_BEGIN_NAMESPACE
+
+static unsigned char ORDERED_DITHER_MATRIX3x3[] = {
+  3,7,4,6,1,9,2,8,5
+};
 
 #define MASK(src, a) src = BYTE_MUL(src, a)
 
@@ -281,6 +286,109 @@ static const uint *QT_FASTCALL convertRGBFromARGB32PM(uint *buffer, const uint *
     }
     return buffer;
 }
+
+template <class T>
+Q_STATIC_TEMPLATE_FUNCTION
+int toGrayscale(T* buffer)
+{
+    return buffer[0];
+}
+
+template <>
+int toGrayscale(uint *buffer)
+{
+    uint p = *buffer;
+    int r = p & 0x000000FF;
+    int g = (p & 0x0000FF00) >> 8;
+    int b = (p & 0x00FF0000) >> 16;
+    if (r == g && r == b)
+        return r;
+    return ((r * 77) + (g * 151) + (b * 28)) >> 8;
+}
+
+template <>
+int toGrayscale(ushort *buffer)
+{
+    int r = ((buffer[0] & 0xf800) >> 8);
+    int g = ((buffer[0] & 0x07e0) >> 3); // only keep 5 bit
+    int b = ((buffer[0] & 0x001f)) << 3;
+    return ((r * 77) + (g * 151) + (b * 28)) >> 8;
+}
+
+template <class T>
+Q_STATIC_TEMPLATE_FUNCTION
+void ditherBuffer(T *buffer, int prevPix)
+{
+    Q_UNUSED(buffer);
+    Q_UNUSED(prevPix);
+}
+
+template <>
+void ditherBuffer(uint *buffer, int prevPix)
+{
+    *buffer = prevPix + (prevPix << 8) + (prevPix << 16) + 0xFF000000;
+}
+
+template <>
+void ditherBuffer(ushort *buffer, int prevPix)
+{
+    int newRandB = prevPix >> 3;
+    int newG = prevPix >> 2;
+    *buffer = (newRandB << 11) | (newG << 5) | newRandB;
+}
+
+template <class T>
+Q_STATIC_TEMPLATE_FUNCTION
+void ditherAndSharpenLine(T *buffer, int row, int length, bool sharpen)
+{
+    int diffs[3];
+    int pix;
+    int prevPix;
+    unsigned int average;
+
+    // initial setup for line.
+    pix = toGrayscale<T>(buffer);
+    buffer++;
+
+    diffs[0] = diffs[1] = diffs[2] = pix;
+    prevPix = pix ;
+
+    int idxR = row % 0x3;
+    for (int col = 1; col < length - 1; ++col) {
+        int idxC = col % 0x3;
+        uchar threshold = ORDERED_DITHER_MATRIX3x3[idxC + (0x3 * idxR)];
+        pix = toGrayscale<T>(buffer);
+
+        // update average of 3 pixels in col
+        diffs[ idxC ] = pix;
+
+        average = diffs[0] + diffs[1] + diffs[2];
+
+        static libdivide::divider<unsigned int> fast_3(3);
+        average = average / fast_3;
+
+        if (sharpen) {
+            // apply sharpness filter
+            int diff = prevPix - average;
+
+            prevPix += (diff >> 1);
+            prevPix = qMax(prevPix, 0);
+        }
+
+        unsigned int t = (( prevPix * 10 ) >> 4);
+        static libdivide::divider<unsigned int> fast_10(10);
+        uchar l = t / fast_10;
+        uchar u = t - l * 10;
+        prevPix = (l + (u >= threshold)) << 4;
+        prevPix = prevPix & 0x100 ? 0xff : prevPix;
+
+        ditherBuffer<T>(buffer, prevPix);
+        buffer++;
+
+        prevPix = pix;
+    }
+}
+
 
 template <QPixelLayout::BPP bpp> static
 uint QT_FASTCALL fetchPixel(const uchar *src, int index);
@@ -1453,6 +1561,11 @@ static const uint * QT_FASTCALL fetchTransformedBilinearARGB32PM(uint *buffer, c
         }
     }
 
+    // Do ordered dithering 3x3,16
+    if (data->dither) {
+        ditherAndSharpenLine< uint >(buffer, y, length, true);
+    }
+
     return buffer;
 }
 
@@ -1785,6 +1898,11 @@ static const uint *QT_FASTCALL fetchTransformedBilinear(uint *buffer, const Oper
             length -= len;
             b += len;
         }
+    }
+
+    // Do ordered dithering 3x3,16
+    if (data->dither) {
+        ditherAndSharpenLine< uint >(buffer, y, length, true);
     }
 
     return buffer;
@@ -4264,6 +4382,9 @@ static void blend_untransformed_generic(int count, const QSpan *spans, void *use
                     const uint *src = op.src_fetch(src_buffer, &op, data, sy, sx, l);
                     uint *dest = op.dest_fetch ? op.dest_fetch(buffer, data->rasterBuffer, x, spans->y, l) : buffer;
                     op.func(dest, src, l, coverage);
+                    if (data->dither) {
+                        ditherAndSharpenLine< uint >(dest, sy, l, false);
+                    }
                     if (op.dest_store)
                         op.dest_store(data->rasterBuffer, x, spans->y, dest, l);
                     x += l;
