@@ -184,6 +184,7 @@ contains(QT_CONFIG, freetype) {
                qwindowsfontdatabase_ft.h
     SOURCES += \
                qwindowsfontdatabase_ft.cpp
+    LIBS += -lfreetype
 }
 
 OTHER_FILES += windows.json
