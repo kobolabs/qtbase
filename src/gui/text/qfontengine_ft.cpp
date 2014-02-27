@@ -1854,10 +1854,15 @@ glyph_metrics_t QFontEngineFT::alphaMapBoundingBox(glyph_t glyph, QFixed subPixe
 
 QImage *QFontEngineFT::lockedAlphaMapForGlyph(glyph_t glyphIndex, QFixed subPixelPosition,
                                               QFontEngine::GlyphFormat neededFormat,
-                                              const QTransform &t, QPoint *offset)
+                                              const QTransform &t, QPoint *offset, bool isVertical)
 {
     Q_ASSERT(currentlyLockedAlphaMap.isNull());
     lockFace();
+
+    QTransform transform = t;
+    if (isVertical) {
+        transform.rotate(-90);
+    }
 
     if (isBitmapFont())
         neededFormat = Format_Mono;
@@ -1887,11 +1892,11 @@ QImage *QFontEngineFT::lockedAlphaMapForGlyph(glyph_t glyphIndex, QFixed subPixe
     if (cacheEnabled) {
         QFontEngineFT::QGlyphSet *gset = &defaultGlyphSet;
         QFontEngine::HintStyle hintStyle = default_hint_style;
-        if (t.type() >= QTransform::TxScale) {
+        if (transform.type() >= QTransform::TxScale) {
             // disable hinting if the glyphs are transformed
             default_hint_style = HintNone;
-            if (t.isAffine())
-                gset = loadTransformedGlyphSet(t);
+            if (transform.isAffine())
+                gset = loadTransformedGlyphSet(transform);
             else
                 gset = 0;
         }
@@ -1906,15 +1911,15 @@ QImage *QFontEngineFT::lockedAlphaMapForGlyph(glyph_t glyphIndex, QFixed subPixe
         if (!gset || gset->outline_drawing || !loadGlyph(gset, glyphIndex, subPixelPosition,
                                                          neededFormat)) {
             default_hint_style = hintStyle;
-            return QFontEngine::lockedAlphaMapForGlyph(glyphIndex, subPixelPosition, neededFormat, t,
-                                                       offset);
+            return QFontEngine::lockedAlphaMapForGlyph(glyphIndex, subPixelPosition, neededFormat, transform,
+                                                       offset, isVertical);
         }
         default_hint_style = hintStyle;
 
         glyph = gset->getGlyph(glyphIndex, subPixelPosition);
     } else {
         FT_Matrix m = matrix;
-        FT_Matrix extra = QTransformToFTMatrix(t);
+        FT_Matrix extra = QTransformToFTMatrix(transform);
         FT_Matrix_Multiply(&extra, &m);
         FT_Set_Transform(freetype->face, &m, 0);
         freetype->matrix = m;

@@ -792,8 +792,9 @@ QFixed QFontEngine::subPixelPositionForX(QFixed x) const
 
 QImage *QFontEngine::lockedAlphaMapForGlyph(glyph_t glyph, QFixed subPixelPosition,
                                             QFontEngine::GlyphFormat neededFormat,
-                                            const QTransform &t, QPoint *offset)
+                                            const QTransform &t, QPoint *offset, bool isVertical)
 {
+    Q_UNUSED(isVertical);
     Q_ASSERT(currentlyLockedAlphaMap.isNull());
     if (neededFormat == Format_None)
         neededFormat = Format_A32;
