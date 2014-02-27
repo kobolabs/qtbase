@@ -42,7 +42,10 @@ HEADERS += \
     text/qrawfont_p.h \
     text/qglyphrun.h \
     text/qglyphrun_p.h \
-    text/qdistancefield_p.h
+    text/qdistancefield_p.h \
+    text/qrawfontinterface_p.h \
+    text/qfontengineinterface_p.h \
+    text/qaccessplugininterface_p.h
 
 SOURCES += \
     text/qfont.cpp \

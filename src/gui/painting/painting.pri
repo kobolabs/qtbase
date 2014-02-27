@@ -44,7 +44,8 @@ HEADERS += \
         painting/qtransform.h \
         painting/qplatformbackingstore.h \
         painting/qpaintbuffer_p.h \
-        painting/qpathsimplifier_p.h
+        painting/qpathsimplifier_p.h \
+        painting/qpaintengine_raster_interface_p.h
 
 
 SOURCES += \

@@ -54,6 +54,7 @@
 #  include <harfbuzz/hb-ot.h>
 #endif
 #include <private/qharfbuzz_p.h>
+#include <private/qaccessplugininterface_p.h>
 
 #include <algorithm>
 
@@ -218,6 +219,7 @@ QFontEngine::QFontEngine()
       font_(0), font_destroy_func(0),
       face_(0), face_destroy_func(0)
 {
+    loadPlugin();
     faceData.user_data = this;
     faceData.get_font_table = qt_get_font_table_default;
 
@@ -550,6 +552,24 @@ void QFontEngine::addOutlineToPath(qreal x, qreal y, const QGlyphLayout &glyphs,
     QTransform matrix = QTransform::fromTranslate(x, y);
     getGlyphPositions(glyphs, matrix, flags, positioned_glyphs, positions);
     addGlyphsToPath(positioned_glyphs.data(), positions.data(), positioned_glyphs.size(), path, flags);
+}
+
+int QFontEngine::substituteWithVerticalVariants(quint32* glyphs, const unsigned length)
+{
+#if defined(Q_OS_LINUX) || defined(Q_OS_WIN) || defined(Q_OS_MAC)
+    if (pluginInterface != NULL)
+        return pluginInterface->substituteWithVerticalVariants((HB_Face)harfbuzzFace(), glyphs, length);
+#endif
+    return glyphs[0];
+}
+
+bool QFontEngine::hasVerticalGlyphs() const
+{
+#if defined(Q_OS_LINUX) || defined(Q_OS_WIN) || defined(Q_OS_MAC)
+    if (pluginInterface != NULL)
+        return pluginInterface->hasVerticalGlyphs((HB_Face)harfbuzzFace());
+#endif
+    return false;
 }
 
 #define GRID(x, y) grid[(y)*(w+1) + (x)]
@@ -1915,6 +1935,30 @@ QTestFontEngine::QTestFontEngine(int size)
 QFontEngine::Type QTestFontEngine::type() const
 {
     return TestFontEngine;
+}
+
+QFontEngineInterface *QFontEngine::pluginInterface = NULL;
+bool QFontEngine::loadPlugin()
+{
+    if (pluginInterface != NULL)
+        return true;
+    static bool checked = false;
+    if (!checked) {
+        ACCESSPlugin p;
+        for (QObject *plugin = p.next(); plugin; plugin = p.next()) {
+            if (plugin) {
+                ACCESSPluginInterface *i = qobject_cast<ACCESSPluginInterface *>(plugin);
+                if (i) {
+                    qDebug("loadPlugin: loaded plugin for QFontEngine");
+                    pluginInterface = i->fontEnginePlugin();
+                    return true;
+                }
+            }
+        }
+        checked = true;
+    }
+
+    return false;
 }
 
 QT_END_NAMESPACE
