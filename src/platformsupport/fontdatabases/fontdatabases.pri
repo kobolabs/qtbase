@@ -1,4 +1,4 @@
-!win32|contains(QT_CONFIG, freetype) {
+contains(QT_CONFIG, freetype)|contains(QT_CONFIG, system-freetype) {
     include($$PWD/basic/basic.pri)
 }
 
