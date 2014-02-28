@@ -57,6 +57,7 @@
 #include "QtCore/qatomic.h"
 #include <QtCore/qvarlengtharray.h>
 #include <QtCore/QLinkedList>
+#include "private/qfontengineinterface_p.h"
 #include "private/qtextengine_p.h"
 #include "private/qfont_p.h"
 
@@ -67,6 +68,8 @@ QT_BEGIN_NAMESPACE
 class QPainterPath;
 
 struct QGlyphLayout;
+
+class QFontEngineInterface;
 
 #define MAKE_TAG(ch1, ch2, ch3, ch4) (\
     (((quint32)(ch1)) << 24) | \
@@ -89,6 +92,9 @@ typedef bool (*qt_get_font_table_func_t) (void *user_data, uint tag, uchar *buff
 
 class Q_GUI_EXPORT QFontEngine
 {
+private:
+    bool loadPlugin();
+    static QFontEngineInterface *pluginInterface;
 public:
     enum Type {
         Box,
@@ -261,6 +267,9 @@ public:
     void clearGlyphCache(const void *key);
     void setGlyphCache(const void *key, QFontEngineGlyphCache *data);
     QFontEngineGlyphCache *glyphCache(const void *key, QFontEngineGlyphCache::Type type, const QTransform &transform) const;
+
+    int substituteWithVerticalVariants(quint32 *glyph, const unsigned buffer);
+    bool hasVerticalGlyphs() const;
 
     static const uchar *getCMap(const uchar *table, uint tableSize, bool *isSymbolFont, int *cmapSize);
     static quint32 getTrueTypeGlyphIndex(const uchar *cmap, uint unicode);

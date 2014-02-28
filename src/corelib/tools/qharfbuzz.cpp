@@ -103,4 +103,59 @@ void qHBFreeFace(HB_Face face)
     HB_FreeFace(face);
 }
 
+HB_Error qHB_GSUB_Select_Script(HB_GSUB  gsub,
+                 HB_UInt         script_tag,
+                 HB_UShort*       script_index)
+{
+    return HB_GSUB_Select_Script(gsub, script_tag, script_index);
+}
+
+HB_Error qHB_GSUB_Select_Feature(HB_GSUB  gsub,
+                  HB_UInt         feature_tag,
+                  HB_UShort        script_index,
+                  HB_UShort        language_index,
+                  HB_UShort*       feature_index)
+{
+    return HB_GSUB_Select_Feature(gsub, feature_tag, script_index, language_index, feature_index);
+}
+
+void qGetCharAttributes(const HB_UChar16 *string, hb_uint32 stringLength,
+                        const HB_ScriptItem *items, hb_uint32 numItems,
+                        HB_CharAttributes *attributes)
+{
+    // TODO: check if this is similiar to 4.8 harfbuzz-shaper implementation
+    HB_GetTailoredCharAttributes(string, stringLength, items, numItems, attributes);
+}
+
+
+HB_Error qHBBufferNew(HB_Buffer *buffer)
+{
+    return hb_buffer_new(buffer);
+}
+
+HB_Error qHBBufferAddGlyph(HB_Buffer buffer,
+                           HB_UInt glyph_index,
+                           HB_UInt properties,
+                           HB_UInt cluster )
+{
+    return hb_buffer_add_glyph(buffer, glyph_index, properties, cluster);
+}
+
+HB_Error qHB_GSUB_Add_Feature(HB_GSUB gsub,
+                               HB_UShort feature_index,
+                               HB_UInt property)
+{
+    return HB_GSUB_Add_Feature(gsub, feature_index, property);
+}
+
+HB_Error qHB_GSUB_Clear_Features(HB_GSUB gsub)
+{
+    return HB_GSUB_Clear_Features(gsub);
+}
+
+HB_Error qHB_GSUB_Apply_String(HB_GSUB gsub, HB_Buffer buffer)
+{
+    return HB_GSUB_Apply_String(gsub, buffer);
+}
+
 QT_END_NAMESPACE

@@ -56,10 +56,16 @@
 #include <QtCore/qchar.h>
 
 #if defined(QT_BUILD_CORE_LIB)
-#  include <harfbuzz-shaper.h>
+#include <harfbuzz-shaper.h>
 #else
 // a minimal set of HB types required for Qt libs other than Core
 extern "C" {
+
+#define HB_MAKE_TAG( _x1, _x2, _x3, _x4 ) \
+          ( ( (HB_UInt)_x1 << 24 ) |     \
+            ( (HB_UInt)_x2 << 16 ) |     \
+            ( (HB_UInt)_x3 <<  8 ) |     \
+              (HB_UInt)_x4         )
 
 typedef enum {
   /* no error */
@@ -158,9 +164,49 @@ typedef struct {
 typedef void * HB_GDEF;
 typedef void * HB_GSUB;
 typedef void * HB_GPOS;
-typedef void * HB_Buffer;
 
 typedef HB_Error (*HB_GetFontTableFunc)(void *font, HB_Tag tag, HB_Byte *buffer, HB_UInt *length);
+
+typedef struct HB_GlyphItemRec_ {
+  HB_UInt     gindex;
+  HB_UInt     properties;
+  HB_UInt     cluster;
+  HB_UShort   component;
+  HB_UShort   ligID;
+  HB_UShort   gproperties;
+} HB_GlyphItemRec, *HB_GlyphItem;
+
+typedef struct HB_PositionRec_ {
+  HB_Fixed   x_pos;
+  HB_Fixed   y_pos;
+  HB_Fixed   x_advance;
+  HB_Fixed   y_advance;
+  HB_UShort  back;            /* number of glyphs to go back
+                 for drawing current glyph   */
+  HB_Short  cursive_chain;   /* character to which this connects,
+                 may be positive or negative; used
+                 only internally                     */
+  HB_Bool    new_advance;     /* if set, the advance width values are
+                 absolute, i.e., they won't be
+                 added to the original glyph's value
+                 but rather replace them.            */
+} HB_PositionRec, *HB_Position;
+
+typedef struct HB_BufferRec_{
+  HB_UInt    allocated;
+
+  HB_UInt    in_length;
+  HB_UInt    out_length;
+  HB_UInt    in_pos;
+  HB_UInt    out_pos;
+
+  HB_GlyphItem  in_string;
+  HB_GlyphItem  out_string;
+  HB_GlyphItem  alt_string;
+  HB_Position   positions;
+  HB_UShort      max_ligID;
+  HB_Bool       separate_out;
+} HB_BufferRec, *HB_Buffer;
 
 typedef struct HB_FaceRec_ {
     HB_Bool isSymbolFont;
@@ -347,6 +393,30 @@ Q_CORE_EXPORT HB_Bool qShapeItem(HB_ShaperItem *item);
 Q_CORE_EXPORT HB_Face qHBNewFace(void *font, HB_GetFontTableFunc tableFunc);
 Q_CORE_EXPORT void qHBFreeFace(HB_Face);
 Q_CORE_EXPORT HB_Face qHBLoadFace(HB_Face face);
+
+Q_CORE_EXPORT HB_Error qHB_GSUB_Select_Script(HB_GSUB  gsub,
+                 HB_UInt         script_tag,
+                 HB_UShort*       script_index);
+
+Q_CORE_EXPORT HB_Error qHB_GSUB_Select_Feature(HB_GSUB gsub,
+                                               HB_UInt feature_tag,
+                                               HB_UShort script_index,
+                                               HB_UShort language_index,
+                                               HB_UShort* feature_index);
+
+Q_CORE_EXPORT HB_Error qHB_GSUB_Add_Feature(HB_GSUB gsub,
+                                            HB_UShort feature_index,
+                                            HB_UInt property);
+
+Q_CORE_EXPORT HB_Error qHBBufferNew(HB_Buffer *buffer);
+Q_CORE_EXPORT HB_Error qHBBufferAddGlyph(HB_Buffer buffer,
+                                         HB_UInt glyph_index,
+                                         HB_UInt properties,
+                                         HB_UInt cluster );
+
+Q_CORE_EXPORT HB_Error qHB_GSUB_Clear_Features(HB_GSUB gsub);
+
+Q_CORE_EXPORT HB_Error qHB_GSUB_Apply_String(HB_GSUB gsub, HB_Buffer buffer);
 
 Q_DECLARE_TYPEINFO(HB_GlyphAttributes, Q_PRIMITIVE_TYPE);
 Q_DECLARE_TYPEINFO(HB_FixedPoint, Q_PRIMITIVE_TYPE);
