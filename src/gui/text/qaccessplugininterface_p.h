@@ -12,7 +12,7 @@
 
 #include <QPluginLoader>
 #include <QDir>
-#include <QtWidgets/qapplication.h>
+#include <QCoreApplication>
 
 class QRawFontInterface;
 class QRasterPaintEngineInterface;
@@ -39,7 +39,7 @@ class ACCESSPlugin
     int i;
 public:
     ACCESSPlugin() : i(-1) {
-        pluginsDir = QDir(qApp->applicationDirPath());
+        pluginsDir = QDir(QCoreApplication::instance()->applicationDirPath());
 #if defined(Q_OS_MAC)
         pluginsDir.cdUp();
         pluginsDir.cd(QStringLiteral("Frameworks"));
