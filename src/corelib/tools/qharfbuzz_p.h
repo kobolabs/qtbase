@@ -387,6 +387,8 @@ static inline uchar hbscript_to_script(uchar script)
     return QChar::Script_Common;
 }
 
+extern "C" {
+
 Q_CORE_EXPORT HB_Bool qShapeItem(HB_ShaperItem *item);
 
 // ### temporary
@@ -417,6 +419,8 @@ Q_CORE_EXPORT HB_Error qHBBufferAddGlyph(HB_Buffer buffer,
 Q_CORE_EXPORT HB_Error qHB_GSUB_Clear_Features(HB_GSUB gsub);
 
 Q_CORE_EXPORT HB_Error qHB_GSUB_Apply_String(HB_GSUB gsub, HB_Buffer buffer);
+
+}
 
 Q_DECLARE_TYPEINFO(HB_GlyphAttributes, Q_PRIMITIVE_TYPE);
 Q_DECLARE_TYPEINFO(HB_FixedPoint, Q_PRIMITIVE_TYPE);
