@@ -119,15 +119,6 @@ HB_Error qHB_GSUB_Select_Feature(HB_GSUB  gsub,
     return HB_GSUB_Select_Feature(gsub, feature_tag, script_index, language_index, feature_index);
 }
 
-void qGetCharAttributes(const HB_UChar16 *string, hb_uint32 stringLength,
-                        const HB_ScriptItem *items, hb_uint32 numItems,
-                        HB_CharAttributes *attributes)
-{
-    // TODO: check if this is similiar to 4.8 harfbuzz-shaper implementation
-    HB_GetTailoredCharAttributes(string, stringLength, items, numItems, attributes);
-}
-
-
 HB_Error qHBBufferNew(HB_Buffer *buffer)
 {
     return hb_buffer_new(buffer);
