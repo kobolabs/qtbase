@@ -428,7 +428,6 @@ static void convertCGPathToQPainterPath(void *info, const CGPathElement *element
 void QCoreTextFontEngine::addGlyphsToPath(glyph_t *glyphs, QFixedPoint *positions, int nGlyphs,
                                           QPainterPath *path, QTextItem::RenderFlags, bool isVertical)
 {
-    Q_UNUSED(isVertical)
     if (glyphFormat == QFontEngineGlyphCache::Raster_ARGB)
         return; // We can't convert color-glyphs to path
 
@@ -438,8 +437,14 @@ void QCoreTextFontEngine::addGlyphsToPath(glyph_t *glyphs, QFixedPoint *position
     if (synthesisFlags & QFontEngine::SynthesizedItalic)
         cgMatrix = CGAffineTransformConcat(cgMatrix, CGAffineTransformMake(1, 0, -SYNTHETIC_ITALIC_SKEW, 1, 0, 0));
 
+    CGAffineTransform cgMatrixRotate = CGAffineTransformRotate(cgMatrix, 3.14/2);
     for (int i = 0; i < nGlyphs; ++i) {
-        QCFType<CGPathRef> cgpath = CTFontCreatePathForGlyph(ctfont, glyphs[i], &cgMatrix);
+        QCFType<CGPathRef> cgpath;
+        if (isVertical) {
+            cgpath = CTFontCreatePathForGlyph(ctfont, glyphs[i], &cgMatrixRotate);
+        } else {
+            cgpath = CTFontCreatePathForGlyph(ctfont, glyphs[i], &cgMatrix);
+        }
         ConvertPathInfo info(path, positions[i].toPointF());
         CGPathApply(cgpath, &info, convertCGPathToQPainterPath);
     }
