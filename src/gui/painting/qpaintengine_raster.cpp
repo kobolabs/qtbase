@@ -71,6 +71,8 @@
 //   #include "qbezier_p.h"
 #include "qoutlinemapper_p.h"
 
+#include "private/qaccessplugininterface_p.h"
+
 #include <limits.h>
 #include <algorithm>
 
@@ -371,6 +373,8 @@ QRasterPaintEngine::QRasterPaintEngine(QRasterPaintEnginePrivate &dd, QPaintDevi
 void QRasterPaintEngine::init()
 {
     Q_D(QRasterPaintEngine);
+
+    d->loadPlugin();
 
 
 #ifdef Q_OS_WIN
@@ -3662,6 +3666,31 @@ bool QRasterPaintEnginePrivate::canUseFastImageBlending(QPainter::CompositionMod
            && (mode == QPainter::CompositionMode_SourceOver
                || (mode == QPainter::CompositionMode_Source
                    && !image.hasAlphaChannel()));
+}
+
+QRasterPaintEngineInterface *QRasterPaintEnginePrivate::pluginInterface = NULL;
+bool QRasterPaintEnginePrivate::loadPlugin()
+{
+    if (pluginInterface != NULL)
+        return true;
+
+    static bool checked = false;
+    if (!checked) {
+        ACCESSPlugin p;
+        for (QObject *plugin = p.next(); plugin; plugin = p.next()) {
+            if (plugin) {
+                ACCESSPluginInterface *i = qobject_cast<ACCESSPluginInterface *>(plugin);
+                if (i) {
+                    qDebug("loadPlugin: loaded plugin for QRasterPaintEngine");
+                    pluginInterface = i->rasterFontPlugin();
+                    return true;
+                }
+            }
+        }
+        checked = true;
+    }
+
+    return false;
 }
 
 QImage QRasterBuffer::colorizeBitmap(const QImage &image, const QColor &color)

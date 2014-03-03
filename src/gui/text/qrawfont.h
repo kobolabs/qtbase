@@ -141,6 +141,9 @@ public:
 
     QByteArray fontTable(const char *tagName) const;
 
+    int substituteWithVerticalVariants(quint32* glyphs, const unsigned length) const;
+    bool hasVerticalGlyphs() const;
+
     static QRawFont fromFont(const QFont &font,
                              QFontDatabase::WritingSystem writingSystem = QFontDatabase::Any);
 

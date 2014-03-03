@@ -58,12 +58,16 @@
 #include "qfontengine_p.h"
 #include <QtCore/qthread.h>
 #include <QtCore/qthreadstorage.h>
+#include "private/qrawfontinterface_p.h"
 
 #if !defined(QT_NO_RAWFONT)
 
 QT_BEGIN_NAMESPACE
 
 namespace { class CustomFontFileLoader; }
+
+class QRawFontInterface;
+
 class Q_GUI_EXPORT QRawFontPrivate
 {
 public:
@@ -113,6 +117,9 @@ public:
 
     float sharpness;
     float thickness;
+
+    bool loadPlugin();
+    static QRawFontInterface *pluginInterface;
 };
 
 QT_END_NAMESPACE
