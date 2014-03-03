@@ -63,6 +63,7 @@
 #include "private/qpainter_p.h"
 #include "private/qtextureglyphcache_p.h"
 #include "private/qoutlinemapper_p.h"
+#include "private/qpaintengine_raster_interface_p.h"
 
 #include <stdlib.h>
 
@@ -276,6 +277,8 @@ private:
 /*******************************************************************************
  * QRasterPaintEnginePrivate
  */
+class QRasterPaintEngineInterface;
+
 class QRasterPaintEnginePrivate : public QPaintEngineExPrivate
 {
     Q_DECLARE_PUBLIC(QRasterPaintEngine)
@@ -318,6 +321,9 @@ public:
     QPaintDevice *device;
     QScopedPointer<QOutlineMapper> outlineMapper;
     QScopedPointer<QRasterBuffer>  rasterBuffer;
+
+    bool loadPlugin();
+    static QRasterPaintEngineInterface *pluginInterface;
 
 #if defined (Q_OS_WIN)
     HDC hdc;
