@@ -443,7 +443,16 @@ bool QEvdevKeyboardHandler::loadKeymap(const QString &file)
     qWarning() << "Load keymap" << file;
 #endif
 
-    QFile f(file);
+    QString filename = QString::fromLatin1(":/%1").arg(file);
+    if (!QFile::exists(filename)) {
+        filename = file;
+        if (!QFile::exists(filename)) {
+            qWarning("Could not open keymap file '%s'", qPrintable(file));
+            return false;
+        }
+    }
+
+    QFile f(filename);
 
     if (!f.open(QIODevice::ReadOnly)) {
         qWarning("Could not open keymap file '%s'", qPrintable(file));
