@@ -92,7 +92,7 @@ void QFbScreen::addWindow(QFbWindow *window)
     }
     invalidateRectCache();
     setDirty(mapToDevice(window->geometry()));
-    QWindow *w = topWindow();
+    QWindow *w = window->window();
     QWindowSystemInterface::handleWindowActivated(w);
     topWindowChanged(w);
 }
@@ -115,7 +115,7 @@ void QFbScreen::raise(QFbWindow *window)
     mWindowStack.move(index, 0);
     invalidateRectCache();
     setDirty(mapToDevice(window->geometry()));
-    QWindow *w = topWindow();
+    QWindow *w = window->window();
     QWindowSystemInterface::handleWindowActivated(w);
     topWindowChanged(w);
 }
