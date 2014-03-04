@@ -275,6 +275,12 @@ void QGlyphRun::setPositions(const QVector<QPointF> &positions)
     d->glyphPositionDataSize = positions.size();
 }
 
+void QGlyphRun::setGlyphIsCJKOrSymbol(const QVector<bool> &glyphIsCJKOrSymbol)
+{
+    detach();
+    d->glyphIsCJKOrSymbol = glyphIsCJKOrSymbol;
+}
+
 /*!
     Clears all data in the QGlyphRun object.
 */
@@ -286,6 +292,7 @@ void QGlyphRun::clear()
 
     setPositions(QVector<QPointF>());
     setGlyphIndexes(QVector<quint32>());
+    setGlyphIsCJKOrSymbol(QVector<bool>());
 }
 
 /*!
@@ -302,6 +309,7 @@ void QGlyphRun::setRawData(const quint32 *glyphIndexArray, const QPointF *glyphP
     detach();
     d->glyphIndexes.clear();
     d->glyphPositions.clear();
+    d->glyphIsCJKOrSymbol.clear();
 
     d->glyphIndexData = glyphIndexArray;
     d->glyphPositionData = glyphPositionArray;

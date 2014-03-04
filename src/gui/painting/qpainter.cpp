@@ -5539,6 +5539,7 @@ void QPainter::drawGlyphRun(const QPointF &position, const QGlyphRun &glyphRun, 
 
     const quint32 *glyphIndexes = glyphRun_d->glyphIndexData;
     const QPointF *glyphPositions = glyphRun_d->glyphPositionData;
+    const bool *isCJKOrSymbol = glyphRun_d->glyphIsCJKOrSymbol.constData();
 
     int count = qMin(glyphRun_d->glyphIndexDataSize, glyphRun_d->glyphPositionDataSize);
     QVarLengthArray<QFixedPoint, 128> fixedPointPositions(count);
@@ -5555,13 +5556,13 @@ void QPainter::drawGlyphRun(const QPointF &position, const QGlyphRun &glyphRun, 
         fixedPointPositions[i] = QFixedPoint::fromPointF(processedPosition);
     }
 
-    d->drawGlyphs(glyphIndexes, fixedPointPositions.data(), count, font, glyphRun.overline(),
+    d->drawGlyphs(glyphIndexes, fixedPointPositions.data(), count, font, isCJKOrSymbol, glyphRun.overline(),
                   glyphRun.underline(), glyphRun.strikeOut(), isVertical);
 }
 
 void QPainterPrivate::drawGlyphs(const quint32 *glyphArray, QFixedPoint *positions,
                                  int glyphCount,
-                                 const QRawFont &font, bool overline, bool underline,
+                                 const QRawFont &font, const bool *isCJKOrSymbol, bool overline, bool underline,
                                  bool strikeOut, bool isVertical)
 {
     Q_Q(QPainter);
@@ -5598,6 +5599,7 @@ void QPainterPrivate::drawGlyphs(const quint32 *glyphArray, QFixedPoint *positio
         staticTextItem.font = state->font;
         staticTextItem.setFontEngine(fontEngine);
         staticTextItem.numGlyphs = glyphCount;
+        staticTextItem.isCJKOrSymbol = isCJKOrSymbol;
         staticTextItem.glyphs = reinterpret_cast<glyph_t *>(const_cast<glyph_t *>(glyphArray));
         staticTextItem.glyphPositions = positions;
 

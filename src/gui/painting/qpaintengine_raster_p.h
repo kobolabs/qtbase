@@ -201,7 +201,7 @@ public:
 
     void drawStaticTextItem(QStaticTextItem *textItem, bool isVertical = false);
     virtual bool drawCachedGlyphs(int numGlyphs, const glyph_t *glyphs, const QFixedPoint *positions,
-                                  QFontEngine *fontEngine, bool isVertical = false);
+                                  QFontEngine *fontEngine, const bool *isCJKOrSymbol = 0, bool isVertical = false);
 
     enum ClipType {
         RectClip,

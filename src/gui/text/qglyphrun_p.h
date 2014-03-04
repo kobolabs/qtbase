@@ -85,6 +85,7 @@ public:
       , glyphIndexDataSize(other.glyphIndexDataSize)
       , glyphPositionData(other.glyphPositionData)
       , glyphPositionDataSize(other.glyphPositionDataSize)
+      , glyphIsCJKOrSymbol(other.glyphIsCJKOrSymbol)
     {
     }
 
@@ -100,6 +101,8 @@ public:
 
     const QPointF *glyphPositionData;
     int glyphPositionDataSize;
+
+    QVector<bool> glyphIsCJKOrSymbol;
 
     static QGlyphRunPrivate *get(const QGlyphRun &glyphRun)
     {

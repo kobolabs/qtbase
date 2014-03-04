@@ -827,6 +827,45 @@ bool QRawFontPrivate::loadPlugin()
     return false;
 }
 
+static unsigned int searchOrientation(unsigned int c, const unsigned int *boundaries, size_t length) {
+    unsigned int from = 0;
+    unsigned int to = length - 1;
+
+    // This case should be handle out of this function.
+    Q_ASSERT(c <= boundaries[to]);
+
+    // binary search
+    while(to - from > 1) {
+        unsigned int middle = (from + to) / 2;
+        if (c < boundaries[middle])
+            to = middle;
+        else
+            from = middle;
+    }
+    return from;
+}
+
+bool QRawFont::isUprightOrientation(unsigned int target) {
+    const unsigned int SIDEWAYS = 0;
+    const unsigned int UPRIGHT = 1;
+    unsigned int startsFrom = SIDEWAYS; // U+0000 is SIDEWAYS
+    bool isOddMeansUpright = startsFrom == SIDEWAYS;
+
+    //  Each number of this array is an of the unicode orientation table, and the index is same with the value of codepoint of unicode.
+    // The index means the place where orientation property "switches" UPRIGHT to SIDEWAYS, and vice versa.
+    // ex. If table is [RRUURRRU], it means 0x0000 is sideways, 0x0001 is sideways, 0x0002 is upright, 0x0003 is upright 0x0004 is sideways and so on.
+    //    From this table, boundaries is expressed as [0, 2, 4, 7, 8].
+    static const unsigned int boundaries[] = {
+        #include "orientation.csv"
+    };
+    unsigned int length = sizeof(boundaries) / sizeof(boundaries[0]);
+    unsigned int rotateType = UPRIGHT;
+    if (target < boundaries[length-1])
+        rotateType = searchOrientation(target, boundaries, length) % 2; // odd number is UPRIGHT, even is SIDEWAYS
+
+    return isOddMeansUpright ? rotateType == UPRIGHT : rotateType == SIDEWAYS;
+}
+
 #endif // QT_NO_RAWFONT
 
 QT_END_NAMESPACE

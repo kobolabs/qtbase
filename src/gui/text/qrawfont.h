@@ -147,6 +147,8 @@ public:
     static QRawFont fromFont(const QFont &font,
                              QFontDatabase::WritingSystem writingSystem = QFontDatabase::Any);
 
+    static bool isUprightOrientation(unsigned int target);
+
 private:
     friend class QRawFontPrivate;
     friend class QTextLayout;

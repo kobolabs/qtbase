@@ -79,7 +79,7 @@ class Q_GUI_EXPORT QStaticTextItem
 {
 public:
     QStaticTextItem() : chars(0), numChars(0), useBackendOptimizations(false),
-                        userDataNeedsUpdate(0), m_fontEngine(0), m_userData(0) {}
+                        userDataNeedsUpdate(0), isCJKOrSymbol(0), m_fontEngine(0), m_userData(0) {}
 
     QStaticTextItem(const QStaticTextItem &other)
     {
@@ -102,6 +102,7 @@ public:
         m_userData = 0;
         setUserData(other.userData());
         setFontEngine(other.fontEngine());
+        isCJKOrSymbol = other.isCJKOrSymbol;
     }
 
     ~QStaticTextItem();
@@ -147,6 +148,7 @@ public:
     char userDataNeedsUpdate : 1;                //
                                                  // ================
                                                  // 51 bytes per item
+    const bool *isCJKOrSymbol;
 
 private: // Needs special handling in setters, so private to avoid abuse
     QFontEngine *m_fontEngine;                     // 4 bytes per item
