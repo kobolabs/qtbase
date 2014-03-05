@@ -84,6 +84,8 @@ public:
     QVector<QPointF> positions() const;
     void setPositions(const QVector<QPointF> &positions);
 
+    void setGlyphIsCJKOrSymbol(const QVector<bool> &glyphIsCJKOrSymbol);
+
     void clear();
 
     QGlyphRun &operator=(const QGlyphRun &other);

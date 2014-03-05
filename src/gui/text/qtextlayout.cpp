@@ -2103,7 +2103,7 @@ static void setPenAndDrawBackground(QPainter *p, const QPen &defaultPen, const Q
 #if !defined(QT_NO_RAWFONT)
 static QGlyphRun glyphRunWithInfo(QFontEngine *fontEngine, const QGlyphLayout &glyphLayout,
                                   const QPointF &pos, const QGlyphRun::GlyphRunFlags &flags,
-                                  const QFixed &selectionX, const QFixed &selectionWidth)
+                                  const QFixed &selectionX, const QFixed &selectionWidth, const QTextItemInt& textItem)
 {
     QGlyphRun glyphRun;
 
@@ -2135,8 +2135,14 @@ static QGlyphRun glyphRunWithInfo(QFontEngine *fontEngine, const QGlyphLayout &g
     qreal maxY = 0;
     QVector<quint32> glyphs;
     QVector<QPointF> positions;
+    QVector<bool> isCJKOrSymbolVector;
+    glyphs.reserve(glyphsArray.size());
+    positions.reserve(glyphsArray.size());
+    isCJKOrSymbolVector.reserve(glyphsArray.size());
     for (int i=0; i<glyphsArray.size(); ++i) {
+        bool isCJKOrSymbol = QRawFont::isUprightOrientation(textItem.chars[i].unicode());
         glyphs.append(glyphsArray.at(i) & 0xffffff);
+        isCJKOrSymbolVector.append(isCJKOrSymbol);
 
         QPointF position = positionsArray.at(i).toPointF() + pos;
         positions.append(position);
@@ -2155,6 +2161,7 @@ static QGlyphRun glyphRunWithInfo(QFontEngine *fontEngine, const QGlyphLayout &g
     glyphRun.setPositions(positions);
     glyphRun.setFlags(flags);
     glyphRun.setRawFont(font);
+    glyphRun.setGlyphIsCJKOrSymbol(isCJKOrSymbolVector);
 
     glyphRun.setBoundingRect(QRectF(selectionX.toReal(), minY - font.ascent(),
                                     selectionWidth.toReal(), height));
@@ -2282,6 +2289,17 @@ QList<QGlyphRun> QTextLine::glyphRuns(int from, int length) const
 #endif
                 mainFontEngine = font.d->engineForScript(si.analysis.script);
 
+            unsigned short *logClusters = eng->logClusters(&si);
+            QGlyphLayout glyphs = eng->shapedGlyphs(&si);
+
+            QTextItemInt gf(glyphs.mid(iterator.glyphsStart, iterator.glyphsEnd - iterator.glyphsStart),
+                            &font, eng->layoutData->string.unicode() + iterator.itemStart,
+                            iterator.itemEnd - iterator.itemStart, eng->fontEngine(si));
+            gf.logClusters = logClusters + iterator.itemStart - si.position;
+            gf.width = iterator.itemWidth;
+            gf.justified = line.justified;
+            gf.initWithScriptItem(si);
+
             if (mainFontEngine->type() == QFontEngine::Multi) {
                 QFontEngineMulti *multiFontEngine = static_cast<QFontEngineMulti *>(mainFontEngine);
                 int end = rtl ? glyphLayout.numGlyphs : 0;
@@ -2301,7 +2319,7 @@ QList<QGlyphRun> QTextLine::glyphRuns(int from, int length) const
                         subFlags |= QGlyphRun::SplitLigature;
 
                     glyphRuns.append(glyphRunWithInfo(multiFontEngine->engine(which),
-                                                      subLayout, pos, subFlags, x, width));
+                                                      subLayout, pos, subFlags, x, width, gf));
                     for (int i = 0; i < subLayout.numGlyphs; i++) {
                         pos += QPointF(subLayout.advances_x[i].toReal(),
                                        subLayout.advances_y[i].toReal());
@@ -2322,14 +2340,14 @@ QList<QGlyphRun> QTextLine::glyphRuns(int from, int length) const
                     subFlags |= QGlyphRun::SplitLigature;
 
                 QGlyphRun glyphRun = glyphRunWithInfo(multiFontEngine->engine(which),
-                                                      subLayout, pos, subFlags, x, width);
+                                                      subLayout, pos, subFlags, x, width, gf);
                 if (!glyphRun.isEmpty())
                     glyphRuns.append(glyphRun);
             } else {
                 if (startsInsideLigature || endsInsideLigature)
                     flags |= QGlyphRun::SplitLigature;
                 QGlyphRun glyphRun = glyphRunWithInfo(mainFontEngine, glyphLayout, pos, flags, x,
-                                                      width);
+                                                      width, gf);
                 if (!glyphRun.isEmpty())
                     glyphRuns.append(glyphRun);
             }
