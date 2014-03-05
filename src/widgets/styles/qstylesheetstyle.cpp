@@ -1573,7 +1573,7 @@ QVector<QCss::StyleRule> QStyleSheetStyle::styleRules(const QObject *obj) const
             if (!parser.parse(&ss)) {
                 parser.init(QLatin1String("* {") + styleSheet + QLatin1Char('}'));
                 if (!parser.parse(&ss))
-                   qWarning("Could not parse stylesheet of object %p", o);
+                   qWarning() << "Could not parse stylesheet of object" << o;
             }
             ss.origin = StyleSheetOrigin_Inline;
             styleSheetCaches->styleSheetCache.insert(o, ss);
