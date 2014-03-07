@@ -509,14 +509,7 @@ QPlatformFontDatabase *QWindowsIntegration::fontDatabase() const
 #ifndef Q_OS_WINCE
             d->m_fontDatabase = new QWindowsFontDatabase;
 #else
-            if (isQMLApplication()) {
-                if (QWindowsContext::verboseIntegration) {
-                    qDebug() << "QML application detected, using FreeType rendering";
-                }
-                d->m_fontDatabase = new QWindowsFontDatabaseFT;
-            }
-            else
-                d->m_fontDatabase = new QWindowsFontDatabase;
+            d->m_fontDatabase = new QWindowsFontDatabaseFT;
 #endif
         }
 #endif // QT_NO_FREETYPE
