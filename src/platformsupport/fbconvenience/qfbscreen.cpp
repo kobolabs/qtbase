@@ -266,7 +266,6 @@ QRegion QFbScreen::doRedraw()
 
         for (int i = 0; i < mCachedRects.length(); i++) {
             QRect screenSubRect = mCachedRects[i].first;
-            int layer = mCachedRects[i].second;
             QRegion intersect = rectRegion.intersected(screenSubRect);
 
             if (intersect.isEmpty())
@@ -274,17 +273,17 @@ QRegion QFbScreen::doRedraw()
 
             rectRegion -= intersect;
 
-            layer = mWindowStack.size() - 1;
-
-            for (int layerIndex = layer; layerIndex != -1; layerIndex--) {
+            QRect rect = intersect.boundingRect();
+            for (int layerIndex = mWindowStack.size() - 1; layerIndex != -1; layerIndex--) {
                 if (!mWindowStack[layerIndex]->window()->isVisible())
                     continue;
                 // if (mWindowStack[layerIndex]->isMinimized())
                 //     continue;
                 QRect windowRect = mWindowStack[layerIndex]->geometry().translated(-screenOffset);
+                QRect windowIntersect = rect.translated(-windowRect.left(), -windowRect.top());
                 QTransform transform = map(screen()->angleBetween(nativeOrientation(), orientation()), mGeometry);
                 mCompositePainter->setTransform(transform, false);
-                mCompositePainter->drawImage(windowRect.topLeft(), mWindowStack[layerIndex]->backingStore()->image());
+                mCompositePainter->drawImage(rect, mWindowStack[layerIndex]->backingStore()->image(), windowIntersect);
             }
         }
     }
