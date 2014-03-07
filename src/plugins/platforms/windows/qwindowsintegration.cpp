@@ -506,11 +506,7 @@ QPlatformFontDatabase *QWindowsIntegration::fontDatabase() const
         } else if (d->m_options & QWindowsIntegration::FontDatabaseNative){
             d->m_fontDatabase = new QWindowsFontDatabase;
         } else {
-#ifndef Q_OS_WINCE
-            d->m_fontDatabase = new QWindowsFontDatabase;
-#else
             d->m_fontDatabase = new QWindowsFontDatabaseFT;
-#endif
         }
 #endif // QT_NO_FREETYPE
     }
