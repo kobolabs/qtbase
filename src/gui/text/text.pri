@@ -45,7 +45,8 @@ HEADERS += \
     text/qdistancefield_p.h \
     text/qrawfontinterface_p.h \
     text/qfontengineinterface_p.h \
-    text/qaccessplugininterface_p.h
+    text/qaccessplugininterface_p.h \
+    text/orientation.csv
 
 SOURCES += \
     text/qfont.cpp \
@@ -77,8 +78,7 @@ SOURCES += \
     text/qstatictext.cpp \
     text/qrawfont.cpp \
     text/qglyphrun.cpp \
-    text/qdistancefield.cpp \
-    text/orientation.csv
+    text/qdistancefield.cpp
 
 SOURCES += \
     text/qfont_qpa.cpp \
