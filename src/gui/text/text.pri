@@ -77,7 +77,8 @@ SOURCES += \
     text/qstatictext.cpp \
     text/qrawfont.cpp \
     text/qglyphrun.cpp \
-    text/qdistancefield.cpp
+    text/qdistancefield.cpp \
+    text/orientation.csv
 
 SOURCES += \
     text/qfont_qpa.cpp \
