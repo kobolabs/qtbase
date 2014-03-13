@@ -378,7 +378,7 @@ static const HB_OpenTypeFeature disabled_features[] = {
     // TODO: we need to add certain HB_ShaperFlag for vertical
     // writing mode to enable these vertical writing features:
     { HB_MAKE_TAG('v', 'a', 'l', 't'), PositioningProperties },
-    // { HB_MAKE_TAG('v', 'h', 'a', 'l'), PositioningProperties },
+    { HB_MAKE_TAG('v', 'h', 'a', 'l'), PositioningProperties },
     { HB_MAKE_TAG('v', 'k', 'r', 'n'), PositioningProperties },
     { HB_MAKE_TAG('v', 'p', 'a', 'l'), PositioningProperties },
     {0, 0}
@@ -816,24 +816,6 @@ HB_Bool HB_SelectScript(HB_ShaperItem *shaper_item, const HB_OpenTypeFeature *fe
                 }
                 ++features;
             }
-            if (face->current_flags & HB_ShaperFlag_VerticalWriting) {
-                HB_UInt tag = HB_MAKE_TAG('v', 'r', 't', '2');
-                HB_UShort feature_index;
-                error = HB_GSUB_Select_Feature(face->gsub, tag,
-                                               script_index, 0xffff, &feature_index);
-                if (!error) {
-                    DEBUG("  adding vertical feature %s", tag_to_string(tag));
-                    HB_GSUB_Add_Feature(face->gsub, feature_index, 1);
-                } else {
-                    tag = HB_MAKE_TAG('v', 'e', 'r', 't');
-                    error = HB_GSUB_Select_Feature(face->gsub, tag,
-                                                   script_index, 0xffff, &feature_index);
-                    if (!error) {
-                        DEBUG("  adding vertical feature %s", tag_to_string(tag));
-                        HB_GSUB_Add_Feature(face->gsub, feature_index, 1);
-                    }
-                }
-            }
         }
     }
 
@@ -1036,7 +1018,6 @@ HB_Bool HB_OpenTypePosition(HB_ShaperItem *item, int availableGlyphs, HB_Bool do
         HB_GetGlyphAdvances(item);
         HB_Position positions = face->buffer->positions;
         HB_Fixed *advances = item->advances;
-        bool vertical = face->current_flags & HB_ShaperFlag_VerticalWriting;
 
 //         DEBUG("positioned glyphs:");
         for (unsigned int i = 0; i < face->buffer->in_length; i++) {
@@ -1046,7 +1027,7 @@ HB_Bool HB_OpenTypePosition(HB_ShaperItem *item, int availableGlyphs, HB_Bool do
 //                    (int)(positions[i].x_pos >> 6), (int)(positions[i].y_pos >> 6),
 //                    positions[i].back, positions[i].new_advance);
 
-            HB_Fixed adjustment = vertical ? positions[i].y_advance : positions[i].x_advance;
+            HB_Fixed adjustment = positions[i].x_advance;
 
             if (!(face->current_flags & HB_ShaperFlag_UseDesignMetrics))
                 adjustment = HB_FIXED_ROUND(adjustment);
