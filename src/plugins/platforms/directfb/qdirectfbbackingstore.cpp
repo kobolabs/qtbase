@@ -68,8 +68,9 @@ QPaintDevice *QDirectFbBackingStore::paintDevice()
     return m_pixmap.data();
 }
 
-void QDirectFbBackingStore::flush(QWindow *, const QRegion &region, const QPoint &offset)
+void QDirectFbBackingStore::flush(QWindow *, const QRegion &region, const QPoint &offset, const QList<QPair<QRect,uint> > &flags)
 {
+    Q_UNUSED(flags)
     m_pmdata->blittable()->unlock();
 
     QVector<QRect> rects = region.rects();

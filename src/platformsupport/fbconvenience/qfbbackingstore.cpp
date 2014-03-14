@@ -61,12 +61,13 @@ QFbBackingStore::~QFbBackingStore()
 {
 }
 
-void QFbBackingStore::flush(QWindow *window, const QRegion &region, const QPoint &offset)
+void QFbBackingStore::flush(QWindow *window, const QRegion &region, const QPoint &offset, const QList<QPair<QRect,uint> > &flags)
 {
     Q_UNUSED(window);
     Q_UNUSED(offset);
+    Q_UNUSED(flags);
 
-    (static_cast<QFbWindow *>(window->handle()))->repaint(region);
+    (static_cast<QFbWindow *>(window->handle()))->repaint(region, flags);
 }
 
 void QFbBackingStore::resize(const QSize &size, const QRegion &staticContents)

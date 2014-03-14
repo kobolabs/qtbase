@@ -57,7 +57,7 @@ public:
     ~QQnxRasterBackingStore();
 
     QPaintDevice *paintDevice();
-    void flush(QWindow *window, const QRegion &region, const QPoint &offset);
+    void flush(QWindow *window, const QRegion &region, const QPoint &offset, const QList<QPair<QRect,uint> > &flags);
     void resize(const QSize &size, const QRegion &staticContents);
     bool scroll(const QRegion &area, int dx, int dy);
     void beginPaint(const QRegion &region);

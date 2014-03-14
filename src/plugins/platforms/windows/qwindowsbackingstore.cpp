@@ -78,9 +78,10 @@ QPaintDevice *QWindowsBackingStore::paintDevice()
 }
 
 void QWindowsBackingStore::flush(QWindow *window, const QRegion &region,
-                                        const QPoint &offset)
+                                        const QPoint &offset, const QList<QPair<QRect,uint> > &flags)
 {
     Q_ASSERT(window);
+    Q_UNUSED(flags);
 
     const QRect br = region.boundingRect();
     if (QWindowsContext::verboseBackingStore > 1)

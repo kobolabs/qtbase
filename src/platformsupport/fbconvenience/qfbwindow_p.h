@@ -72,7 +72,7 @@ public:
 
     QFbScreen *platformScreen() const;
 
-    virtual void repaint(const QRegion&);
+    virtual void repaint(const QRegion&, const QList<QPair<QRect,uint> >&);
 
 protected:
     friend class QFbScreen;

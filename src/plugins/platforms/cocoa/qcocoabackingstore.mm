@@ -84,8 +84,9 @@ QPaintDevice *QCocoaBackingStore::paintDevice()
     return &m_qImage;
 }
 
-void QCocoaBackingStore::flush(QWindow *win, const QRegion &region, const QPoint &offset)
+void QCocoaBackingStore::flush(QWindow *win, const QRegion &region, const QPoint &offset, const QList<QPair<QRect,uint> > &flags)
 {
+    Q_UNUSED(flags)
     // A flush means that qImage has changed. Since CGImages are seen as
     // immutable, CoreImage fails to pick up this change for m_cgImage
     // (since it usually cached), so we must recreate it. We await doing this

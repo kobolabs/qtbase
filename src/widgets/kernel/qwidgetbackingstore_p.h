@@ -97,6 +97,7 @@ public:
 private:
     QWidget *tlw;
     QRegion dirtyOnScreen; // needsFlush
+    QList<QPair<QRect,uint> > dirtyWidgetFlags;
     QRegion dirty; // needsRepaint
     QRegion dirtyFromPreviousSync;
     QVector<QWidget *> dirtyWidgets;

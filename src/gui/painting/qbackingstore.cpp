@@ -93,7 +93,7 @@ public:
 
     Note that the \a offset parameter is currently unused.
 */
-void QBackingStore::flush(const QRegion &region, QWindow *win, const QPoint &offset)
+void QBackingStore::flush(const QRegion &region, QWindow *win, const QPoint &offset, const QList<QPair<QRect,uint> > &flags)
 {
     if (!win)
         win = window();
@@ -110,7 +110,7 @@ void QBackingStore::flush(const QRegion &region, QWindow *win, const QPoint &off
     }
 #endif
 
-    d_ptr->platformBackingStore->flush(win, region, offset);
+    d_ptr->platformBackingStore->flush(win, region, offset, flags);
 }
 
 /*!

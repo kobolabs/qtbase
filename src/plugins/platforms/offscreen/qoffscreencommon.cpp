@@ -143,9 +143,10 @@ QPaintDevice *QOffscreenBackingStore::paintDevice()
     return &m_image;
 }
 
-void QOffscreenBackingStore::flush(QWindow *window, const QRegion &region, const QPoint &offset)
+void QOffscreenBackingStore::flush(QWindow *window, const QRegion &region, const QPoint &offset, const QList<QPair<QRect,uint> > &flags)
 {
     Q_UNUSED(region);
+    Q_UNUSED(flags);
 
     if (m_image.size().isEmpty())
         return;

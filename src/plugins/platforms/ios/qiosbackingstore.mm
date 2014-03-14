@@ -90,10 +90,11 @@ QPaintDevice *QIOSBackingStore::paintDevice()
     return m_device;
 }
 
-void QIOSBackingStore::flush(QWindow *window, const QRegion &region, const QPoint &offset)
+void QIOSBackingStore::flush(QWindow *window, const QRegion &region, const QPoint &offset, const QList<QPair<QRect,uint> > &flags)
 {
     Q_UNUSED(region);
     Q_UNUSED(offset);
+    Q_UNUSED(flags);
 
     if (window != this->window()) {
         // We skip flushing raster-based child windows, to avoid the extra cost of copying from the

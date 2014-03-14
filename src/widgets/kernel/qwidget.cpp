@@ -5138,7 +5138,7 @@ void QWidgetPrivate::drawWidget(QPaintDevice *pdev, const QRegion &rgn, const QP
             QCoreApplication::sendSpontaneousEvent(q, &e);
 
             // Native widgets need to be marked dirty on screen so painting will be done in correct context
-            if (backingStore && !onScreen && !asRoot && (q->internalWinId() || !q->nativeParentWidget()->isWindow()))
+            if (backingStore && !onScreen && !asRoot && (high_attributes[3] || q->internalWinId() || !q->nativeParentWidget()->isWindow()))
                 backingStore->markDirtyOnScreen(toBePainted, q, offset);
 
             //restore

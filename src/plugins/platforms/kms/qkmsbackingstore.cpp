@@ -79,10 +79,11 @@ void QKmsBackingStore::beginPaint(const QRegion &rgn)
     m_dirty |= rgn;
 }
 
-void QKmsBackingStore::flush(QWindow *window, const QRegion &region, const QPoint &offset)
+void QKmsBackingStore::flush(QWindow *window, const QRegion &region, const QPoint &offset, const QList<QPair<QRect,uint> > &flags)
 {
     Q_UNUSED(region)
     Q_UNUSED(offset)
+    Q_UNUSED(flags)
 
     m_context->makeCurrent(window);
 
