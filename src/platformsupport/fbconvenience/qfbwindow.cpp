@@ -123,18 +123,21 @@ void QFbWindow::lower()
 void QFbWindow::repaint(const QRegion &region)
 {
     QRect currentGeometry = geometry();
-
-    QRect dirtyClient = region.boundingRect();
-    QRect dirtyRegion(currentGeometry.left() + dirtyClient.left(),
-                      currentGeometry.top() + dirtyClient.top(),
-                      dirtyClient.width(),
-                      dirtyClient.height());
     QRect mOldGeometryLocal = mOldGeometry;
     mOldGeometry = currentGeometry;
     // If this is a move, redraw the previous location
     if (mOldGeometryLocal != currentGeometry)
         platformScreen()->setDirty(platformScreen()->mapToDevice(mOldGeometryLocal));
-    platformScreen()->setDirty(platformScreen()->mapToDevice(dirtyRegion));
+
+    const QVector<QRect> dirtyRects = region.rects();
+    for (int i = 0; i < dirtyRects.size(); ++i) {
+        const QRect dirtyClient = dirtyRects[i];
+        QRect dirtyRegion(currentGeometry.left() + dirtyClient.left(),
+                          currentGeometry.top() + dirtyClient.top(),
+                          dirtyClient.width(),
+                          dirtyClient.height());
+        platformScreen()->setDirty(platformScreen()->mapToDevice(dirtyRegion));
+     }
 }
 
 QT_END_NAMESPACE
