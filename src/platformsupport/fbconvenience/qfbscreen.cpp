@@ -284,6 +284,7 @@ QRegion QFbScreen::doRedraw()
                 QTransform transform = map(screen()->angleBetween(nativeOrientation(), orientation()), mGeometry);
                 mCompositePainter->setTransform(transform, false);
                 mCompositePainter->drawImage(rect, mWindowStack[layerIndex]->backingStore()->image(), windowIntersect);
+                touchedRegion += rect;
             }
         }
     }
@@ -293,13 +294,12 @@ QRegion QFbScreen::doRedraw()
         cursorRect = mCursor->drawCursor(*mCompositePainter);
         touchedRegion += cursorRect;
     }
-    touchedRegion += mRepaintRegion;
+
     mRepaintRegion = QRegion();
 
 
 
 //    qDebug() << "QFbScreen::doRedraw"  << mWindowStack.size() << mScreenImage->size() << touchedRegion;
-
 
     return touchedRegion;
 }
