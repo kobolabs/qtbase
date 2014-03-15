@@ -106,8 +106,12 @@ static inline void qt_flush(QWidget *widget, const QRegion &region, QBackingStor
 
     if (widget != tlw)
         backingStore->flush(region, widget->windowHandle(), tlwOffset + widget->mapTo(tlw, QPoint()), dirtyWidgetFlags);
-    else
-        backingStore->flush(region, widget->windowHandle(), tlwOffset, dirtyWidgetFlags);
+    else {
+        QWidgetPrivate *priv = qt_widget_private(widget);
+        QList<QPair<QRect,uint> > flags(dirtyWidgetFlags);
+        flags += QPair<QRect,uint>(region.boundingRect(), priv->high_attributes[3]);
+        backingStore->flush(region, widget->windowHandle(), tlwOffset, flags);
+    }
 }
 
 #ifndef QT_NO_PAINT_DEBUG
