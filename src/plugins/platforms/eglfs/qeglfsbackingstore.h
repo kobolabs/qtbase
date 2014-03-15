@@ -62,7 +62,7 @@ public:
 
     void beginPaint(const QRegion &);
 
-    void flush(QWindow *window, const QRegion &region, const QPoint &offset);
+    void flush(QWindow *window, const QRegion &region, const QPoint &offset, const QList<QPair<QRect,uint> > &flags);
     void resize(const QSize &size, const QRegion &staticContents);
 
     uint texture() const { return m_texture; }

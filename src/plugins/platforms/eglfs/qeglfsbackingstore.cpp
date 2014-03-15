@@ -102,11 +102,12 @@ void QEglFSBackingStore::updateTexture()
     }
 }
 
-void QEglFSBackingStore::flush(QWindow *window, const QRegion &region, const QPoint &offset)
+void QEglFSBackingStore::flush(QWindow *window, const QRegion &region, const QPoint &offset, const QList<QPair<QRect,uint> > &flags)
 {
     Q_UNUSED(window);
     Q_UNUSED(region);
     Q_UNUSED(offset);
+    Q_UNUSED(flags);
 
 #ifdef QEGL_EXTRA_DEBUG
     qWarning("QEglBackingStore::flush %p", window);

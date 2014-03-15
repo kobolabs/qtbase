@@ -72,7 +72,7 @@ extern QRegion qt_dirtyRegion(QWidget *);
  * \a region is the region to be updated in \a widget coordinates.
  */
 static inline void qt_flush(QWidget *widget, const QRegion &region, QBackingStore *backingStore,
-                            QWidget *tlw, const QPoint &tlwOffset)
+                            QWidget *tlw, const QPoint &tlwOffset, const QList<QPair<QRect,uint> > &dirtyWidgetFlags = QList<QPair<QRect,uint> >())
 {
     Q_ASSERT(widget);
     Q_ASSERT(!region.isEmpty());
@@ -105,9 +105,9 @@ static inline void qt_flush(QWidget *widget, const QRegion &region, QBackingStor
         return;
 
     if (widget != tlw)
-        backingStore->flush(region, widget->windowHandle(), tlwOffset + widget->mapTo(tlw, QPoint()));
+        backingStore->flush(region, widget->windowHandle(), tlwOffset + widget->mapTo(tlw, QPoint()), dirtyWidgetFlags);
     else
-        backingStore->flush(region, widget->windowHandle(), tlwOffset);
+        backingStore->flush(region, widget->windowHandle(), tlwOffset, dirtyWidgetFlags);
 }
 
 #ifndef QT_NO_PAINT_DEBUG
@@ -640,8 +640,13 @@ void QWidgetBackingStore::markDirtyOnScreen(const QRegion &region, QWidget *widg
         return;
     }
 
+    QWidgetPrivate *wp = qt_widget_private(widget);
+    if (wp->high_attributes[3] != 0) {
+        dirtyWidgetFlags += QPair<QRect, uint>(region.translated(topLevelOffset).boundingRect(), wp->high_attributes[3]);
+        return;
+
     // Alien widgets.
-    if (!widget->internalWinId() && !widget->isWindow()) {
+    } else if (!widget->internalWinId() && !widget->isWindow()) {
         QWidget *nativeParent = widget->nativeParentWidget();        // Alien widgets with the top-level as the native parent (common case).
         if (nativeParent == tlw) {
             if (!widget->testAttribute(Qt::WA_WState_InPaintEvent))
@@ -1093,8 +1098,9 @@ void QWidgetBackingStore::flush(QWidget *widget)
 {
     if (!dirtyOnScreen.isEmpty()) {
         QWidget *target = widget ? widget : tlw;
-        qt_flush(target, dirtyOnScreen, store, tlw, tlwOffset);
+        qt_flush(target, dirtyOnScreen, store, tlw, tlwOffset, dirtyWidgetFlags);
         dirtyOnScreen = QRegion();
+        dirtyWidgetFlags.clear();
     }
 
     if (!dirtyOnScreenWidgets || dirtyOnScreenWidgets->isEmpty())

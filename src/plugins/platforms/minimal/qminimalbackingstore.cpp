@@ -69,11 +69,12 @@ QPaintDevice *QMinimalBackingStore::paintDevice()
     return &mImage;
 }
 
-void QMinimalBackingStore::flush(QWindow *window, const QRegion &region, const QPoint &offset)
+void QMinimalBackingStore::flush(QWindow *window, const QRegion &region, const QPoint &offset, const QList<QPair<QRect,uint> > &flags)
 {
     Q_UNUSED(window);
     Q_UNUSED(region);
     Q_UNUSED(offset);
+    Q_UNUSED(flags);
 
     if (mDebug) {
         static int c = 0;

@@ -177,8 +177,9 @@ QRect QFbScreen::mapToDevice(const QRect &rect) const
     return transform.mapRect(rect);
 }
 
-void QFbScreen::setDirty(const QRect &rect)
+void QFbScreen::setDirty(const QRect &rect, uint flags)
 {
+    Q_UNUSED(flags);
     QRect intersection = rect.intersected(mGeometry);
     QPoint screenOffset = mGeometry.topLeft();
     mRepaintRegion += intersection.translated(-screenOffset);    // global to local translation

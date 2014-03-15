@@ -493,6 +493,23 @@ public:
         WA_X11DoNotAcceptFocus = 126,
         WA_MacNoShadow = 127,
 
+        WA_KoboEpdScreenFlush = 128,
+        WA_KoboEpdUpdateModeHeuristic,
+        WA_KoboEpdUpdateModePartial,
+        WA_KoboEpdUpdateModeFull,
+        WA_KoboEpdWfModeAutomatic,
+        WA_KoboEpdWfModeDirect,
+        WA_KoboEpdWfModeGC16,
+        WA_KoboEpdWfModeGC4,
+        WA_KoboEpdWfModeA2,
+        WA_KoboEpdWfModeGL16,
+        WA_KoboEpdWfModeGLR32,
+        WA_KoboEpdWfModeGLD16,
+
+        WA_KoboEpdFlagInvert,
+        WA_KoboEpdFlagMonochrome,
+        WA_KoboEpdFlagUseReaglD,
+
         // Add new attributes before this line
         WA_AttributeCount
     };

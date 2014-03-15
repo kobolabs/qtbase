@@ -120,8 +120,9 @@ void QFbWindow::lower()
     platformScreen()->lower(this);
 }
 
-void QFbWindow::repaint(const QRegion &region)
+void QFbWindow::repaint(const QRegion &region, const QList<QPair<QRect,uint> > &flags)
 {
+    Q_UNUSED(flags);
     QRect currentGeometry = geometry();
     QRect mOldGeometryLocal = mOldGeometry;
     mOldGeometry = currentGeometry;

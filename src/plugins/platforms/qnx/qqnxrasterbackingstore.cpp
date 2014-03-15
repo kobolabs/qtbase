@@ -76,9 +76,10 @@ QPaintDevice *QQnxRasterBackingStore::paintDevice()
     return 0;
 }
 
-void QQnxRasterBackingStore::flush(QWindow *window, const QRegion &region, const QPoint &offset)
+void QQnxRasterBackingStore::flush(QWindow *window, const QRegion &region, const QPoint &offset, const QList<QPair<QRect,uint> > &flags)
 {
     Q_UNUSED(offset)
+    Q_UNUSED(flags)
 
     qRasterBackingStoreDebug() << Q_FUNC_INFO << "w =" << this->window();
 

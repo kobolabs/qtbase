@@ -52,11 +52,12 @@ QPaintDevice * QOpenWFDBackingStore::paintDevice()
 }
 
 //we don't support flush yet :)
-void QOpenWFDBackingStore::flush(QWindow *window, const QRegion &region, const QPoint &offset)
+void QOpenWFDBackingStore::flush(QWindow *window, const QRegion &region, const QPoint &offset, const QList<QPair<QRect,uint> > &flags)
 {
     Q_UNUSED(window);
     Q_UNUSED(region);
     Q_UNUSED(offset);
+    Q_UNUSED(flags);
 }
 
 void QOpenWFDBackingStore::resize(const QSize &size, const QRegion &staticContents)
