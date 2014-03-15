@@ -80,6 +80,7 @@ public:
     void addBackingStore(QFbBackingStore *bs) {mBackingStores << bs;}
 
     void scheduleUpdate();
+    QRect mapToDevice(const QRect &rect) const;
 
 public slots:
     virtual void setDirty(const QRect &rect, uint flags = 0);
@@ -108,8 +109,6 @@ protected:
 private:
     void invalidateRectCache() { mIsUpToDate = false; }
     void generateRects();
-
-    QRect mapToDevice(const QRect &rect) const;
 
     QList<QPair<QRect, int> > mCachedRects;
     QList<QFbBackingStore*> mBackingStores;
