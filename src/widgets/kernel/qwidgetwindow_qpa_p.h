@@ -66,6 +66,7 @@ public:
 #endif
 
     QObject *focusObject() const;
+    uint dirtyFlags() const;
 protected:
     bool event(QEvent *);
 
