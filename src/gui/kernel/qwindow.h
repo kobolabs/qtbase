@@ -162,6 +162,7 @@ public:
     void setFlags(Qt::WindowFlags flags);
     Qt::WindowFlags flags() const;
     Qt::WindowType type() const;
+    virtual uint dirtyFlags() const { return 0; }
 
     QString title() const;
 

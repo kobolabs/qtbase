@@ -816,4 +816,9 @@ void QWidgetWindow::updateObjectName()
     setObjectName(name);
 }
 
+uint QWidgetWindow::dirtyFlags() const
+{
+    return qt_widget_private(widget())->high_attributes[3];
+}
+
 QT_END_NAMESPACE
