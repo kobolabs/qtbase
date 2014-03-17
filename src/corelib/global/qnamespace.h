@@ -509,6 +509,7 @@ public:
         WA_KoboEpdFlagInvert,
         WA_KoboEpdFlagMonochrome,
         WA_KoboEpdFlagUseReaglD,
+        WA_KoboEpdFlagExpandToScreenGeometry,
 
         // Add new attributes before this line
         WA_AttributeCount
