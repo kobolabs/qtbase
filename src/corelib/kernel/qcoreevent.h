@@ -281,6 +281,8 @@ public:
         // 512 reserved for Qt Jambi's MetaCall event
         // 513 reserved for Qt Jambi's DeleteOnMainThread event
 
+        Painted = 425,
+
         User = 1000,                            // first user event id
         MaxUser = 65535                         // last user event id
     };

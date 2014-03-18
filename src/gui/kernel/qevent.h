@@ -381,6 +381,23 @@ protected:
     bool m_erased;
 };
 
+class Q_GUI_EXPORT QPaintedEvent : public QEvent
+{
+public:
+    explicit QPaintedEvent(const QRegion& paintRegion);
+    explicit QPaintedEvent(const QRect &paintRect);
+    ~QPaintedEvent();
+
+    inline const QRect &rect() const { return m_rect; }
+    inline const QRegion &region() const { return m_region; }
+
+protected:
+    friend class QApplication;
+    friend class QCoreApplication;
+    QRect m_rect;
+    QRegion m_region;
+};
+
 class Q_GUI_EXPORT QMoveEvent : public QEvent
 {
 public:

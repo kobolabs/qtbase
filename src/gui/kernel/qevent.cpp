@@ -1195,6 +1195,19 @@ QPaintEvent::~QPaintEvent()
 {
 }
 
+QPaintedEvent::QPaintedEvent(const QRegion& paintRegion)
+    : QEvent(Painted), m_rect(paintRegion.boundingRect()), m_region(paintRegion)
+{}
+
+QPaintedEvent::QPaintedEvent(const QRect &paintRect)
+    : QEvent(Paint), m_rect(paintRect),m_region(paintRect)
+{}
+
+QPaintedEvent::~QPaintedEvent()
+{
+}
+
+
 /*!
     \fn const QRect &QPaintEvent::rect() const
 
@@ -3345,6 +3358,9 @@ QDebug operator<<(QDebug dbg, const QEvent *e) {
         break;
     case QEvent::Paint:
         n = "Paint";
+        break;
+    case QEvent::Painted:
+        n = "Painted";
         break;
     case QEvent::Move:
         n = "Move";
