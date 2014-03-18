@@ -180,7 +180,7 @@ public:
     virtual void doKerning(QGlyphLayout *, ShaperFlags) const;
 
     virtual void addGlyphsToPath(glyph_t *glyphs, QFixedPoint *positions, int nglyphs,
-                                 QPainterPath *path, QTextItem::RenderFlags flags, bool isVertical = false);
+                                 QPainterPath *path, QTextItem::RenderFlags flags, const bool *isCJKOrSymbol = 0, bool isVertical = false);
 
     void getGlyphPositions(const QGlyphLayout &glyphs, const QTransform &matrix, QTextItem::RenderFlags flags,
                            QVarLengthArray<glyph_t> &glyphs_out, QVarLengthArray<QFixedPoint> &positions);

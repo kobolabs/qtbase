@@ -91,7 +91,7 @@ public:
 
     virtual void addOutlineToPath(qreal x, qreal y, const QGlyphLayout &glyphs, QPainterPath *path, QTextItem::RenderFlags flags);
     virtual void addGlyphsToPath(glyph_t *glyphs, QFixedPoint *positions, int nglyphs,
-                         QPainterPath *path, QTextItem::RenderFlags flags);
+                         QPainterPath *path, QTextItem::RenderFlags flags, const bool *isCJKOrSymbol = 0, bool isVertical = false);
 
     HGDIOBJ selectDesignFont() const;
 
