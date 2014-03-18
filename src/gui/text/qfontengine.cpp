@@ -80,7 +80,7 @@ static inline bool qtransform_equals_no_translate(const QTransform &a, const QTr
 // Harfbuzz helper functions
 
 #ifdef QT_ENABLE_HARFBUZZ_NG
-bool useHarfbuzzNG = qgetenv("QT_HARFBUZZ") != "old";
+bool useHarfbuzzNG = false; //qgetenv("QT_HARFBUZZ") != "old";
 #endif
 
 Q_STATIC_ASSERT(sizeof(HB_Glyph) == sizeof(glyph_t));
