@@ -5167,6 +5167,10 @@ void QWidgetPrivate::drawWidget(QPaintDevice *pdev, const QRegion &rgn, const QP
             if (flushed)
                 QWidgetBackingStore::unflushPaint(q, toBePainted);
 #endif
+
+            QPaintedEvent painted(toBePainted);
+            QCoreApplication::sendSpontaneousEvent(q, &painted);
+
         } else if (q->isWindow()) {
             QPaintEngine *engine = pdev->paintEngine();
             if (engine) {
