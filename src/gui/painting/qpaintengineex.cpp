@@ -1059,7 +1059,7 @@ void QPaintEngineEx::drawStaticTextItem(QStaticTextItem *staticTextItem, bool is
 
     QFontEngine *fontEngine = staticTextItem->fontEngine();
     fontEngine->addGlyphsToPath(staticTextItem->glyphs, staticTextItem->glyphPositions,
-                                staticTextItem->numGlyphs, &path, 0, isVertical);
+                                staticTextItem->numGlyphs, &path, 0, staticTextItem->isCJKOrSymbol, isVertical);
     if (!path.isEmpty()) {
         QPainterState *s = state();
         QPainter::RenderHints oldHints = s->renderHints;

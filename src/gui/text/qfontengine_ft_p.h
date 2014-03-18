@@ -247,7 +247,7 @@ private:
     virtual bool canRender(const QChar *string, int len);
 
     virtual void addGlyphsToPath(glyph_t *glyphs, QFixedPoint *positions, int nglyphs,
-                         QPainterPath *path, QTextItem::RenderFlags flags, bool isVertical);
+                         QPainterPath *path, QTextItem::RenderFlags flags, const bool *isCJKOrSymbol = 0, bool isVertical = false);
     virtual void addOutlineToPath(qreal x, qreal y, const QGlyphLayout &glyphs,
                           QPainterPath *path, QTextItem::RenderFlags flags);
 

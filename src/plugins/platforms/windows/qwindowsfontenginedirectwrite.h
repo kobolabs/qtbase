@@ -78,7 +78,7 @@ public:
     void recalcAdvances(QGlyphLayout *glyphs, ShaperFlags) const;
 
     void addGlyphsToPath(glyph_t *glyphs, QFixedPoint *positions, int nglyphs,
-                         QPainterPath *path, QTextItem::RenderFlags flags);
+                         QPainterPath *path, QTextItem::RenderFlags flags, const bool *isCJKOrSymbol = 0, bool isVertical = false);
 
     glyph_metrics_t boundingBox(const QGlyphLayout &glyphs);
     glyph_metrics_t boundingBox(glyph_t g);

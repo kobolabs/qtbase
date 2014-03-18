@@ -382,8 +382,10 @@ void QWindowsFontEngineDirectWrite::recalcAdvances(QGlyphLayout *glyphs, QFontEn
 }
 
 void QWindowsFontEngineDirectWrite::addGlyphsToPath(glyph_t *glyphs, QFixedPoint *positions, int nglyphs,
-                                             QPainterPath *path, QTextItem::RenderFlags flags)
+                                             QPainterPath *path, QTextItem::RenderFlags flags, const bool *isCJKOrSymbol, bool isVertical)
 {
+    Q_UNUSED(isVertical);
+    Q_UNUSED(isCJKOrSymbol);
     QVarLengthArray<UINT16> glyphIndices(nglyphs);
     QVarLengthArray<DWRITE_GLYPH_OFFSET> glyphOffsets(nglyphs);
     QVarLengthArray<FLOAT> glyphAdvances(nglyphs);

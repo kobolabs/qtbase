@@ -937,8 +937,10 @@ static bool addGlyphToPath(glyph_t glyph, const QFixedPoint &position, HDC hdc,
 }
 
 void QWindowsFontEngine::addGlyphsToPath(glyph_t *glyphs, QFixedPoint *positions, int nglyphs,
-                                     QPainterPath *path, QTextItem::RenderFlags)
+                                     QPainterPath *path, QTextItem::RenderFlags, const bool *isCJKOrSymbol, bool isVertical)
 {
+    Q_UNUSED(isVertical);
+    Q_UNUSED(isCJKOrSymbol);
     LOGFONT lf = m_logfont;
     // The sign must be negative here to make sure we match against character height instead of
     // hinted cell height. This ensures that we get linear matching, and we need this for
