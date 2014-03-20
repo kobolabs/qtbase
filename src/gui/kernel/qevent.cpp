@@ -1200,7 +1200,7 @@ QPaintedEvent::QPaintedEvent(const QRegion& paintRegion)
 {}
 
 QPaintedEvent::QPaintedEvent(const QRect &paintRect)
-    : QEvent(Paint), m_rect(paintRect),m_region(paintRect)
+    : QEvent(Painted), m_rect(paintRect),m_region(paintRect)
 {}
 
 QPaintedEvent::~QPaintedEvent()
