@@ -179,6 +179,7 @@ QFontEngine *QBasicFontDatabase::fontEngine(const QByteArray &fontData, qreal pi
 {
     QFontDef fontDef;
     fontDef.pixelSize = pixelSize;
+    fontDef.hintingPreference = hintingPreference;
 
     QFontEngineFTRawData *fe = new QFontEngineFTRawData(fontDef);
     if (!fe->initFromData(fontData)) {
@@ -187,21 +188,6 @@ QFontEngine *QBasicFontDatabase::fontEngine(const QByteArray &fontData, qreal pi
     }
 
     fe->updateFamilyNameAndStyle();
-
-    switch (hintingPreference) {
-    case QFont::PreferNoHinting:
-        fe->setDefaultHintStyle(QFontEngineFT::HintNone);
-        break;
-    case QFont::PreferFullHinting:
-        fe->setDefaultHintStyle(QFontEngineFT::HintFull);
-        break;
-    case QFont::PreferVerticalHinting:
-        fe->setDefaultHintStyle(QFontEngineFT::HintLight);
-        break;
-    default:
-        // Leave it as it is
-        break;
-    }
 
     return fe;
 }
