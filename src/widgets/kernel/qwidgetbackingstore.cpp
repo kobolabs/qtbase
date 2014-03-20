@@ -104,6 +104,9 @@ static inline void qt_flush(QWidget *widget, const QRegion &region, QBackingStor
     if (tlw->testAttribute(Qt::WA_DontShowOnScreen) || widget->testAttribute(Qt::WA_DontShowOnScreen))
         return;
 
+    if (tlw->testAttribute(Qt::WA_KoboDontFlushBackingStore) || widget->testAttribute(Qt::WA_KoboDontFlushBackingStore))
+        return;
+
     if (widget != tlw)
         backingStore->flush(region, widget->windowHandle(), tlwOffset + widget->mapTo(tlw, QPoint()), dirtyWidgetFlags);
     else {

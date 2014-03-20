@@ -512,6 +512,8 @@ public:
         WA_KoboEpdFlagExpandToScreenGeometry,
         WA_KoboEpdFlagCanCollide,
 
+        WA_KoboDontFlushBackingStore,
+
         // Add new attributes before this line
         WA_AttributeCount
     };
