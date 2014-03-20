@@ -439,11 +439,14 @@ void QCoreTextFontEngine::addGlyphsToPath(glyph_t *glyphs, QFixedPoint *position
     if (synthesisFlags & QFontEngine::SynthesizedItalic)
         cgMatrix = CGAffineTransformConcat(cgMatrix, CGAffineTransformMake(1, 0, -SYNTHETIC_ITALIC_SKEW, 1, 0, 0));
 
-    CGAffineTransform cgMatrixRotate = CGAffineTransformRotate(cgMatrix, 3.14/2);
+    QVarLengthArray<CGSize> translations(nGlyphs);
+    CTFontGetVerticalTranslationsForGlyphs(ctfont, (CGGlyph*)glyphs, translations.data(), nGlyphs);
     for (int i = 0; i < nGlyphs; ++i) {
         QCFType<CGPathRef> cgpath;
         if (isCJKOrSymbol && isCJKOrSymbol[i] && isVertical) {
-            cgpath = CTFontCreatePathForGlyph(ctfont, glyphs[i], &cgMatrixRotate);
+            CGAffineTransform cgMatrixRotate = CGAffineTransformRotate(cgMatrix, M_PI_2);
+            CGAffineTransform cgMatrixRotateAndTranslate = CGAffineTransformTranslate(cgMatrixRotate, 0, translations[i].height);
+            cgpath = CTFontCreatePathForGlyph(ctfont, glyphs[i], &cgMatrixRotateAndTranslate);
         } else {
             cgpath = CTFontCreatePathForGlyph(ctfont, glyphs[i], &cgMatrix);
         }
