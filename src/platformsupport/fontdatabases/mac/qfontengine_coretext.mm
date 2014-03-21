@@ -445,7 +445,7 @@ void QCoreTextFontEngine::addGlyphsToPath(glyph_t *glyphs, QFixedPoint *position
         QCFType<CGPathRef> cgpath;
         if (isCJKOrSymbol && isCJKOrSymbol[i] && isVertical) {
             CGAffineTransform cgMatrixRotate = CGAffineTransformRotate(cgMatrix, M_PI_2);
-            CGAffineTransform cgMatrixRotateAndTranslate = CGAffineTransformTranslate(cgMatrixRotate, 0, translations[i].height);
+            CGAffineTransform cgMatrixRotateAndTranslate = CGAffineTransformTranslate(cgMatrixRotate, -descent().toReal(), translations[i].height);
             cgpath = CTFontCreatePathForGlyph(ctfont, glyphs[i], &cgMatrixRotateAndTranslate);
         } else {
             cgpath = CTFontCreatePathForGlyph(ctfont, glyphs[i], &cgMatrix);
