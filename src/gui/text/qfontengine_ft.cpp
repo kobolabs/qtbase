@@ -1971,8 +1971,13 @@ QImage *QFontEngineFT::lockedAlphaMapForGlyph(glyph_t glyphIndex, QFixed subPixe
         pitch = 0;
     };
 
-    if (offset != 0)
-        *offset = isVertical ? QPoint(glyph->x, glyph->verticalY) : QPoint(glyph->x, -glyph->y);
+    if (offset != 0) {
+        if (isVertical) {
+            *offset = QPoint(glyph->x - qRound(descent()), glyph->verticalY - qRound(descent()));
+        } else {
+            *offset = QPoint(glyph->x, -glyph->y);
+        }
+    }
 
     currentlyLockedAlphaMap = QImage(glyph->data, glyph->width, glyph->height, pitch, format);
     if (!glyphGuard.isNull())
