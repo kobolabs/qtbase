@@ -71,8 +71,8 @@
 
 QT_BEGIN_NAMESPACE
 
-static unsigned char ORDERED_DITHER_MATRIX3x3[] = {
-  3,7,4,6,1,9,2,8,5
+static unsigned char ORDERED_DITHER_MATRIX3x3[3][3] = {
+  { 3,7,4 }, { 6,1,9 }, { 2,8,5 }
 };
 
 #define MASK(src, a) src = BYTE_MUL(src, a)
@@ -356,7 +356,7 @@ void ditherAndSharpenLine(T *buffer, int row, int length, bool sharpen)
     int idxR = row % 0x3;
     for (int col = 1; col < length - 1; ++col) {
         int idxC = col % 0x3;
-        uchar threshold = ORDERED_DITHER_MATRIX3x3[idxC + (0x3 * idxR)];
+        uchar threshold = ORDERED_DITHER_MATRIX3x3[idxC][idxR];
         pix = toGrayscale<T>(buffer);
 
         // update average of 3 pixels in col
