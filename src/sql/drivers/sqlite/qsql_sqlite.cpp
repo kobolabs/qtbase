@@ -438,7 +438,6 @@ bool QSQLiteResult::exec()
                                             ba->size(), SQLITE_STATIC);
                     break; }
                 case QVariant::Int:
-                case QVariant::Bool:
                     res = sqlite3_bind_int(d->stmt, i + 1, value.toInt());
                     break;
                 case QVariant::Double:
