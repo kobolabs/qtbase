@@ -1576,6 +1576,7 @@ static const uint *QT_FASTCALL fetchTransformedBilinear(uint *buffer, const Oper
 {
     const QPixelLayout *layout = &qPixelLayouts[data->texture.format];
     const QRgb *clut = data->texture.colorTable ? data->texture.colorTable->constData() : 0;
+    const int originalLength = length;
 
     int image_width = data->texture.width;
     int image_height = data->texture.height;
@@ -1902,7 +1903,7 @@ static const uint *QT_FASTCALL fetchTransformedBilinear(uint *buffer, const Oper
 
     // Do ordered dithering 3x3,16
     if (data->dither) {
-        ditherAndSharpenLine< uint >(buffer, y, length, true);
+        ditherAndSharpenLine< uint >(buffer, y, originalLength, true);
     }
 
     return buffer;
