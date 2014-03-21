@@ -291,13 +291,13 @@ static const uint *QT_FASTCALL convertRGBFromARGB32PM(uint *buffer, const uint *
 
 template <class T>
 Q_STATIC_TEMPLATE_FUNCTION
-int toGrayscale(T* buffer)
+inline int toGrayscale(T* buffer)
 {
     return buffer[0];
 }
 
 template <>
-int toGrayscale(uint *buffer)
+inline int toGrayscale(uint *buffer)
 {
     uint p = *buffer;
     int r = p & 0x000000FF;
@@ -309,7 +309,7 @@ int toGrayscale(uint *buffer)
 }
 
 template <>
-int toGrayscale(ushort *buffer)
+inline int toGrayscale(ushort *buffer)
 {
     int r = ((buffer[0] & 0xf800) >> 8);
     int g = ((buffer[0] & 0x07e0) >> 3); // only keep 5 bit
@@ -319,29 +319,29 @@ int toGrayscale(ushort *buffer)
 
 template <class T>
 Q_STATIC_TEMPLATE_FUNCTION
-void ditherBuffer(T *buffer, int prevPix)
+inline void ditherBuffer(T *buffer, int prevPix)
 {
     Q_UNUSED(buffer);
     Q_UNUSED(prevPix);
 }
 
 template <>
-void ditherBuffer(uint *buffer, int prevPix)
+inline void ditherBuffer(uint *buffer, int prevPix)
 {
     *buffer = prevPix + (prevPix << 8) + (prevPix << 16) + 0xFF000000;
 }
 
 template <>
-void ditherBuffer(ushort *buffer, int prevPix)
+inline void ditherBuffer(ushort *buffer, int prevPix)
 {
     int newRandB = prevPix >> 3;
     int newG = prevPix >> 2;
     *buffer = (newRandB << 11) | (newG << 5) | newRandB;
 }
 
-template <class T>
+template <typename T, bool Sharpen>
 Q_STATIC_TEMPLATE_FUNCTION
-void ditherAndSharpenLine(T *buffer, int row, int length, bool sharpen)
+void ditherAndSharpenLine(T *buffer, int row, int length)
 {
     int diffs[3];
     int pix;
@@ -363,14 +363,14 @@ void ditherAndSharpenLine(T *buffer, int row, int length, bool sharpen)
         pix = toGrayscale<T>(buffer);
 
         // update average of 3 pixels in col
-        diffs[ idxC ] = pix;
+        diffs[idxC] = pix;
 
         average = diffs[0] + diffs[1] + diffs[2];
 
         static libdivide::divider<unsigned int> fast_3(3);
         average = average / fast_3;
 
-        if (sharpen) {
+        if (Sharpen) {
             // apply sharpness filter
             int diff = prevPix - average;
 
@@ -1566,7 +1566,7 @@ static const uint * QT_FASTCALL fetchTransformedBilinearARGB32PM(uint *buffer, c
 
     // Do ordered dithering 3x3,16
     if (data->dither) {
-        ditherAndSharpenLine< uint >(buffer, y, length, true);
+        ditherAndSharpenLine<uint, true>(buffer, y, length);
     }
 
     return buffer;
@@ -1906,7 +1906,7 @@ static const uint *QT_FASTCALL fetchTransformedBilinear(uint *buffer, const Oper
 
     // Do ordered dithering 3x3,16
     if (data->dither) {
-        ditherAndSharpenLine< uint >(buffer, y, originalLength, true);
+        ditherAndSharpenLine<uint, true>(buffer, y, originalLength);
     }
 
     return buffer;
@@ -4387,7 +4387,7 @@ static void blend_untransformed_generic(int count, const QSpan *spans, void *use
                     uint *dest = op.dest_fetch ? op.dest_fetch(buffer, data->rasterBuffer, x, spans->y, l) : buffer;
                     op.func(dest, src, l, coverage);
                     if (data->dither) {
-                        ditherAndSharpenLine< uint >(dest, sy, l, false);
+                        ditherAndSharpenLine<uint, false>(dest, sy, l);
                     }
                     if (op.dest_store)
                         op.dest_store(data->rasterBuffer, x, spans->y, dest, l);
