@@ -1566,9 +1566,8 @@ void QFontEngineFT::addGlyphsToPath(glyph_t *glyphs, QFixedPoint *positions, int
         QPainterPath tmpPath;
         QFreetypeFace::addGlyphToPath(face, g, positions[gl], &tmpPath, xsize, ysize);
         if (isVertical && isCJKOrSymbol && isCJKOrSymbol[gl]) {
-            QRectF cbox = tmpPath.controlPointRect();
             QPointF rotationOffset(positions[gl].x.toReal(), positions[gl].y.toReal());
-            QPointF placementOffset(cbox.height(), descent().toReal());
+            QPointF placementOffset(maxCharWidth(), descent().toReal());
             tmpPath.translate(-rotationOffset);
             tmpPath.rotate(-90);
             tmpPath.translate(rotationOffset + placementOffset);
