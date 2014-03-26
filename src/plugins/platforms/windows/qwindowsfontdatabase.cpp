@@ -1550,7 +1550,7 @@ LOGFONT QWindowsFontDatabase::fontDefToLOGFONT(const QFontDef &request)
     return lf;
 }
 
-static QStringList extraTryFontsForFamily(const QString& family)
+QStringList QWindowsFontDatabase::extraTryFontsForFamily(const QString &family)
 {
     QStringList result;
     QFontDatabase db;
@@ -1620,7 +1620,8 @@ QStringList QWindowsFontDatabase::fallbacksForFamily(const QString &family, QFon
             result << QString::fromLatin1("Arial");
     }
 
-    result.append(extraTryFontsForFamily(family));
+    if (script == QChar::Script_Common || script == QChar::Script_Han)
+        result.append(QWindowsFontDatabase::extraTryFontsForFamily(family));
 
     if (QWindowsContext::verboseFonts)
         qDebug() << __FUNCTION__ << family << style << styleHint
@@ -1785,7 +1786,7 @@ QFontEngine *QWindowsFontDatabase::createEngine(int script, const QFontDef &requ
 
     if ((script == QChar::Script_Common || script == QChar::Script_Han)
             && !(request.styleStrategy & QFont::NoFontMerging)) {
-        QStringList extraFonts = extraTryFontsForFamily(request.family);
+        const QStringList extraFonts = QWindowsFontDatabase::extraTryFontsForFamily(request.family);
         if (extraFonts.size()) {
             QStringList list = family_list;
             list.append(extraFonts);
@@ -1825,9 +1826,9 @@ QFont QWindowsFontDatabase::LOGFONT_to_QFont(const LOGFONT& logFont, int vertica
         qFont.setWeight(weightFromInteger(logFont.lfWeight));
     const qreal logFontHeight = qAbs(logFont.lfHeight);
     qFont.setPointSizeF(logFontHeight * 72.0 / qreal(verticalDPI_In));
-    qFont.setUnderline(false);
+    qFont.setUnderline(logFont.lfUnderline);
     qFont.setOverline(false);
-    qFont.setStrikeOut(false);
+    qFont.setStrikeOut(logFont.lfStrikeOut);
     return qFont;
 }
 
