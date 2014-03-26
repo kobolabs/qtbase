@@ -1,0 +1,19 @@
+README for Vertical Typesetting Synthesis script set.
+
+- Description:
+ This set of files is for the specification Vertical Typesetting Synthesis which is in CSS Text Level 3.
+The spec defines glyph's default orientation (upright/sideways) behavior in the vertical writing mode.
+These script with spec table (csv) generates a array of codepoint, and it is used for quick search for given character's orientation.
+
+- Files:
+   - README_VerticalTypesettingSynthesis -- This file.
+
+   - generateOrientationBoundaryForVTS.py -- Script file, it generates an array which is for quick character's orientation look-up.
+
+   - VerticalTypesettingSynthesisSpec.csv -- CSV file which is under Vertical Typesetting Synthesis specification. It is used as input file of script.
+
+- Usage:
+   execute following command. The result will be output file named <output-file-name>, and move output file to Source/WebCore/platform/graphics/ .
+
+   python generateOrientationBoundaryForVTS.py VerticalTypesettingSynthesisSpec.csv <output-file-name>
+
