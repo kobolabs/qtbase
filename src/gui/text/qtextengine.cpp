@@ -1045,6 +1045,7 @@ static inline void moveGlyphData(const QGlyphLayout &destination, const QGlyphLa
         memmove(destination.glyphs, source.glyphs, num * sizeof(glyph_t));
         memmove(destination.attributes, source.attributes, num * sizeof(QGlyphAttributes));
         memmove(destination.advances_x, source.advances_x, num * sizeof(QFixed));
+        memmove(destination.vert_advances_x, source.vert_advances_x, num * sizeof(QFixed));
         memmove(destination.offsets, source.offsets, num * sizeof(QFixedPoint));
     }
 }
@@ -1164,6 +1165,8 @@ int QTextEngine::shapeTextWithHarfbuzzNG(const QScriptItem &si, const ushort *st
 
             g.advances_x[i] = QFixed::fromFixed(positions[i].x_advance);
             g.advances_y[i] = QFixed::fromFixed(positions[i].y_advance);
+            g.vert_advances_x[i] = g.advances_x[i];
+            g.vert_advances_y[i] = g.advances_y[i];
             g.offsets[i].x = QFixed::fromFixed(positions[i].x_offset);
             g.offsets[i].y = QFixed::fromFixed(positions[i].y_offset);
 

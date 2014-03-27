@@ -195,6 +195,8 @@ struct QGlyphLayout
     glyph_t *glyphs; // 4 bytes per element
     QFixed *advances_x; // 4 bytes per element
     QFixed *advances_y; // 4 bytes per element
+    QFixed *vert_advances_x; // 4 bytes per element
+    QFixed *vert_advances_y; // 4 bytes per element
     QGlyphJustification *justifications; // 4 bytes per element
     QGlyphAttributes *attributes; // 2 bytes per element
 
@@ -212,6 +214,10 @@ struct QGlyphLayout
         offset += totalGlyphs * sizeof(QFixed);
         advances_y = reinterpret_cast<QFixed *>(address + offset);
         offset += totalGlyphs * sizeof(QFixed);
+        vert_advances_x = reinterpret_cast<QFixed *>(address + offset);
+        offset += totalGlyphs * sizeof(QFixed);
+        vert_advances_y = reinterpret_cast<QFixed *>(address + offset);
+        offset += totalGlyphs * sizeof(QFixed);
         justifications = reinterpret_cast<QGlyphJustification *>(address + offset);
         offset += totalGlyphs * sizeof(QGlyphJustification);
         attributes = reinterpret_cast<QGlyphAttributes *>(address + offset);
@@ -223,6 +229,8 @@ struct QGlyphLayout
         copy.glyphs += position;
         copy.advances_x += position;
         copy.advances_y += position;
+        copy.vert_advances_x += position;
+        copy.vert_advances_y += position;
         copy.offsets += position;
         copy.justifications += position;
         copy.attributes += position;
@@ -235,7 +243,7 @@ struct QGlyphLayout
 
     static inline int spaceNeededForGlyphLayout(int totalGlyphs) {
         return totalGlyphs * (sizeof(glyph_t) + sizeof(QGlyphAttributes)
-                + sizeof(QFixed) + sizeof(QFixed) + sizeof(QFixedPoint)
+                + (4 * sizeof(QFixed)) + sizeof(QFixedPoint)
                 + sizeof(QGlyphJustification));
     }
 
@@ -254,6 +262,8 @@ struct QGlyphLayout
             memset(glyphs + first, 0, num * sizeof(glyph_t));
             memset(advances_x + first, 0, num * sizeof(QFixed));
             memset(advances_y + first, 0, num * sizeof(QFixed));
+            memset(vert_advances_x + first, 0, num * sizeof(QFixed));
+            memset(vert_advances_y + first, 0, num * sizeof(QFixed));
             memset(justifications + first, 0, num * sizeof(QGlyphJustification));
             memset(attributes + first, 0, num * sizeof(QGlyphAttributes));
         }

@@ -570,6 +570,16 @@ bool QRawFont::glyphIndexesForChars(const QChar *chars, int numChars, quint32 *g
 */
 bool QRawFont::advancesForGlyphIndexes(const quint32 *glyphIndexes, QPointF *advances, int numGlyphs, LayoutFlags layoutFlags) const
 {
+    return advancesForGlyphIndexes(glyphIndexes, advances, numGlyphs, layoutFlags, false, NULL);
+}
+
+bool QRawFont::verticalAdvancesForGlyphIndexes(const quint32 *glyphIndexes, QPointF *advances, int numGlyphs, const bool *isCJKOrSymbol, LayoutFlags layoutFlags) const
+{
+    return advancesForGlyphIndexes(glyphIndexes, advances, numGlyphs, layoutFlags, true, isCJKOrSymbol);
+}
+
+bool QRawFont::advancesForGlyphIndexes(const quint32 *glyphIndexes, QPointF *advances, int numGlyphs, LayoutFlags layoutFlags, bool isVertical, const bool *isCJKOrSymbol) const
+{
     Q_ASSERT(glyphIndexes && advances);
     if (!d->isValid() || numGlyphs <= 0)
         return false;
@@ -579,8 +589,12 @@ bool QRawFont::advancesForGlyphIndexes(const quint32 *glyphIndexes, QPointF *adv
     glyphs.numGlyphs = numGlyphs;
     QVarLengthArray<QFixed> advances_x(numGlyphs);
     QVarLengthArray<QFixed> advances_y(numGlyphs);
+    QVarLengthArray<QFixed> vert_advances_x(numGlyphs);
+    QVarLengthArray<QFixed> vert_advances_y(numGlyphs);
     glyphs.advances_x = advances_x.data();
     glyphs.advances_y = advances_y.data();
+    glyphs.vert_advances_x = vert_advances_x.data();
+    glyphs.vert_advances_y = vert_advances_y.data();
 
     bool design = layoutFlags & UseDesignMetrics;
 
@@ -588,8 +602,13 @@ bool QRawFont::advancesForGlyphIndexes(const quint32 *glyphIndexes, QPointF *adv
     if (layoutFlags & KernedAdvances)
         d->fontEngine->doKerning(&glyphs, design ? QFontEngine::DesignMetrics : QFontEngine::ShaperFlag(0));
 
-    for (int i=0; i<numGlyphs; ++i)
-        advances[i] = QPointF(glyphs.advances_x[i].toReal(), glyphs.advances_y[i].toReal());
+    for (int i=0; i<numGlyphs; ++i) {
+        if (isVertical && isCJKOrSymbol && isCJKOrSymbol[i]) {
+            advances[i] = QPointF(glyphs.vert_advances_x[i].toReal(), glyphs.vert_advances_y[i].toReal());
+        } else {
+            advances[i] = QPointF(glyphs.advances_x[i].toReal(), glyphs.advances_y[i].toReal());
+        }
+    }
 
     return true;
 }
