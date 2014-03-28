@@ -202,8 +202,8 @@ void QCoreTextFontDatabase::populateFontDatabase()
 void QCoreTextFontDatabase::populateFromDescriptor(CTFontDescriptorRef font)
 {
     QString foundryName = QStringLiteral("CoreText");
-    QCFString familyName = (CFStringRef) CTFontDescriptorCopyLocalizedAttribute(font, kCTFontFamilyNameAttribute, NULL);
-    QCFString styleName = (CFStringRef)CTFontDescriptorCopyLocalizedAttribute(font, kCTFontStyleNameAttribute, NULL);
+    QCFString familyName = (CFStringRef) CTFontDescriptorCopyAttribute(font, kCTFontFamilyNameAttribute);
+    QCFString styleName = (CFStringRef)CTFontDescriptorCopyAttribute(font, kCTFontStyleNameAttribute);
     QCFType<CFDictionaryRef> styles = (CFDictionaryRef) CTFontDescriptorCopyAttribute(font, kCTFontTraitsAttribute);
     QFont::Weight weight = QFont::Normal;
     QFont::Style style = QFont::StyleNormal;
