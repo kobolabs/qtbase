@@ -105,7 +105,7 @@ QT_BEGIN_NAMESPACE
 
 /* FreeType 2.1.10 starts to provide FT_GlyphSlot_Embolden */
 #if (FREETYPE_MAJOR*10000+FREETYPE_MINOR*100+FREETYPE_PATCH) >= 20110
-#define Q_FT_GLYPHSLOT_EMBOLDEN(slot)   FT_GlyphSlot_Embolden(slot)
+#define Q_FT_GLYPHSLOT_EMBOLDEN(slot)   GlyphSlot_Embolden(slot)
 #else
 #define Q_FT_GLYPHSLOT_EMBOLDEN(slot)
 #endif
@@ -122,6 +122,73 @@ QT_BEGIN_NAMESPACE
 #define CEIL(x)     (((x)+63) & -64)
 #define TRUNC(x)    ((x) >> 6)
 #define ROUND(x)    (((x)+32) & -64)
+
+/* FreeType 2.1.10 starts to provide FT_GlyphSlot_Embolden */
+#if (FREETYPE_MAJOR*10000+FREETYPE_MINOR*100+FREETYPE_PATCH) >= 20110
+/* see FT_GlyphSlot_Embolden@freetype/src/base/ftsynth.c */
+static void
+GlyphSlot_Embolden(FT_GlyphSlot slot)
+{
+    FT_Library  library = slot->library;
+    FT_Face     face    = slot->face;
+    FT_Error    error;
+    FT_Pos      xstr, ystr;
+
+    if (slot->format != FT_GLYPH_FORMAT_OUTLINE
+        && slot->format != FT_GLYPH_FORMAT_BITMAP)
+        return;
+
+    /* some reasonable strength */
+    xstr = FT_MulFix(face->units_per_EM,
+                     face->size->metrics.y_scale) / 24;
+    ystr = xstr;
+
+    if (slot->format == FT_GLYPH_FORMAT_OUTLINE) {
+        error = FT_Outline_Embolden(&slot->outline, xstr);
+        /* ignore error */
+
+        /* this is more than enough for most glyphs; if you need accurate */
+        /* values, you have to call FT_Outline_Get_CBox                   */
+        xstr = xstr * 2;
+        ystr = xstr;
+    } else if (slot->format == FT_GLYPH_FORMAT_BITMAP) {
+        /* round to full pixels */
+        xstr &= ~63;
+        if (xstr == 0)
+            xstr = 1 << 6;
+        ystr &= ~63;
+
+        error = FT_GlyphSlot_Own_Bitmap(slot);
+        if (error)
+            return;
+
+        error = FT_Bitmap_Embolden(library, &slot->bitmap, xstr, ystr);
+        if (error)
+            return;
+    }
+
+    if (slot->advance.x)
+        slot->advance.x += xstr;
+    else
+        slot->advance.x = (face->glyph->linearHoriAdvance>>10) + xstr;
+
+    if (slot->advance.y)
+        slot->advance.y += ystr;
+    else
+        slot->advance.y = (face->glyph->linearVertAdvance>>10) + ystr;
+
+    slot->metrics.width        += xstr;
+    slot->metrics.height       += ystr;
+    slot->metrics.horiBearingY += ystr;
+    slot->metrics.horiAdvance  += xstr;
+    slot->metrics.vertBearingX -= xstr / 2;
+    slot->metrics.vertBearingY += ystr;
+    slot->metrics.vertAdvance  += ystr;
+
+    if (slot->format == FT_GLYPH_FORMAT_BITMAP)
+        slot->bitmap_top += ystr >> 6;
+}
+#endif
 
 static bool ft_getSfntTable(void *user_data, uint tag, uchar *buffer, uint *length)
 {
