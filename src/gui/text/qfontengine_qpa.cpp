@@ -401,6 +401,8 @@ void QFontEngineQPA::recalcAdvances(QGlyphLayout *glyphs, QFontEngine::ShaperFla
         }
         glyphs->advances_x[i] = g->advance;
         glyphs->advances_y[i] = 0;
+        glyphs->vert_advances_x[i] = g->advance;
+        glyphs->vert_advances_y[i] = 0;
     }
 }
 

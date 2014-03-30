@@ -110,12 +110,16 @@ static void hb_getAdvances(HB_Font font, const HB_Glyph *glyphs, hb_uint32 numGl
     QFontEngine *fe = (QFontEngine *)font->userData;
 
     QVarLengthArray<QFixed> advances_y(numGlyphs);
+    QVarLengthArray<QFixed> vert_advances_x(numGlyphs);
+    QVarLengthArray<QFixed> vert_advances_y(numGlyphs);
 
     QGlyphLayout qglyphs;
     qglyphs.numGlyphs = numGlyphs;
     qglyphs.glyphs = const_cast<glyph_t *>(glyphs);
     qglyphs.advances_x = reinterpret_cast<QFixed *>(advances);
     qglyphs.advances_y = advances_y.data(); // not used
+    qglyphs.vert_advances_x = vert_advances_x.data(); // not used
+    qglyphs.vert_advances_y = vert_advances_y.data(); // not used
 
     fe->recalcAdvances(&qglyphs, (flags & HB_ShaperFlag_UseDesignMetrics) ? QFontEngine::DesignMetrics : QFontEngine::ShaperFlags(0));
 }
@@ -735,6 +739,8 @@ void QFontEngine::addGlyphsToPath(glyph_t *glyphs, QFixedPoint *positions, int n
             g.advances_x[i] = QFixed::fromReal(maxCharWidth());
             g.advances_y[i] = 0;
         }
+        g.vert_advances_x[i] = g.advances_x[i];
+        g.vert_advances_y[i] = g.advances_y[i];
     }
 
     addBitmapFontToPath(x, y, g, path, flags);
@@ -1366,6 +1372,8 @@ void QFontEngineBox::recalcAdvances(QGlyphLayout *glyphs, QFontEngine::ShaperFla
     for (int i = 0; i < glyphs->numGlyphs; i++) {
         glyphs->advances_x[i] = _size;
         glyphs->advances_y[i] = 0;
+        glyphs->vert_advances_x[i] = _size;
+        glyphs->vert_advances_y[i] = 0;
     }
 }
 
@@ -1527,9 +1535,12 @@ bool QFontEngineMulti::stringToCMap(const QChar *str, int len,
         uint ucs4 = surrogate ? QChar::surrogateToUcs4(str[i], str[i+1]) : str[i].unicode();
         if (glyphs->glyphs[glyph_pos] == 0 && str[i].category() != QChar::Separator_Line) {
             QFixedPoint tmpAdvance;
+            QFixedPoint tmpVertAdvance;
             if (!(flags & GlyphIndicesOnly)) {
                 tmpAdvance.x = glyphs->advances_x[glyph_pos];
                 tmpAdvance.y = glyphs->advances_y[glyph_pos];
+                tmpVertAdvance.x = glyphs->vert_advances_x[glyph_pos];
+                tmpVertAdvance.y = glyphs->vert_advances_y[glyph_pos];
             }
             for (int x = 1, n = qMin(engines.size(), 256); x < n; ++x) {
                 if (engines.at(x) == 0 && !shouldLoadFontEngineForCharacter(x, ucs4))
@@ -1544,8 +1555,10 @@ bool QFontEngineMulti::stringToCMap(const QChar *str, int len,
                 if (engine->type() == Box)
                     continue;
 
-                if (!(flags & GlyphIndicesOnly))
+                if (!(flags & GlyphIndicesOnly)) {
                     glyphs->advances_x[glyph_pos] = glyphs->advances_y[glyph_pos] = 0;
+                    glyphs->vert_advances_x[glyph_pos] = glyphs->vert_advances_y[glyph_pos] = 0;
+                }
                 int num = 2;
                 QGlyphLayout offs = glyphs->mid(glyph_pos, num);
                 engine->stringToCMap(str + i, surrogate ? 2 : 1, &offs, &num, flags);
@@ -1561,6 +1574,8 @@ bool QFontEngineMulti::stringToCMap(const QChar *str, int len,
             if (!(flags & GlyphIndicesOnly) && glyphs->glyphs[glyph_pos] == 0) {
                 glyphs->advances_x[glyph_pos] = tmpAdvance.x;
                 glyphs->advances_y[glyph_pos] = tmpAdvance.y;
+                glyphs->vert_advances_x[glyph_pos] = tmpVertAdvance.x;
+                glyphs->vert_advances_y[glyph_pos] = tmpVertAdvance.y;
             }
         }
 

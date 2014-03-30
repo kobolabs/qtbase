@@ -101,9 +101,12 @@ public:
     QVector<quint32> glyphIndexesForString(const QString &text) const;
     inline QVector<QPointF> advancesForGlyphIndexes(const QVector<quint32> &glyphIndexes) const;
     inline QVector<QPointF> advancesForGlyphIndexes(const QVector<quint32> &glyphIndexes, LayoutFlags layoutFlags) const;
+    inline QVector<QPointF> verticalAdvancesForGlyphIndexes(const QVector<quint32> &glyphIndexes, const bool *isCJKOrSymbol) const;
+    inline QVector<QPointF> verticalAdvancesForGlyphIndexes(const QVector<quint32> &glyphIndexes, const bool *isCJKOrSymbol, LayoutFlags layoutFlags) const;
     bool glyphIndexesForChars(const QChar *chars, int numChars, quint32 *glyphIndexes, int *numGlyphs) const;
     bool advancesForGlyphIndexes(const quint32 *glyphIndexes, QPointF *advances, int numGlyphs) const;
     bool advancesForGlyphIndexes(const quint32 *glyphIndexes, QPointF *advances, int numGlyphs, LayoutFlags layoutFlags) const;
+    bool verticalAdvancesForGlyphIndexes(const quint32 *glyphIndexes, QPointF *advances, int numGlyphs, const bool *isCJKOrSymbol, LayoutFlags layoutFlags) const;
 
     QImage alphaMapForGlyph(quint32 glyphIndex,
                             AntialiasingType antialiasingType = SubPixelAntialiasing,
@@ -154,6 +157,7 @@ private:
     friend class QTextLayout;
     friend class QTextEngine;
 
+    bool advancesForGlyphIndexes(const quint32 *glyphIndexes, QPointF *advances, int numGlyphs, LayoutFlags layoutFlags, bool isVertical, const bool *isCJKOrSymbol) const;
     QExplicitlySharedDataPointer<QRawFontPrivate> d;
 };
 
@@ -172,6 +176,19 @@ inline QVector<QPointF> QRawFont::advancesForGlyphIndexes(const QVector<quint32>
 inline QVector<QPointF> QRawFont::advancesForGlyphIndexes(const QVector<quint32> &glyphIndexes) const
 {
     return advancesForGlyphIndexes(glyphIndexes, QRawFont::SeparateAdvances);
+}
+
+inline QVector<QPointF> QRawFont::verticalAdvancesForGlyphIndexes(const QVector<quint32> &glyphIndexes, const bool *isCJKOrSymbol, QRawFont::LayoutFlags layoutFlags) const
+{
+    QVector<QPointF> advances(glyphIndexes.size());
+    if (verticalAdvancesForGlyphIndexes(glyphIndexes.constData(), advances.data(), glyphIndexes.size(), isCJKOrSymbol, layoutFlags))
+        return advances;
+    return QVector<QPointF>();
+}
+
+inline QVector<QPointF> QRawFont::verticalAdvancesForGlyphIndexes(const QVector<quint32> &glyphIndexes, const bool *isCJKOrSymbol) const
+{
+    return verticalAdvancesForGlyphIndexes(glyphIndexes, isCJKOrSymbol, QRawFont::SeparateAdvances);
 }
 
 QT_END_NAMESPACE

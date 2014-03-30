@@ -5620,6 +5620,8 @@ void QPainterPrivate::drawGlyphs(const quint32 *glyphArray, QFixedPoint *positio
         textItem.glyphs.offsets = positions;
         textItem.glyphs.advances_x = advances.data();
         textItem.glyphs.advances_y = advances.data();
+        textItem.glyphs.vert_advances_x = advances.data();
+        textItem.glyphs.vert_advances_y = advances.data();
         textItem.glyphs.justifications = glyphJustifications.data();
         textItem.glyphs.attributes = glyphAttributes.data();
 
