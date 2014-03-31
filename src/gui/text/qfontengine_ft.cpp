@@ -824,12 +824,8 @@ bool QFontEngineFT::init(FaceId faceId, bool antialias, GlyphFormat format,
     if (FT_IS_SCALABLE(face)) {
         bool fake_oblique = (fontDef.style != QFont::StyleNormal) && !(face->style_flags & FT_STYLE_FLAG_ITALIC);
         if (fake_oblique) {
-#if !defined(Q_HAS_FT_GLYPHSLOT_OBLIQUE)
             matrix.xy = 0x10000*3/10;
             transform = true;
-#else
-            obliquen = true;
-#endif
         }
         FT_Set_Transform(face, &matrix, 0);
         freetype->matrix = matrix;
