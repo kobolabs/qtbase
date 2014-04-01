@@ -1627,8 +1627,10 @@ void QFontEngineFT::addGlyphsToPath(glyph_t *glyphs, QFixedPoint *positions, int
         QPainterPath tmpPath;
         QFreetypeFace::addGlyphToPath(face, g, positions[gl], &tmpPath, xsize, ysize);
         if (isVertical && isCJKOrSymbol && isCJKOrSymbol[gl]) {
-            QPointF rotationOffset(positions[gl].x.toReal(), positions[gl].y.toReal());
-            QPointF placementOffset(maxCharWidth(), descent().toReal());
+            FT_Fixed y_scale = FT_MulDiv(FT_Fixed(ysize), 1 << 10, face->units_per_EM);
+            QFixed advance = QFixed::fromFixed(FT_MulFix(g->metrics.vertAdvance, y_scale));
+            QPointF rotationOffset(positions[gl].x.toReal() - descent().toReal(), positions[gl].y.toReal());
+            QPointF placementOffset(advance.toReal(), descent().toReal() * 2);
             tmpPath.translate(-rotationOffset);
             tmpPath.rotate(-90);
             tmpPath.translate(rotationOffset + placementOffset);
