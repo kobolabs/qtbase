@@ -344,6 +344,23 @@ static QString classNameForInterface(const QString &interface, ClassType classTy
     return retval;
 }
 
+static QByteArray qtMethodName(const QString &method, const QDBusIntrospection::Annotations &annotations)
+{
+        QString annotationName = QString::fromLatin1("org.qtproject.QtDBus.QtMethodName");
+        QString qtmethod = annotations.value(annotationName);
+        if (!qtmethod.isEmpty())
+            return qtmethod.toLatin1();
+
+        QString oldAnnotationName = QString::fromLatin1("com.trolltech.QtDBus.QtMethodName");
+        qtmethod = annotations.value(oldAnnotationName);
+
+        if (!qtmethod.isEmpty()) {
+            return qtmethod.toLatin1();
+        }
+
+        return method.toLatin1();
+}
+
 static QByteArray qtTypeName(const QString &signature, const QDBusIntrospection::Annotations &annotations, int paramId = -1, const char *direction = "Out")
 {
     int type = QDBusMetaType::signatureToType(signature.toLatin1());
@@ -687,7 +704,7 @@ static void writeProxy(const QString &filename, const QDBusIntrospection::Interf
                 hs << "> ";
             }
 
-            hs << method.name << "(";
+            hs << qtMethodName(method.name, method.annotations) << "(";
 
             QStringList argNames = makeArgNames(method.inputArgs);
             writeArgList(hs, argNames, method.annotations, method.inputArgs);
@@ -763,7 +780,7 @@ static void writeProxy(const QString &filename, const QDBusIntrospection::Interf
                 QLatin1String("true"))
                 hs << "Q_DECL_DEPRECATED ";
 
-            hs << "void " << signal.name << "(";
+            hs << "void " << qtMethodName(signal.name, signal.annotations) << "(";
 
             QStringList argNames = makeArgNames(signal.outputArgs);
             writeArgList(hs, argNames, signal.annotations, signal.outputArgs);
