@@ -105,8 +105,8 @@ public:
     inline QVector<QPointF> verticalAdvancesForGlyphIndexes(const QVector<quint32> &glyphIndexes, const bool *isCJKOrSymbol, LayoutFlags layoutFlags) const;
     bool glyphIndexesForChars(const QChar *chars, int numChars, quint32 *glyphIndexes, int *numGlyphs) const;
     bool advancesForGlyphIndexes(const quint32 *glyphIndexes, QPointF *advances, int numGlyphs) const;
-    bool advancesForGlyphIndexes(const quint32 *glyphIndexes, QPointF *advances, int numGlyphs, LayoutFlags layoutFlags, const float *expansions = 0) const;
-    bool verticalAdvancesForGlyphIndexes(const quint32 *glyphIndexes, QPointF *advances, int numGlyphs, const bool *isCJKOrSymbol, LayoutFlags layoutFlags, const float *expansions = 0) const;
+    bool advancesForGlyphIndexes(const quint32 *glyphIndexes, QPointF *advances, int numGlyphs, LayoutFlags layoutFlags) const;
+    bool verticalAdvancesForGlyphIndexes(const quint32 *glyphIndexes, QPointF *advances, int numGlyphs, const bool *isCJKOrSymbol, LayoutFlags layoutFlags) const;
 
     QImage alphaMapForGlyph(quint32 glyphIndex,
                             AntialiasingType antialiasingType = SubPixelAntialiasing,
@@ -157,7 +157,7 @@ private:
     friend class QTextLayout;
     friend class QTextEngine;
 
-    bool advancesForGlyphIndexes(const quint32 *glyphIndexes, QPointF *advances, int numGlyphs, LayoutFlags layoutFlags, bool isVertical, const bool *isCJKOrSymbol, const float *expansions) const;
+    bool advancesForGlyphIndexes(const quint32 *glyphIndexes, QPointF *advances, int numGlyphs, LayoutFlags layoutFlags, bool isVertical, const bool *isCJKOrSymbol) const;
     QExplicitlySharedDataPointer<QRawFontPrivate> d;
 };
 
