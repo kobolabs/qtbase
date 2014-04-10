@@ -70,7 +70,7 @@ static QTzTimeZoneHash loadTzTimeZones()
 {
     QString path = QStringLiteral("/usr/share/zoneinfo/zone.tab");
     if (!QFile::exists(path))
-        path = QStringLiteral("/usr/lib/zoneinfo/zone.tab");
+        path = QStringLiteral(":/zone.tab");
 
     QFile tzif(path);
     if (!tzif.open(QIODevice::ReadOnly))
@@ -560,7 +560,7 @@ void QTzTimeZonePrivate::init(const QByteArray &olsenId)
         // Open named tz, try modern path first, if fails try legacy path
         tzif.setFileName(QLatin1String("/usr/share/zoneinfo/") + QString::fromLocal8Bit(olsenId));
         if (!tzif.open(QIODevice::ReadOnly)) {
-            tzif.setFileName(QLatin1String("/usr/lib/zoneinfo/") + QString::fromLocal8Bit(olsenId));
+            tzif.setFileName(QLatin1String("/etc/zoneinfo/") + QString::fromLocal8Bit(olsenId));
             if (!tzif.open(QIODevice::ReadOnly))
                 return;
         }
