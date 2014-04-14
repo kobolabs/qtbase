@@ -439,17 +439,22 @@ void QCoreTextFontEngine::addGlyphsToPath(glyph_t *glyphs, QFixedPoint *position
 
     CGAffineTransform cgMatrix = CGAffineTransformIdentity;
     cgMatrix = CGAffineTransformScale(cgMatrix, 1, -1);
+    CGAffineTransform cgVerticalMatrix = cgMatrix;
 
-    if (synthesisFlags & QFontEngine::SynthesizedItalic)
+    qreal offset = -descent().toReal();
+    if (synthesisFlags & QFontEngine::SynthesizedItalic) {
+        cgVerticalMatrix = CGAffineTransformConcat(cgVerticalMatrix, CGAffineTransformMake(1, SYNTHETIC_ITALIC_SKEW, 0, 1, 0, 0));
         cgMatrix = CGAffineTransformConcat(cgMatrix, CGAffineTransformMake(1, 0, -SYNTHETIC_ITALIC_SKEW, 1, 0, 0));
+        offset = 0;
+    }
 
     QVarLengthArray<CGSize> translations(nGlyphs);
     CTFontGetVerticalTranslationsForGlyphs(ctfont, (CGGlyph*)glyphs, translations.data(), nGlyphs);
     for (int i = 0; i < nGlyphs; ++i) {
         QCFType<CGPathRef> cgpath;
         if (isCJKOrSymbol && isCJKOrSymbol[i] && isVertical) {
-            CGAffineTransform cgMatrixRotate = CGAffineTransformRotate(cgMatrix, M_PI_2);
-            CGAffineTransform cgMatrixRotateAndTranslate = CGAffineTransformTranslate(cgMatrixRotate, -descent().toReal(), translations[i].height);
+            CGAffineTransform cgMatrixRotate = CGAffineTransformRotate(cgVerticalMatrix, M_PI_2);
+            CGAffineTransform cgMatrixRotateAndTranslate = CGAffineTransformTranslate(cgMatrixRotate, offset, translations[i].height);
             cgpath = CTFontCreatePathForGlyph(ctfont, glyphs[i], &cgMatrixRotateAndTranslate);
         } else {
             cgpath = CTFontCreatePathForGlyph(ctfont, glyphs[i], &cgMatrix);
