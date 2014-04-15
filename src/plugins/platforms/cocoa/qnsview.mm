@@ -1291,6 +1291,10 @@ static QTabletEvent::TabletDevice wacomTabletDevice(NSEvent *theEvent)
     m_sendKeyEvent = false;
 }
 
+- (void)cancelOperation:(id)sender
+{
+}
+
 - (void)keyDown:(NSEvent *)nsevent
 {
     if (m_window->flags() & Qt::WindowTransparentForInput)
