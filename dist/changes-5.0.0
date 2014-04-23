@@ -649,9 +649,6 @@ QtNetwork
 * QSslCertificate::serialNumber() now always returns the serial number in
   hexadecimal format.
 
-* The openssl network backend now reads the ssl configuration file allowing
-  the use of openssl engines.
-
 QtDBus
 ------
 * QtDBus now generates property annotations for the Qt type names
