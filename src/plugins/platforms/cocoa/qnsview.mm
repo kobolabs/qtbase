@@ -493,7 +493,8 @@ static QTouchDevice *touchDevice = 0;
 {
     if (m_window->flags() & Qt::WindowTransparentForInput)
         return NO;
-    QWindowSystemInterface::handleWindowActivated([self topLevelWindow]);
+    if (!m_platformWindow->windowIsPopupType())
+        QWindowSystemInterface::handleWindowActivated([self topLevelWindow]);
     return YES;
 }
 
