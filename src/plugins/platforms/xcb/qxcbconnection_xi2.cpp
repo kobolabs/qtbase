@@ -483,8 +483,8 @@ bool QXcbConnection::xi2HandleTabletEvent(void *event, TabletData *tabletData)
         }
         break;
     case XI_Motion:
-        // Report TabletMove only when the stylus is touching the tablet.
-        // No possibility to report proximity motion (no suitable Qt event exists yet).
+        // Report TabletMove only when the stylus is touching the tablet or any button is pressed.
+        // TODO: report proximity (hover) motion (no suitable Qt event exists yet).
         if (tabletData->down)
             xi2ReportTabletEvent(*tabletData, xiEvent);
         break;
@@ -577,9 +577,10 @@ void QXcbConnection::xi2ReportTabletEvent(const TabletData &tabletData, void *ev
             fixed1616ToReal(ev->root_x), fixed1616ToReal(ev->root_y),
             pressure, xTilt, yTilt, rotation);
 
-    QWindowSystemInterface::handleTabletEvent(window, tabletData.down, local, global,
+    QWindowSystemInterface::handleTabletEvent(window, local, global,
                                               QTabletEvent::Stylus, tabletData.pointerType,
-                                              pressure, xTilt, yTilt, 0,
+                                              tabletData.down? Qt::LeftButton : Qt::NoButton, pressure,
+                                              xTilt, yTilt, 0,
                                               rotation, 0, tabletData.serialId);
 }
 #endif // QT_NO_TABLETEVENT
