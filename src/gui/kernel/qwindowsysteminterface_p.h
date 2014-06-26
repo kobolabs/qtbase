@@ -185,9 +185,11 @@ public:
 
     class FlushEventsEvent : public WindowSystemEvent {
     public:
-        FlushEventsEvent()
+        FlushEventsEvent(QEventLoop::ProcessEventsFlags f = QEventLoop::AllEvents)
             : WindowSystemEvent(FlushEvents)
+            , flags(f)
         { }
+        QEventLoop::ProcessEventsFlags flags;
     };
 
     class UserEvent : public WindowSystemEvent {
