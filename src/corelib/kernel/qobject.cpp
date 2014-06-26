@@ -4407,7 +4407,8 @@ QMetaObject::Connection QObject::connectImpl(const QObject *sender, void **signa
                                              QtPrivate::QSlotObjectBase *slotObj, Qt::ConnectionType type,
                                              const int *types, const QMetaObject *senderMetaObject)
 {
-    if (!signal) {
+    Q_ASSERT(sender && receiver);
+    if (!signal || !sender || !receiver) {
         qWarning("QObject::connect: invalid null parameter");
         if (slotObj)
             slotObj->destroyIfLastRef();
