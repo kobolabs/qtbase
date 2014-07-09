@@ -328,6 +328,9 @@ inline void ditherBuffer(T *buffer, int prevPix)
 template <>
 inline void ditherBuffer(uint *buffer, int prevPix)
 {
+    if ((buffer[0] & 0xFF000000) != 0xFF000000) { // don't dither translucent pixels
+        return;
+    }
     *buffer = prevPix + (prevPix << 8) + (prevPix << 16) + 0xFF000000;
 }
 
@@ -353,7 +356,7 @@ void ditherAndSharpenLine(T *buffer, int row, int length)
     buffer++;
 
     diffs[0] = diffs[1] = diffs[2] = pix;
-    prevPix = pix ;
+    prevPix = pix;
 
     int idxR = row % 0x3;
     const uchar *order = ORDERED_DITHER_MATRIX3x3[idxR];
@@ -365,15 +368,12 @@ void ditherAndSharpenLine(T *buffer, int row, int length)
         // update average of 3 pixels in col
         diffs[idxC] = pix;
 
-        average = diffs[0] + diffs[1] + diffs[2];
-
-        static libdivide::divider<unsigned int> fast_3(3);
-        average = average / fast_3;
-
         if (Sharpen) {
-            // apply sharpness filter
-            int diff = prevPix - average;
+            average = diffs[0] + diffs[1] + diffs[2];
+            static libdivide::divider<unsigned int> fast_3(3);
+            average = average / fast_3;
 
+            int diff = prevPix - average;
             prevPix += (diff >> 1);
             prevPix = qMax(prevPix, 0);
         }
