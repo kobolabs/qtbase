@@ -82,6 +82,8 @@ public:
     void scheduleUpdate();
     QRect mapToDevice(const QRect &rect) const;
 
+    const QImage *image() const { return mScreenImage; }
+
 public slots:
     virtual void setDirty(const QRect &rect, uint flags = 0);
     void setPhysicalSize(const QSize &size);
