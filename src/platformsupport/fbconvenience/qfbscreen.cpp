@@ -275,11 +275,21 @@ QRegion QFbScreen::doRedraw()
             rectRegion -= intersect;
 
             QRect rect = intersect.boundingRect();
-            for (int layerIndex = mWindowStack.size() - 1; layerIndex != -1; layerIndex--) {
+            int z = 0;
+            // find the highest window to fully contain this rect
+            while (z < mWindowStack.size()) {
+                if (!mWindowStack[z]->window()->isVisible())
+                    continue;
+                QRect windowRect = mWindowStack[z]->geometry().translated(-screenOffset);
+                if (windowRect.contains(rect)) {
+                    break;
+                }
+                z++;
+            }
+
+            for (int layerIndex = qMin(z, mWindowStack.size() - 1); layerIndex != -1; layerIndex--) {
                 if (!mWindowStack[layerIndex]->window()->isVisible())
                     continue;
-                // if (mWindowStack[layerIndex]->isMinimized())
-                //     continue;
                 QRect windowRect = mWindowStack[layerIndex]->geometry().translated(-screenOffset);
                 QRect windowIntersect = rect.translated(-windowRect.left(), -windowRect.top());
                 QTransform transform = map(screen()->angleBetween(nativeOrientation(), orientation()), mGeometry);
