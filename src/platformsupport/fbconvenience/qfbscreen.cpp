@@ -278,8 +278,10 @@ QRegion QFbScreen::doRedraw()
             int z = 0;
             // find the highest window to fully contain this rect
             while (z < mWindowStack.size()) {
-                if (!mWindowStack[z]->window()->isVisible())
+                if (!mWindowStack[z]->window()->isVisible() || mWindowStack[z]->window()->flags() & Qt::KoboDialogTranslucentHint) {
+                    z++;
                     continue;
+                }
                 QRect windowRect = mWindowStack[z]->geometry().translated(-screenOffset);
                 if (windowRect.contains(rect)) {
                     break;
