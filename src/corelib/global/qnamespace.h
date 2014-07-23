@@ -298,6 +298,8 @@ public:
         ForeignWindow = 0x00000020 | Window,
         CoverWindow = 0x00000040 | Window,
 
+        KoboDialogTranslucentHint = 0x00000080,
+
         WindowType_Mask = 0x000000ff,
         MSWindowsFixedSizeDialogHint = 0x00000100,
         MSWindowsOwnDC = 0x00000200,
