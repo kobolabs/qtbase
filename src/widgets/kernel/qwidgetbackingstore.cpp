@@ -688,6 +688,8 @@ void QWidgetBackingStore::removeDirtyWidget(QWidget *w)
     dirtyOnScreenWidgetsRemoveAll(w);
     resetWidget(w);
 
+    dirty -= qt_dirtyRegion(w);
+
     QWidgetPrivate *wd = w->d_func();
     const int n = wd->children.count();
     for (int i = 0; i < n; ++i) {
