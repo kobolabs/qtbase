@@ -136,6 +136,7 @@ public:
         MV_10_7 = 0x0009,
         MV_10_8 = 0x000A,
         MV_10_9 = 0x000B,
+        MV_10_10 = 0x000C,
 
         /* codenames */
         MV_CHEETAH = MV_10_0,
@@ -148,6 +149,7 @@ public:
         MV_LION = MV_10_7,
         MV_MOUNTAINLION = MV_10_8,
         MV_MAVERICKS = MV_10_9,
+        MV_YOSEMITE = MV_10_10,
 
         /* iOS */
         MV_IOS     = 1 << 8,
