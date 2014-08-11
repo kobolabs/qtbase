@@ -259,14 +259,7 @@ bool QGestureManager::filterEventThroughContexts(const QMultiMap<QObject *,
             QGesture *state = getState(target, recognizer, gestureType);
             if (!state)
                 continue;
-            QGestureRecognizer::Result recognizerResult;
-            if (((event->type() >= QEvent::TouchBegin && event->type() <= QEvent::TouchEnd) || (event->type() == QEvent::TouchCancel)) &&
-                 static_cast<QTouchEvent *>(event)->globalTouchPointCount() > recognizer->maxGlobalTouchPoints()) {
-                recognizerResult = QGestureRecognizer::CancelGesture;
-            }
-            else {
-                recognizerResult = recognizer->recognize(state, target, event);
-            }
+            QGestureRecognizer::Result recognizerResult = recognizer->recognize(state, target, event);
             QGestureRecognizer::Result recognizerState = recognizerResult & QGestureRecognizer::ResultState_Mask;
             QGestureRecognizer::Result resultHint = recognizerResult & QGestureRecognizer::ResultHint_Mask;
             if (recognizerState == QGestureRecognizer::TriggerGesture) {

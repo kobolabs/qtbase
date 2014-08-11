@@ -700,11 +700,6 @@ void QFlickGestureRecognizer::reset(QGesture *state)
     QGestureRecognizer::reset(state);
 }
 
-int QFlickGestureRecognizer::maxGlobalTouchPoints()
-{
-    return 1;
-}
-
 QT_END_NAMESPACE
 
 #endif // QT_NO_GESTURES
