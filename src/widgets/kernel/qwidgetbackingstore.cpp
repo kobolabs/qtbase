@@ -679,11 +679,6 @@ void QWidgetBackingStore::markDirtyOnScreen(const QRegion &region, QWidget *widg
     appendDirtyOnScreenWidget(widget);
 }
 
-void QWidgetBackingStore::removeDirtyRegion(QWidget *w)
-{
-    dirty -= qt_dirtyRegion(w);
-}
-
 void QWidgetBackingStore::removeDirtyWidget(QWidget *w)
 {
     if (!w)

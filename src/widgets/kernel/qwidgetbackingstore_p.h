@@ -124,7 +124,6 @@ private:
     void markDirtyOnScreen(const QRegion &dirtyOnScreen, QWidget *widget, const QPoint &topLevelOffset);
 
     void removeDirtyWidget(QWidget *w);
-    void removeDirtyRegion(QWidget *w);
 
     void updateLists(QWidget *widget);
 
