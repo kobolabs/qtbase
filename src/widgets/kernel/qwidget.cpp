@@ -11486,7 +11486,6 @@ void QWidget::removeFromDirtyList()
     Q_D(QWidget);
     if (QWidgetBackingStore *bs = d->maybeBackingStore()) {
         bs->removeDirtyWidget(this);
-        bs->removeDirtyRegion(this);
     }
 }
 
