@@ -337,7 +337,7 @@ void QProgressBar::setValue(int value)
     }
 #endif
     if (d->repaintRequired())
-        repaint();
+        update();
 }
 
 int QProgressBar::value() const
