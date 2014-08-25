@@ -369,12 +369,30 @@ inline char qToLower(char ch)
 const QString::Null QString::null = { };
 
 /*!
+  \macro QT_RESTRICTED_CAST_FROM_ASCII
+  \relates QString
+
+  Defining this macro disables most automatic conversions from source
+  literals and 8-bit data to unicode QStrings, but allows the use of
+  the \c{QChar(char)} and \c{QString(const char (&ch)[N]} constructors,
+  and the \c{QString::operator=(const char (&ch)[N])} assignment operator
+  giving most of the type-safety benefits of QT_NO_CAST_FROM_ASCII
+  but does not require user code to wrap character and string literals
+  with QLatin1Char, QLatin1String or similar.
+
+  Using this macro together with source strings outside the 7-bit range,
+  non-literals, or literals with embedded NUL characters is undefined.
+
+  \sa QT_NO_CAST_FROM_ASCII, QT_NO_CAST_TO_ASCII
+*/
+
+/*!
   \macro QT_NO_CAST_FROM_ASCII
   \relates QString
 
   Disables automatic conversions from 8-bit strings (char *) to unicode QStrings
 
-  \sa QT_NO_CAST_TO_ASCII, QT_NO_CAST_FROM_BYTEARRAY
+  \sa QT_NO_CAST_TO_ASCII, QT_RESTRICTED_CAST_FROM_ASCII, QT_NO_CAST_FROM_BYTEARRAY
 */
 
 /*!
@@ -383,7 +401,7 @@ const QString::Null QString::null = { };
 
   disables automatic conversion from QString to 8-bit strings (char *)
 
-  \sa QT_NO_CAST_FROM_ASCII, QT_NO_CAST_FROM_BYTEARRAY
+  \sa QT_NO_CAST_FROM_ASCII, QT_RESTRICTED_CAST_FROM_ASCII, QT_NO_CAST_FROM_BYTEARRAY
 */
 
 /*!
@@ -397,7 +415,7 @@ const QString::Null QString::null = { };
   Note: This only works for compilers that support warnings for
   deprecated API.
 
-  \sa QT_NO_CAST_TO_ASCII, QT_NO_CAST_FROM_ASCII
+  \sa QT_NO_CAST_TO_ASCII, QT_NO_CAST_FROM_ASCII, QT_RESTRICTED_CAST_FROM_ASCII
 */
 
 /*!
@@ -631,6 +649,9 @@ const QString::Null QString::null = { };
     \list
     \li \c QT_NO_CAST_FROM_ASCII disables automatic conversions from
        C string literals and pointers to Unicode.
+    \li \c QT_RESTRICTED_CAST_FROM_ASCII allows automatic conversions
+       from C characters and character arrays, but disables automatic
+       conversions from character pointers to Unicode.
     \li \c QT_NO_CAST_TO_ASCII disables automatic conversion from QString
        to C strings.
     \endlist
@@ -948,6 +969,12 @@ const QString::Null QString::null = { };
     QT_NO_CAST_FROM_ASCII when you compile your applications. This
     can be useful if you want to ensure that all user-visible strings
     go through QObject::tr(), for example.
+
+    \note Defining QT_RESTRICTED_CAST_FROM_ASCII also disables
+    this constructor, but enables a \c{QString(const char (&ch)[N])}
+    constructor instead. Using non-literal input, or input with
+    embedded NUL characters, or non-7-bit characters is undefined
+    in this case.
 
     \sa fromLatin1(), fromLocal8Bit(), fromUtf8()
 */
@@ -1394,10 +1421,11 @@ QString &QString::operator=(const QString &other)
     Assigns \a str to this string. The const char pointer is converted
     to Unicode using the fromUtf8() function.
 
-    You can disable this operator by defining \c
-    QT_NO_CAST_FROM_ASCII when you compile your applications. This
-    can be useful if you want to ensure that all user-visible strings
+    You can disable this operator by defining \c QT_NO_CAST_FROM_ASCII
+    or \c QT_RESTRICTED_CAST_FROM_ASCII when you compile your applications.
+    This can be useful if you want to ensure that all user-visible strings
     go through QObject::tr(), for example.
+
 */
 
 /*! \fn QString &QString::operator=(char ch)
