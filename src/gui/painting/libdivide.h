@@ -20,7 +20,7 @@
 #include <assert.h>
 #endif
 
-#if ! LIBDIVIDE_HAS_STDINT_TYPES && ! LIBDIVIDE_VC
+#if ! LIBDIVIDE_HAS_STDINT_TYPES && (! LIBDIVIDE_VC || _MSC_VER >= 1600)
 /* Visual C++ still doesn't ship with stdint.h (!) */
 #include <stdint.h>
 #define LIBDIVIDE_HAS_STDINT_TYPES 1
