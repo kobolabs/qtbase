@@ -101,7 +101,6 @@ public:
     QGesture *create(QObject *target);
     QGestureRecognizer::Result recognize(QGesture *state, QObject *watched, QEvent *event);
     void reset(QGesture *state);
-    virtual int maxGlobalTouchPoints();
 
 private:
     Qt::MouseButton button; // NoButton == Touch

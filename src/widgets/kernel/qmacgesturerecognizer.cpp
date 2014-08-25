@@ -86,11 +86,6 @@ void QMacSwipeGestureRecognizer::reset(QGesture *gesture)
     QGestureRecognizer::reset(gesture);
 }
 
-int QMacSwipeGestureRecognizer::maxGlobalTouchPoints()
-{
-    return 1;
-}
-
 ////////////////////////////////////////////////////////////////////////
 
 QMacPinchGestureRecognizer::QMacPinchGestureRecognizer()
@@ -166,11 +161,6 @@ void QMacPinchGestureRecognizer::reset(QGesture *gesture)
     g->setStartCenterPoint(QPointF());
     g->setLastCenterPoint(QPointF());
     QGestureRecognizer::reset(gesture);
-}
-
-int QMacPinchGestureRecognizer::maxGlobalTouchPoints()
-{
-    return 2;
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -278,11 +268,6 @@ void QMacPanGestureRecognizer::reset(QGesture *gesture)
     g->setLastOffset(QPointF(0, 0));
     g->setAcceleration(qreal(1));
     QGestureRecognizer::reset(gesture);
-}
-
-int QMacPanGestureRecognizer::maxGlobalTouchPoints()
-{
-    return 1;
 }
 
 QT_END_NAMESPACE

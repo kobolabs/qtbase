@@ -5860,7 +5860,6 @@ void QGraphicsScenePrivate::touchEventHandler(QTouchEvent *sceneTouchEvent)
         }
 
         QTouchEvent touchEvent(eventType);
-        touchEvent.setGlobalTouchPointCount(sceneTouchEvent->touchPoints().count());
         touchEvent.setWindow(sceneTouchEvent->window());
         touchEvent.setTarget(sceneTouchEvent->target());
         touchEvent.setDevice(sceneTouchEvent->device());

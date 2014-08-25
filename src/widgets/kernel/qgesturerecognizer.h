@@ -83,7 +83,6 @@ public:
     virtual Result recognize(QGesture *state, QObject *watched,
                              QEvent *event) = 0;
     virtual void reset(QGesture *state);
-    virtual int maxGlobalTouchPoints() = 0;
 
     static Qt::GestureType registerRecognizer(QGestureRecognizer *recognizer);
     static void unregisterRecognizer(Qt::GestureType type);

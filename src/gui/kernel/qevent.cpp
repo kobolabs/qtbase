@@ -3772,8 +3772,7 @@ QTouchEvent::QTouchEvent(QEvent::Type eventType,
       _target(0),
       _device(device),
       _touchPointStates(touchPointStates),
-      _touchPoints(touchPoints),
-      _globalTouchPointCount(0)
+      _touchPoints(touchPoints)
 { }
 
 /*!
