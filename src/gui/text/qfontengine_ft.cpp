@@ -206,6 +206,7 @@ static bool ft_getSfntTable(void *user_data, uint tag, uchar *buffer, uint *leng
     return result;
 }
 
+static QFontEngineFT::Glyph emptyGlyph = {0, 0, 0, 0, 0, 0, 0, 0};
 
 // -------------------------- Freetype support ------------------------------
 
@@ -962,6 +963,9 @@ QFontEngineFT::Glyph *QFontEngineFT::loadGlyph(QGlyphSet *set, uint glyph,
     if (g && g->format == format && (fetchMetricsOnly || g->data))
         return g;
 
+    if (!g && set && set->isGlyphMissing(glyph))
+        return &emptyGlyph;
+
     QFontEngineFT::GlyphInfo info;
 
     Q_ASSERT(format != Format_None);
@@ -1020,8 +1024,12 @@ QFontEngineFT::Glyph *QFontEngineFT::loadGlyph(QGlyphSet *set, uint glyph,
         load_flags |= FT_LOAD_FORCE_AUTOHINT;
         err = FT_Load_Glyph(face, glyph, load_flags);
     }
-    if (err != FT_Err_Ok)
+    if (err != FT_Err_Ok) {
         qWarning("load glyph failed err=%x face=%p, glyph=%d", err, face, glyph);
+        if (set)
+            set->setGlyphMissing(glyph);
+        return &emptyGlyph;
+    }
 
     FT_GlyphSlot slot = face->glyph;
 
@@ -1744,7 +1752,7 @@ void QFontEngineFT::recalcAdvances(QGlyphLayout *glyphs, QFontEngine::ShaperFlag
                 glyphs->vert_advances_x[i] = design ? QFixed::fromFixed(face->glyph->linearVertAdvance >> 10)
                                                     : QFixed::fromFixed(face->glyph->metrics.vertAdvance).round();
             }
-            if (!cacheEnabled)
+            if (!cacheEnabled && g != &emptyGlyph)
                 delete g;
         }
         glyphs->advances_y[i] = 0;
@@ -1787,7 +1795,7 @@ glyph_metrics_t QFontEngineFT::boundingBox(const QGlyphLayout &glyphs)
             xmax = qMax(xmax, x + g->width);
             ymax = qMax(ymax, y + g->height);
             overall.xoff += g->horiAdvance;
-            if (!cacheEnabled)
+            if (!cacheEnabled && g != &emptyGlyph)
                 delete g;
         } else {
             int left  = FLOOR(face->glyph->metrics.horiBearingX);
@@ -1831,7 +1839,7 @@ glyph_metrics_t QFontEngineFT::boundingBox(glyph_t glyph)
         if (fontDef.styleStrategy & QFont::ForceIntegerMetrics) {
             overall.xoff = overall.xoff.round();
         }
-        if (!cacheEnabled)
+        if (!cacheEnabled && g != &emptyGlyph)
             delete g;
     } else {
         int left  = FLOOR(face->glyph->metrics.horiBearingX);
@@ -1922,7 +1930,7 @@ glyph_metrics_t QFontEngineFT::alphaMapBoundingBox(glyph_t glyph, QFixed subPixe
         overall.width = g->width;
         overall.height = g->height;
         overall.xoff = g->horiAdvance;
-        if (!glyphSet)
+        if (!glyphSet && g != &emptyGlyph)
             delete g;
     } else {
         int left  = FLOOR(face->glyph->metrics.horiBearingX);
