@@ -85,7 +85,7 @@
 #endif
 
 #if !defined(QT_MAX_CACHED_GLYPH_SIZE)
-#  define QT_MAX_CACHED_GLYPH_SIZE 128
+#  define QT_MAX_CACHED_GLYPH_SIZE 512
 #endif
 
 QT_BEGIN_NAMESPACE
@@ -1031,17 +1031,6 @@ QFontEngineFT::Glyph *QFontEngineFT::loadGlyph(QGlyphSet *set, uint glyph,
         int width = right-left;
         int height = top-bottom;
 
-        // If any of the metrics are too large to fit, don't cache them
-        if (qAbs(TRUNC(top)) >= 128
-                || TRUNC(width) >= 256
-                || TRUNC(height) >= 256
-                || qAbs(TRUNC(left)) >= 128
-                || qAbs(TRUNC(FLOOR(slot->metrics.vertBearingY))) >= 128
-                || qAbs(TRUNC(ROUND(slot->metrics.horiAdvance))) >= 128
-                || qAbs(TRUNC(ROUND(slot->metrics.vertAdvance))) >= 128) {
-            return 0;
-        }
-
         g = new Glyph;
         g->data = 0;
         g->linearHoriAdvance = slot->linearHoriAdvance >> 10;
@@ -1128,19 +1117,6 @@ QFontEngineFT::Glyph *QFontEngineFT::loadGlyph(QGlyphSet *set, uint glyph,
     if (hsubpixel) {
         info.width /= 3;
         info.x += 1;
-    }
-
-    bool large_glyph = (((short)(slot->linearHoriAdvance>>10) != slot->linearHoriAdvance>>10)
-                        || ((uchar)(info.width) != info.width)
-                        || ((uchar)(info.height) != info.height)
-                        || ((signed char)(info.x) != info.x)
-                        || ((signed char)(info.y) != info.y)
-                        || ((signed char)(info.xOff) != info.xOff)
-                        || ((signed char)(info.yOff) != info.yOff));
-
-    if (large_glyph) {
-        delete [] glyph_buffer;
-        return 0;
     }
 
     int pitch = (format == Format_Mono ? ((info.width + 31) & ~31) >> 3 :

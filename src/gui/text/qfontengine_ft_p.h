@@ -147,10 +147,10 @@ public:
         short linearVertAdvance;
         unsigned char width;
         unsigned char height;
-        signed char x;
-        signed char y;
-        signed char horiAdvance;
-        signed char vertAdvance;
+        short x;
+        short y;
+        short horiAdvance;
+        short vertAdvance;
         signed char format;
         uchar *data;
     };
