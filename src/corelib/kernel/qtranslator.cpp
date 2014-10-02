@@ -100,7 +100,7 @@ static bool match(const uchar* found, const char* target, uint len)
     // (normalize it to be without the zero-terminating symbol)
     if (len > 0 && found[len-1] == '\0')
         --len;
-    return (memcmp(found, target, len) == 0 && target[len] == '\0');
+    return (strncmp((const char *) found, target, len) == 0 && target[len] == '\0');
 }
 
 static void elfHash_continue(const char *name, uint &h)
