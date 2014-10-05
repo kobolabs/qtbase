@@ -353,7 +353,7 @@ enum StyleFeature {
     NumKnownStyleFeatures = 4
 };
 
-struct Q_GUI_EXPORT Value
+struct Value
 {
     enum Type {
         Unknown,
@@ -372,7 +372,8 @@ struct Q_GUI_EXPORT Value
     inline Value() : type(Unknown) { }
     Type type;
     QVariant variant;
-    QString toString() const;
+
+    Q_GUI_EXPORT QString toString() const;
 };
 
 struct ColorData {
@@ -635,7 +636,7 @@ enum StyleSheetOrigin {
     StyleSheetOrigin_Inline
 };
 
-struct Q_GUI_EXPORT StyleSheet
+struct StyleSheet
 {
     StyleSheet() : origin(StyleSheetOrigin_Unspecified), depth(0) { }
     QVector<StyleRule> styleRules;  //only contains rules that are not indexed
@@ -646,7 +647,8 @@ struct Q_GUI_EXPORT StyleSheet
     int depth; // applicable only for inline style sheets
     QMultiHash<QString, StyleRule> nameIndex;
     QMultiHash<QString, StyleRule> idIndex;
-    void buildIndexes(Qt::CaseSensitivity nameCaseSensitivity = Qt::CaseSensitive);
+
+    Q_GUI_EXPORT void buildIndexes(Qt::CaseSensitivity nameCaseSensitivity = Qt::CaseSensitive);
 };
 
 class Q_GUI_EXPORT StyleSelector
@@ -732,13 +734,13 @@ enum TokenType {
     OR
 };
 
-struct Q_GUI_EXPORT Symbol
+struct Symbol
 {
     inline Symbol() : token(NONE), start(0), len(-1) {}
     TokenType token;
     QString text;
     int start, len;
-    QString lexem() const;
+    Q_GUI_EXPORT QString lexem() const;
 };
 
 class Q_GUI_EXPORT Scanner
