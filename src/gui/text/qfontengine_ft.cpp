@@ -53,6 +53,8 @@
 #include "qthreadstorage.h"
 #include <qmath.h>
 
+#include <mutex>
+
 #include "qlibrary.h"
 
 #include <ft2build.h>
@@ -312,6 +314,18 @@ QFreetypeFace *QFreetypeFace::getFace(const QFontEngine::FaceId &face_id,
         FT_UInt     hinting_engine = FT_CFF_HINTING_ADOBE;
         FT_Property_Set(freetypeData->library, "cff", "hinting-engine", &hinting_engine);
 #endif
+    }
+
+    typedef FT_Error (*FT_Enable_Edge_Rendering)(FT_Library, FT_Bool);
+    static FT_Enable_Edge_Rendering ft_enable_edge_rendering = NULL;
+
+    static std::once_flag once;
+    std::call_once(once, []() {
+        ft_enable_edge_rendering = (FT_Enable_Edge_Rendering) QLibrary::resolve(QLatin1String("freetype"), "FT_Enable_Edge_Rendering");
+    });
+
+    if (ft_enable_edge_rendering) {
+        ft_enable_edge_rendering(freetypeData->library, face_id.edgeRendering);
     }
 
     QFreetypeFace *freetype = freetypeData->faces.value(face_id, 0);
@@ -974,17 +988,26 @@ QFontEngineFT::Glyph *QFontEngineFT::loadGlyph(QGlyphSet *set, uint glyph,
     v.y = 0;
     FT_Set_Transform(face, &freetype->matrix, &v);
 
-    static bool initialized = false;
     typedef FT_Error (*FT_Set_CSM_Adjustments)(FT_Face, FT_Fixed, FT_Fixed, FT_Fixed, FT_Fixed);
     static FT_Set_CSM_Adjustments ft_set_csm_adjustments = NULL;
-    if (!initialized) {
-        initialized = true;
+
+    typedef FT_Error (*FT_Enable_Edge_Rendering)(FT_Library, FT_Bool);
+    static FT_Enable_Edge_Rendering ft_enable_edge_rendering = NULL;
+
+    static std::once_flag once;
+    std::call_once(once, []() {
         ft_set_csm_adjustments = (FT_Set_CSM_Adjustments) QLibrary::resolve(QLatin1String("freetype"), "FT_Set_CSM_Adjustments");
+        ft_enable_edge_rendering = (FT_Enable_Edge_Rendering) QLibrary::resolve(QLatin1String("freetype"), "FT_Enable_Edge_Rendering");
         qDebug() << "Loading iType.." << (ft_set_csm_adjustments != NULL);
-    }
+    });
 
     if (ft_set_csm_adjustments) {
         ft_set_csm_adjustments(freetype->face, QFixed::fromReal(fontDef.csmSharpnessOffset).value(), 0.0, QFixed::fromReal(fontDef.csmThicknessOffset).value(), 0.0);
+    }
+
+    if (ft_enable_edge_rendering) {
+        FT_Library library = qt_getFreetype();
+        ft_enable_edge_rendering(library, face_id.edgeRendering);
     }
 
     FT_Error err = FT_Load_Glyph(face, glyph, load_flags);
