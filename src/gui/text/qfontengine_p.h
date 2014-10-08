@@ -161,6 +161,7 @@ public:
         QByteArray uuid;
         int index;
         int encoding;
+        bool edgeRendering;
     };
     virtual FaceId faceId() const { return FaceId(); }
     enum SynthesizedFlags {
@@ -339,12 +340,12 @@ Q_DECLARE_OPERATORS_FOR_FLAGS(QFontEngine::ShaperFlags)
 
 inline bool operator ==(const QFontEngine::FaceId &f1, const QFontEngine::FaceId &f2)
 {
-    return (f1.index == f2.index) && (f1.encoding == f2.encoding) && (f1.filename == f2.filename);
+    return (f1.edgeRendering == f2.edgeRendering) && (f1.index == f2.index) && (f1.encoding == f2.encoding) && (f1.filename == f2.filename);
 }
 
 inline uint qHash(const QFontEngine::FaceId &f)
 {
-    return qHash((f.index << 16) + f.encoding) + qHash(f.filename + f.uuid);
+    return qHash((f.edgeRendering ? 1 : 0 << 31) + (f.index << 16) + f.encoding) + qHash(f.filename + f.uuid);
 }
 
 

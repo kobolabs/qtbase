@@ -120,6 +120,7 @@ QFontEngine *QBasicFontDatabase::fontEngine(const QFontDef &fontDef, QChar::Scri
     QFontEngine::FaceId fid;
     fid.filename = QFile::encodeName(fontfile->fileName);
     fid.index = fontfile->indexValue;
+    fid.edgeRendering = !(fontDef.hintingPreference & QFont::PreferNoHinting);
     engine = new QFontEngineFT(fontDef);
 
     bool antialias = !(fontDef.styleStrategy & QFont::NoAntialias);
@@ -167,6 +168,7 @@ namespace {
             faceId.filename = "";
             faceId.index = 0;
             faceId.uuid = QUuid::createUuid().toByteArray();
+            faceId.edgeRendering = false;
 
             return init(faceId, true, Format_None, fontData);
         }
