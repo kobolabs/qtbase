@@ -405,8 +405,10 @@ bool QWindowsInputContext::composition(HWND hwnd, LPARAM lParamIn)
     if (QWindowsContext::verboseInputMethods)
         qDebug() << '>' << __FUNCTION__ << fo << debugComposition(lParam)
                  << " composing=" << m_compositionContext.isComposing;
-    if (!fo || m_compositionContext.hwnd != hwnd || !lParam)
+    if (!fo || m_compositionContext.hwnd != hwnd || !lParam) {
+        imeNotifyCancelComposition(hwnd);
         return false;
+    }
     const HIMC himc = ImmGetContext(m_compositionContext.hwnd);
     if (!himc)
         return false;
