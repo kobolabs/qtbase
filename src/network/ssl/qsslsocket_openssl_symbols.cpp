@@ -424,6 +424,7 @@ static QStringList libraryPathList()
 #  ifdef Q_OS_DARWIN
     paths = QString::fromLatin1(qgetenv("DYLD_LIBRARY_PATH"))
             .split(QLatin1Char(':'), QString::SkipEmptyParts);
+    paths << QDir(QStringLiteral("%1/../Frameworks").arg(QCoreApplication::applicationDirPath())).canonicalPath();
 #  else
     paths = QString::fromLatin1(qgetenv("LD_LIBRARY_PATH"))
             .split(QLatin1Char(':'), QString::SkipEmptyParts);
@@ -560,7 +561,7 @@ static QPair<QLibrary*, QLibrary*> loadOpenSsl()
 #ifdef Q_OS_OPENBSD
     libcrypto->setLoadHints(QLibrary::ExportExternalSymbolsHint);
 #endif
-#if defined(SHLIB_VERSION_NUMBER) && !defined(Q_OS_QNX) // on QNX, the libs are always libssl.so and libcrypto.so
+#if defined(SHLIB_VERSION_NUMBER) && !defined(Q_OS_QNX) && !defined(Q_OS_MAC) // on QNX, the libs are always libssl.so and libcrypto.so
     // first attempt: the canonical name is libssl.so.<SHLIB_VERSION_NUMBER>
     libssl->setFileNameAndVersion(QLatin1String("ssl"), QLatin1String(SHLIB_VERSION_NUMBER));
     libcrypto->setFileNameAndVersion(QLatin1String("crypto"), QLatin1String(SHLIB_VERSION_NUMBER));
@@ -573,6 +574,7 @@ static QPair<QLibrary*, QLibrary*> loadOpenSsl()
     }
 #endif
 
+#if !defined(Q_OS_MAC)
     // second attempt: find the development files libssl.so and libcrypto.so
     libssl->setFileNameAndVersion(QLatin1String("ssl"), -1);
     libcrypto->setFileNameAndVersion(QLatin1String("crypto"), -1);
@@ -583,6 +585,7 @@ static QPair<QLibrary*, QLibrary*> loadOpenSsl()
         libssl->unload();
         libcrypto->unload();
     }
+#endif
 
     // third attempt: loop on the most common library paths and find libssl
     QStringList sslList = findAllLibSsl();
