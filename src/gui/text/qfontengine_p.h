@@ -156,7 +156,7 @@ public:
     virtual bool getSfntTableData(uint /*tag*/, uchar * /*buffer*/, uint * /*length*/) const { return false; }
 
     struct FaceId {
-        FaceId() : index(0), encoding(0) {}
+        FaceId() : index(0), encoding(0), edgeRendering(false) {}
         QByteArray filename;
         QByteArray uuid;
         int index;
