@@ -310,16 +310,17 @@ QStringList QBasicFontDatabase::addTTFile(const QByteArray &fontData, const QByt
         }
 
         QString family = QString::fromLatin1(face->family_name);
-        FontFile *fontFile = new FontFile;
-        fontFile->fileName = QFile::decodeName(file);
-        fontFile->indexValue = index;
+        if (canRegisterFamily(family)) {
+            FontFile *fontFile = new FontFile;
+            fontFile->fileName = QFile::decodeName(file);
+            fontFile->indexValue = index;
 
-        QFont::Stretch stretch = QFont::Unstretched;
+            QFont::Stretch stretch = QFont::Unstretched;
 
-        registerFont(family,QString::fromLatin1(face->style_name),QString(),weight,style,stretch,true,true,0,fixedPitch,writingSystems,fontFile);
+            registerFont(family,QString::fromLatin1(face->style_name),QString(),weight,style,stretch,true,true,0,fixedPitch,writingSystems,fontFile);
 
-        families.append(family);
-
+            families.append(family);
+        }
         FT_Done_Face(face);
         ++index;
     } while (index < numFaces);
