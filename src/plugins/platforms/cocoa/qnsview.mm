@@ -1198,10 +1198,6 @@ static QTabletEvent::TabletDevice wacomTabletDevice(NSEvent *theEvent)
         }
 
         QWindowSystemInterface::handleWheelEvent(m_window, qt_timestamp, qt_windowPoint, qt_screenPoint, pixelDelta, angleDelta, currentWheelModifiers, ph);
-
-        if (momentumPhase == NSEventPhaseEnded || momentumPhase == NSEventPhaseCancelled || momentumPhase == NSEventPhaseNone) {
-            currentWheelModifiers = Qt::NoModifier;
-        }
     } else
 #endif
     {
