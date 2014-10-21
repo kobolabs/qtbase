@@ -289,8 +289,8 @@ int q_X509Callback(int ok, X509_STORE_CTX *ctx)
 long QSslSocketBackendPrivate::setupOpenSslOptions(QSsl::SslProtocol protocol, QSsl::SslOptions sslOptions)
 {
     long options;
-    if (protocol == QSsl::TlsV1SslV3 || protocol == QSsl::SecureProtocols)
-        options = SSL_OP_ALL|SSL_OP_NO_SSLv2;
+    if (protocol == QSsl::SecureProtocols)
+        options = SSL_OP_ALL|SSL_OP_NO_SSLv3|SSL_OP_NO_SSLv2;
     else
         options = SSL_OP_ALL;
 
@@ -351,8 +351,7 @@ bool QSslSocketBackendPrivate::initSslContext()
     }
 
 #if OPENSSL_VERSION_NUMBER >= 0x0090806fL && !defined(OPENSSL_NO_TLSEXT)
-    if ((configuration.protocol == QSsl::TlsV1SslV3 ||
-        configuration.protocol == QSsl::TlsV1_0 ||
+    if ((configuration.protocol == QSsl::TlsV1_0 ||
         configuration.protocol == QSsl::TlsV1_1 ||
         configuration.protocol == QSsl::TlsV1_2 ||
         configuration.protocol == QSsl::SecureProtocols ||
