@@ -85,7 +85,6 @@ namespace QSsl {
         TlsV1_1,
         TlsV1_2,
         AnyProtocol,
-        TlsV1SslV3,
         SecureProtocols,
         UnknownProtocol = -1
     };
