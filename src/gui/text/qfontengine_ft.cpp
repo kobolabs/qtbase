@@ -206,7 +206,7 @@ static bool ft_getSfntTable(void *user_data, uint tag, uchar *buffer, uint *leng
     return result;
 }
 
-static QFontEngineFT::Glyph emptyGlyph = {0, 0, 0, 0, 0, 0, 0, 0};
+static QFontEngineFT::Glyph emptyGlyph = {0, 0, 0, 0, 0, 0, 0, 0, 0};
 
 // -------------------------- Freetype support ------------------------------
 
