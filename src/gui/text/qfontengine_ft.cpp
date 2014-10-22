@@ -206,6 +206,7 @@ static bool ft_getSfntTable(void *user_data, uint tag, uchar *buffer, uint *leng
     return result;
 }
 
+static QFontEngineFT::Glyph emptyGlyph = {0, 0, 0, 0, 0, 0, 0, 0, 0};
 
 // -------------------------- Freetype support ------------------------------
 
@@ -933,7 +934,7 @@ int QFontEngineFT::loadFlags(QGlyphSet *set, GlyphFormat format, int flags,
     }
 
     if (set && set->outline_drawing)
-        load_flags = FT_LOAD_NO_BITMAP;
+        load_flags |= FT_LOAD_NO_BITMAP;
 
     if (default_hint_style == HintNone || (flags & DesignMetrics) || (set && set->outline_drawing))
         load_flags |= FT_LOAD_NO_HINTING;
@@ -961,6 +962,9 @@ QFontEngineFT::Glyph *QFontEngineFT::loadGlyph(QGlyphSet *set, uint glyph,
     Glyph *g = set ? set->getGlyph(glyph, subPixelPosition) : 0;
     if (g && g->format == format && (fetchMetricsOnly || g->data))
         return g;
+
+    if (!g && set && set->isGlyphMissing(glyph))
+        return &emptyGlyph;
 
     QFontEngineFT::GlyphInfo info;
 
@@ -1020,8 +1024,12 @@ QFontEngineFT::Glyph *QFontEngineFT::loadGlyph(QGlyphSet *set, uint glyph,
         load_flags |= FT_LOAD_FORCE_AUTOHINT;
         err = FT_Load_Glyph(face, glyph, load_flags);
     }
-    if (err != FT_Err_Ok)
+    if (err != FT_Err_Ok) {
         qWarning("load glyph failed err=%x face=%p, glyph=%d", err, face, glyph);
+        if (set)
+            set->setGlyphMissing(glyph);
+        return &emptyGlyph;
+    }
 
     FT_GlyphSlot slot = face->glyph;
 
@@ -1744,7 +1752,7 @@ void QFontEngineFT::recalcAdvances(QGlyphLayout *glyphs, QFontEngine::ShaperFlag
                 glyphs->vert_advances_x[i] = design ? QFixed::fromFixed(face->glyph->linearVertAdvance >> 10)
                                                     : QFixed::fromFixed(face->glyph->metrics.vertAdvance).round();
             }
-            if (!cacheEnabled)
+            if (!cacheEnabled && g != &emptyGlyph)
                 delete g;
         }
         glyphs->advances_y[i] = 0;
@@ -1787,7 +1795,7 @@ glyph_metrics_t QFontEngineFT::boundingBox(const QGlyphLayout &glyphs)
             xmax = qMax(xmax, x + g->width);
             ymax = qMax(ymax, y + g->height);
             overall.xoff += g->horiAdvance;
-            if (!cacheEnabled)
+            if (!cacheEnabled && g != &emptyGlyph)
                 delete g;
         } else {
             int left  = FLOOR(face->glyph->metrics.horiBearingX);
@@ -1831,7 +1839,7 @@ glyph_metrics_t QFontEngineFT::boundingBox(glyph_t glyph)
         if (fontDef.styleStrategy & QFont::ForceIntegerMetrics) {
             overall.xoff = overall.xoff.round();
         }
-        if (!cacheEnabled)
+        if (!cacheEnabled && g != &emptyGlyph)
             delete g;
     } else {
         int left  = FLOOR(face->glyph->metrics.horiBearingX);
@@ -1922,7 +1930,7 @@ glyph_metrics_t QFontEngineFT::alphaMapBoundingBox(glyph_t glyph, QFixed subPixe
         overall.width = g->width;
         overall.height = g->height;
         overall.xoff = g->horiAdvance;
-        if (!glyphSet)
+        if (!glyphSet && g != &emptyGlyph)
             delete g;
     } else {
         int left  = FLOOR(face->glyph->metrics.horiBearingX);
@@ -2076,8 +2084,6 @@ QImage QFontEngineFT::alphaMapForGlyph(glyph_t g, QFixed subPixelPosition)
     lockFace();
 
     QScopedPointer<Glyph> glyph(loadGlyphFor(g, subPixelPosition, antialias ? Format_A8 : Format_Mono));
-    if (cacheEnabled)
-        glyph.take();
     if (!glyph || !glyph->data) {
         unlockFace();
         return QFontEngine::alphaMapForGlyph(g);
@@ -2102,6 +2108,8 @@ QImage QFontEngineFT::alphaMapForGlyph(glyph_t g, QFixed subPixelPosition)
         for (int y = 0; y < glyph->height; ++y)
             memcpy(img.scanLine(y), &glyph->data[y * pitch], pitch);
     }
+    if (cacheEnabled)
+        glyph.take();
     unlockFace();
 
     return img;
@@ -2115,8 +2123,6 @@ QImage QFontEngineFT::alphaRGBMapForGlyph(glyph_t g, QFixed subPixelPosition, co
     lockFace();
 
     QScopedPointer<Glyph> glyph(loadGlyphFor(g, subPixelPosition, Format_A32));
-    if (cacheEnabled)
-        glyph.take();
     if (!glyph || !glyph->data) {
         unlockFace();
         return QFontEngine::alphaRGBMapForGlyph(g, subPixelPosition, t);
@@ -2124,6 +2130,9 @@ QImage QFontEngineFT::alphaRGBMapForGlyph(glyph_t g, QFixed subPixelPosition, co
 
     QImage img(glyph->width, glyph->height, QImage::Format_RGB32);
     memcpy(img.bits(), glyph->data, 4 * glyph->width * glyph->height);
+
+    if (cacheEnabled)
+        glyph.take();
     unlockFace();
 
     return img;
