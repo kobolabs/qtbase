@@ -94,7 +94,8 @@ public:
         HighQualityAntialiasing = 0x08,
         NonCosmeticDefaultPen = 0x10,
         Qt4CompatiblePainting = 0x20,
-        Dithering = 0x40
+        Dithering = 0x40,
+        ForcedSmoothTransform = 0x80
     };
 
     Q_DECLARE_FLAGS(RenderHints, RenderHint)
