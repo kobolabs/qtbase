@@ -973,6 +973,8 @@ static HB_Error  Lookup_LigatureSubst( HB_GSUBHeader*    gsub,
      return ERR(HB_Err_Invalid_SubTable);
 
   lig = ls->LigatureSet[index].Ligature;
+  if (lig->LigGlyph == 65535)
+    return ERR(HB_Err_Invalid_SubTable);
 
   for ( numlig = ls->LigatureSet[index].LigatureCount;
 	numlig;
