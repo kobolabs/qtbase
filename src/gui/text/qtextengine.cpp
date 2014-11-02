@@ -1022,16 +1022,22 @@ void QTextEngine::shapeText(int item) const
             advance += (letterSpacing - 100) * advance / 100;
         }
     }
-    if (wordSpacing != 0) {
-        for (int i = 0; i < si.num_glyphs; ++i) {
-            if (glyphs.attributes[i].justification == QGlyphAttributes::Space
-                || glyphs.attributes[i].justification == QGlyphAttributes::Arabic_Space) {
-                // word spacing only gets added once to a consecutive run of spaces (see CSS spec)
-                if (i + 1 == si.num_glyphs
-                    ||(glyphs.attributes[i+1].justification != QGlyphAttributes::Space
-                       && glyphs.attributes[i+1].justification != QGlyphAttributes::Arabic_Space))
-                    glyphs.advances_x[i] += wordSpacing;
-            }
+
+    for (int i = 0; i < si.num_glyphs; ++i) {
+        if (glyphs.attributes[i].justification == QGlyphAttributes::Space
+            || glyphs.attributes[i].justification == QGlyphAttributes::Arabic_Space) {
+
+            // subtract off the letter spacing for this space and the previous character
+            glyphs.advances_x[i] -= letterSpacing;
+            for (int j = i - 1; j >= 0; --j)
+                if (glyphs.attributes[j].clusterStart)
+                    glyphs.advances_x[i-1] -= letterSpacing;
+
+            // word spacing only gets added once to a consecutive run of spaces (see CSS spec)
+            if (i + 1 < si.num_glyphs
+                ||(glyphs.attributes[i+1].justification != QGlyphAttributes::Space
+                   && glyphs.attributes[i+1].justification != QGlyphAttributes::Arabic_Space))
+                glyphs.advances_x[i] += wordSpacing;
         }
     }
 
