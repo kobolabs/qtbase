@@ -1029,9 +1029,8 @@ void QTextEngine::shapeText(int item) const
 
             // subtract off the letter spacing for this space and the previous character
             glyphs.advances_x[i] -= letterSpacing;
-            for (int j = i - 1; j >= 0; --j)
-                if (glyphs.attributes[j].clusterStart)
-                    glyphs.advances_x[i-1] -= letterSpacing;
+            if (i > 0)
+                glyphs.advances_x[i-1] -= letterSpacing;
 
             // word spacing only gets added once to a consecutive run of spaces (see CSS spec)
             if (i + 1 < si.num_glyphs
