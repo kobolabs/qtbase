@@ -168,6 +168,11 @@ QPixmap QPlatformPixmap::transformed(const QTransform &matrix,
     return QPixmap::fromImage(toImage().transformed(matrix, mode));
 }
 
+QPixmap QPlatformPixmap::transformed(QImage img, const QTransform &matrix, Qt::TransformationMode mode) const
+{
+    return QPixmap::fromImage(img.transformed(matrix, mode));
+}
+
 void QPlatformPixmap::setSerialNumber(int serNo)
 {
     ser_no = serNo;
