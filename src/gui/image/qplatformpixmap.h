@@ -97,6 +97,9 @@ public:
     virtual QPixmap transformed(const QTransform &matrix,
                                 Qt::TransformationMode mode) const;
 
+    virtual QPixmap transformed(QImage img, const QTransform &matrix,
+                                Qt::TransformationMode mode) const;
+
     virtual QImage toImage() const = 0;
     virtual QImage toImage(const QRect &rect) const;
     virtual QPaintEngine* paintEngine() const = 0;

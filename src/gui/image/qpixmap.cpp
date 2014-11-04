@@ -1175,6 +1175,24 @@ QPixmap QPixmap::scaled(const QSize& s, Qt::AspectRatioMode aspectMode, Qt::Tran
     return pix;
 }
 
+QPixmap QPixmap::fromScaledImage(QImage &image, const QSize& s, Qt::AspectRatioMode aspectMode, Qt::TransformationMode mode)
+{
+    if (s.isEmpty())
+        return QPixmap();
+
+    QSize newSize = image.size();
+    newSize.scale(s, aspectMode);
+    newSize.rwidth() = qMax(newSize.width(), 1);
+    newSize.rheight() = qMax(newSize.height(), 1);
+
+    QTransform wm = QTransform::fromScale((qreal)newSize.width() / image.size().width(),
+                                          (qreal)newSize.height() / image.size().height());
+
+    QScopedPointer<QPlatformPixmap> data(QGuiApplicationPrivate::platformIntegration()->createPlatformPixmap(QPlatformPixmap::PixmapType));
+    QPixmap pix = data->transformed(image, wm, mode);
+    return pix;
+}
+
 /*!
     \fn QPixmap QPixmap::scaledToWidth(int width, Qt::TransformationMode
     mode) const
