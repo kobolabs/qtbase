@@ -173,6 +173,10 @@
 }
 
 - (BOOL)accessibilityIsAttributeSettable:(NSString *)attribute {
+    QAccessibleInterface *iface = QAccessible::accessibleInterface(axid);
+    if (!iface)
+        return NO;
+
     if ([attribute isEqualToString:NSAccessibilityFocusedAttribute]) {
         return NO; // YES to handle keyboard input
     } else {
