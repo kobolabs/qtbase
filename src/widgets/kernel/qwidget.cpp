@@ -6772,8 +6772,12 @@ bool QWidget::restoreGeometry(const QByteArray &geometry)
 #endif // Q_OS_WIN
         if (maximized)
             ws |= Qt::WindowMaximized;
+        else
+            ws &= ~Qt::WindowMaximized;
         if (fullScreen)
             ws |= Qt::WindowFullScreen;
+        else
+            ws &= ~Qt::WindowFullScreen;
        setWindowState(ws);
        d_func()->topData()->normalGeometry = restoredNormalGeometry;
     } else {
