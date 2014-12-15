@@ -224,7 +224,7 @@ static bool addFontToDatabase(const QString &familyName, uchar charSet,
         const FontKey &fontKey = allFonts.at(k);
         for (int i = 0; i < fontKey.second.length(); ++i) {
             const QString &font = fontKey.second.at(i);
-            if (font == faceName || fullName == font || englishName == font) {
+            if (!font.isEmpty() && (font == faceName || fullName == font || englishName == font)) {
                 value = fontRegistry.value(fontKey.first).toString();
                 index = i;
                 break;
