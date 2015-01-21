@@ -402,6 +402,10 @@ QStringList QCoreTextFontDatabase::fallbacksForFamily(const QString &family, QFo
                 QCFType<CFArrayRef> cascadeList = (CFArrayRef) CTFontCopyDefaultCascadeListForLanguages(font, (CFArrayRef) languages);
                 if (cascadeList) {
                     QStringList fallbackList;
+                    QString customFallbackFont = QStringLiteral("Hiragino Kaku Gothic ProN");
+                    if (familyNameToPsName.contains(customFallbackFont)) { // if we have hiragino gothic in system, put it to first of fallback fonts, otherwise Mac will fallback to Apple SD Gothic Neo
+                        fallbackList.append(customFallbackFont);
+                    }
                     const int numCascades = CFArrayGetCount(cascadeList);
                     for (int i = 0; i < numCascades; ++i) {
                         CTFontDescriptorRef fontFallback = (CTFontDescriptorRef) CFArrayGetValueAtIndex(cascadeList, i);
