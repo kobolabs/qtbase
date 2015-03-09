@@ -761,6 +761,7 @@ static QWindowSystemInterface::TouchPoint touchPoint(const QTouchEvent::TouchPoi
 static QList<struct QWindowSystemInterface::TouchPoint> touchPointList(const QList<QTouchEvent::TouchPoint>& pointList)
 {
     QList<struct QWindowSystemInterface::TouchPoint> newList;
+    newList.reserve(pointList.size());
 
     Q_FOREACH (QTouchEvent::TouchPoint p, pointList)
     {
