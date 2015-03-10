@@ -745,36 +745,28 @@ Q_GUI_EXPORT void qt_handleKeyEvent(QWindow *w, QEvent::Type t, int k, Qt::Keybo
     QWindowSystemInterface::handleKeyEvent(w, t, k, mods, text, autorep, count);
 }
 
-static QWindowSystemInterface::TouchPoint touchPoint(const QTouchEvent::TouchPoint& pt)
-{
-    QWindowSystemInterface::TouchPoint p;
-    p.id = pt.id();
-    p.flags = pt.flags();
-    p.normalPosition = pt.normalizedPos();
-    p.area = pt.screenRect();
-    p.pressure = pt.pressure();
-    p.state = pt.state();
-    p.velocity = pt.velocity();
-    p.rawPositions = pt.rawScreenPositions();
-    return p;
-}
-static QList<struct QWindowSystemInterface::TouchPoint> touchPointList(const QList<QTouchEvent::TouchPoint>& pointList)
-{
-    QList<struct QWindowSystemInterface::TouchPoint> newList;
-    newList.reserve(pointList.size());
-
-    Q_FOREACH (QTouchEvent::TouchPoint p, pointList)
-    {
-        newList.append(touchPoint(p));
-    }
-    return newList;
-}
-
 Q_GUI_EXPORT  void qt_handleTouchEvent(QWindow *w, QTouchDevice *device,
                                 const QList<QTouchEvent::TouchPoint> &points,
                                 Qt::KeyboardModifiers mods = Qt::NoModifier)
 {
-    QWindowSystemInterface::handleTouchEvent(w, device, touchPointList(points), mods);
+    Qt::TouchPointStates states;
+    QList<QTouchEvent::TouchPoint>::const_iterator point = points.constBegin();
+    QList<QTouchEvent::TouchPoint>::const_iterator end = points.constEnd();
+    while (point != end) {
+        states |= point->state();
+        ++point;
+    }
+
+    QEvent::Type type = QEvent::TouchUpdate;
+    if (states == Qt::TouchPointPressed)
+        type = QEvent::TouchBegin;
+    else if (states == Qt::TouchPointReleased)
+        type = QEvent::TouchEnd;
+
+    unsigned long timestamp = QWindowSystemInterfacePrivate::eventTime.elapsed();
+    QWindowSystemInterfacePrivate::TouchEvent *e =
+            new QWindowSystemInterfacePrivate::TouchEvent(w, timestamp, type, device, points, mods);
+    QWindowSystemInterfacePrivate::handleWindowSystemEvent(e);
 }
 
 QT_END_NAMESPACE
