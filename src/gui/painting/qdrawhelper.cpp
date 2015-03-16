@@ -349,10 +349,10 @@ void ditherAndSharpenLine(T *buffer, int row, int length)
     int diffs[3];
     int pix;
     int prevPix;
-    unsigned int average;
 
     // initial setup for line.
     pix = toGrayscale<T>(buffer);
+    ditherBuffer<T>(buffer, pix);
     buffer++;
 
     diffs[0] = diffs[1] = diffs[2] = pix;
@@ -360,16 +360,16 @@ void ditherAndSharpenLine(T *buffer, int row, int length)
 
     int idxR = row % 0x3;
     const uchar *order = ORDERED_DITHER_MATRIX3x3[idxR];
-    for (int col = 1; col < length - 1; ++col) {
+    for (int col = 1; col < length; ++col) {
         int idxC = col % 0x3;
         uchar threshold = order[idxC];
         pix = toGrayscale<T>(buffer);
 
-        // update average of 3 pixels in col
-        diffs[idxC] = pix;
-
         if (Sharpen) {
-            average = diffs[0] + diffs[1] + diffs[2];
+            // update average of 3 pixels in col
+            diffs[idxC] = pix;
+
+            unsigned int average = diffs[0] + diffs[1] + diffs[2];
             static libdivide::divider<unsigned int> fast_3(3);
             average = average / fast_3;
 
