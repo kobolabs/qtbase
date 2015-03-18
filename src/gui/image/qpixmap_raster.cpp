@@ -135,9 +135,14 @@ bool QRasterPlatformPixmap::fromData(const uchar *buffer, uint len, const char *
 void QRasterPlatformPixmap::fromImage(const QImage &sourceImage,
                                   Qt::ImageConversionFlags flags)
 {
-    Q_UNUSED(flags);
     QImage image = sourceImage;
     createPixmapForImage(image, flags, /* inplace = */false);
+}
+
+void QRasterPlatformPixmap::fromImageInPlace(QImage &sourceImage,
+                                             Qt::ImageConversionFlags flags)
+{
+    createPixmapForImage(sourceImage, flags, /* inplace = */true);
 }
 
 void QRasterPlatformPixmap::fromImageReader(QImageReader *imageReader,
@@ -338,6 +343,7 @@ void QRasterPlatformPixmap::createPixmapForImage(QImage &sourceImage, Qt::ImageC
     if (format == QImage::Format_RGB32 && (sourceImage.format() == QImage::Format_ARGB32
         || sourceImage.format() == QImage::Format_ARGB32_Premultiplied))
     {
+        inPlace = inPlace && sourceImage.isDetached();
         image = sourceImage;
         if (!inPlace)
             image.detach();
@@ -353,14 +359,17 @@ void QRasterPlatformPixmap::createPixmapForImage(QImage &sourceImage, Qt::ImageC
         w = image.d->width;
         h = image.d->height;
         d = image.d->depth;
-        image.d->devicePixelRatio = sourceImage.devicePixelRatio();
-        //ensure the pixmap and the image resulting from toImage() have the same cacheKey();
-        setSerialNumber(image.cacheKey() >> 32);
-        setDetachNumber(image.d->detach_no);
     } else {
         w = h = d = 0;
     }
     is_null = (w <= 0 || h <= 0);
+
+    if (image.d)
+        image.d->devicePixelRatio = sourceImage.devicePixelRatio();
+    //ensure the pixmap and the image resulting from toImage() have the same cacheKey();
+    setSerialNumber(image.cacheKey() >> 32);
+    if (image.d)
+        setDetachNumber(image.d->detach_no);
 }
 
 QImage* QRasterPlatformPixmap::buffer()
