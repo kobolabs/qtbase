@@ -514,8 +514,6 @@ public:
         WA_KoboEpdFlagUseReaglD,
         WA_KoboEpdFlagExpandToScreenGeometry,
         WA_KoboEpdFlagCanCollide,
-        WA_KoboEpdFlagDitherY1,
-        WA_KoboEpdFlagDitherY4,
 
         WA_KoboDontFlushBackingStore,
 
