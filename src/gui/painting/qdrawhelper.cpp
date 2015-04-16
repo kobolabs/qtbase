@@ -291,30 +291,25 @@ static const uint *QT_FASTCALL convertRGBFromARGB32PM(uint *buffer, const uint *
 
 template <class T>
 Q_STATIC_TEMPLATE_FUNCTION
-inline int toGrayscale(T* buffer)
+inline int toGrayscale(const T* buffer)
 {
-    return buffer[0];
+    return *buffer;
 }
 
 template <>
-inline int toGrayscale(uint *buffer)
+inline int toGrayscale(const uint *buffer)
 {
-    uint p = *buffer;
-    int r = p & 0x000000FF;
-    int g = (p & 0x0000FF00) >> 8;
-    int b = (p & 0x00FF0000) >> 16;
-    if (r == g && r == b)
-        return r;
-    return ((r * 77) + (g * 151) + (b * 28)) >> 8;
+    return qGray(*buffer);
 }
 
 template <>
-inline int toGrayscale(ushort *buffer)
+inline int toGrayscale(const ushort *buffer)
 {
-    int r = ((buffer[0] & 0xf800) >> 8);
-    int g = ((buffer[0] & 0x07e0) >> 3); // only keep 5 bit
-    int b = ((buffer[0] & 0x001f)) << 3;
-    return ((r * 77) + (g * 151) + (b * 28)) >> 8;
+    ushort p = *buffer;
+    int r = (p & 0xf800) >> 11;
+    int g = (p & 0x07e0) >> 5; // only keep 5 bit
+    int b = p & 0x001f;
+    return qGray(r, g, b);
 }
 
 template <class T>
@@ -328,7 +323,7 @@ inline void ditherBuffer(T *buffer, int prevPix)
 template <>
 inline void ditherBuffer(uint *buffer, int prevPix)
 {
-    if ((buffer[0] & 0xFF000000) != 0xFF000000) { // don't dither translucent pixels
+    if (qAlpha(*buffer) != 0xFF) { // don't dither translucent pixels
         return;
     }
     *buffer = prevPix + (prevPix << 8) + (prevPix << 16) + 0xFF000000;
