@@ -232,6 +232,9 @@ inline static bool read_jpeg_format(QImage::Format &format, j_decompress_ptr cin
         break;
     case 3:
     case 4:
+#if JCS_EXTENSIONS == 1
+        cinfo->out_color_space = JCS_EXT_ARGB;
+#endif
         format = QImage::Format_RGB32;
         break;
     default:
@@ -386,9 +389,14 @@ static bool read_jpeg_image(QImage *outImage,
             longjmp(err->setjmp_buffer, 1);
 
         // Avoid memcpy() overhead if grayscale with no clipping.
-        bool quickGray = (info->output_components == 1 &&
+#if JCS_EXTENSIONS == 1
+        bool quick = ((info->output_components == 1 || info->out_color_space == JCS_EXT_ARGB) &&
                           clip == imageRect);
-        if (!quickGray) {
+#else
+        bool quick = (info->output_components == 1 &&
+                          clip == imageRect);
+#endif
+        if (!quick) {
             // Ask the jpeg library to allocate a temporary row.
             // The library will automatically delete it for us later.
             // The libjpeg docs say we should do this before calling
