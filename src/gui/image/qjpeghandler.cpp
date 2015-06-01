@@ -233,9 +233,11 @@ inline static bool read_jpeg_format(QImage::Format &format, j_decompress_ptr cin
     case 3:
     case 4:
 #if JCS_EXTENSIONS == 1
-        cinfo->out_color_space = JCS_EXT_ARGB;
-#endif
+        cinfo->out_color_space = JCS_EXT_RGBA;
+        format = QImage::Format_ARGB32;
+#else
         format = QImage::Format_RGB32;
+#endif
         break;
     default:
         result = false;
@@ -255,7 +257,11 @@ static bool ensureValidImage(QImage *dest, struct jpeg_decompress_struct *info,
         break;
     case 3:
     case 4:
+#if JCS_EXTENSIONS == 1
+        format = QImage::Format_ARGB32;
+#else
         format = QImage::Format_RGB32;
+#endif
         break;
     default:
         return false; // unsupported format
@@ -390,7 +396,7 @@ static bool read_jpeg_image(QImage *outImage,
 
         // Avoid memcpy() overhead if grayscale with no clipping.
 #if JCS_EXTENSIONS == 1
-        bool quick = ((info->output_components == 1 || info->out_color_space == JCS_EXT_ARGB) &&
+        bool quick = ((info->output_components == 1 || info->out_color_space == JCS_EXT_RGBA) &&
                           clip == imageRect);
 #else
         bool quick = (info->output_components == 1 &&
