@@ -71,10 +71,11 @@
 
 QT_BEGIN_NAMESPACE
 
-static unsigned char ORDERED_DITHER_MATRIX3x3[3][3] = {
-  { 3, 6, 2 },
-  { 7, 1, 8 },
-  { 4, 9, 5 },
+static unsigned char ORDERED_DITHER_MATRIX[4][4] = {
+  { 1, 13, 4, 16},
+  { 9, 5, 12, 8},
+  { 3, 15, 2, 14},
+  { 11, 7, 10, 6}
 };
 
 #define MASK(src, a) src = BYTE_MUL(src, a)
@@ -339,9 +340,9 @@ inline void ditherBuffer(ushort *buffer, int prevPix)
 
 template <typename T, bool Sharpen>
 Q_STATIC_TEMPLATE_FUNCTION
-void ditherAndSharpenLine(T *buffer, int row, int length)
+void ditherAndSharpenLine(T *buffer, const uint row, const uint length)
 {
-    int diffs[3];
+    int diffs[4];
     int pix;
     int prevPix;
 
@@ -350,33 +351,26 @@ void ditherAndSharpenLine(T *buffer, int row, int length)
     ditherBuffer<T>(buffer, pix);
     buffer++;
 
-    diffs[0] = diffs[1] = diffs[2] = pix;
-    prevPix = pix;
+    prevPix = diffs[0] = diffs[1] = diffs[2] = diffs[3] = pix;
 
-    int idxR = row % 0x3;
-    const uchar *order = ORDERED_DITHER_MATRIX3x3[idxR];
-    for (int col = 1; col < length; ++col) {
-        int idxC = col % 0x3;
-        uchar threshold = order[idxC];
+    const uchar *order = ORDERED_DITHER_MATRIX[row & 3];
+    for (uint col = 1; col < length; ++col) {
+        const int idxC = col & 3;
+        const uchar threshold = order[idxC];
         pix = toGrayscale<T>(buffer);
 
         if (Sharpen) {
-            // update average of 3 pixels in col
             diffs[idxC] = pix;
-
-            unsigned int average = diffs[0] + diffs[1] + diffs[2];
-            static libdivide::divider<unsigned int> fast_3(3);
-            average = average / fast_3;
-
-            int diff = prevPix - average;
+            const unsigned int average = (diffs[0] + diffs[1] + diffs[2] + diffs[3]) >> 2;
+            const int diff = prevPix - average;
             prevPix += (diff >> 1);
             prevPix = qMax(prevPix, 0);
         }
 
-        unsigned int t = (( prevPix * 10 ) >> 4);
-        static libdivide::divider<unsigned int> fast_10(10);
-        uchar l = t / fast_10;
-        uchar u = t - l * 10;
+        const unsigned int t = (prevPix * 17) >> 4;
+        const static libdivide::divider<unsigned int> fast_17(17);
+        const uchar l = t / fast_17;
+        const uchar u = t - l * 17;
         prevPix = (l + (u >= threshold)) << 4;
         prevPix = prevPix & 0x100 ? 0xff : prevPix;
 
