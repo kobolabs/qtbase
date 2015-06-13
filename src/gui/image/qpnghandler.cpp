@@ -334,8 +334,6 @@ void setup_qt(QImage& image, png_structp png_ptr, png_infop info_ptr, QSize scal
         // 1-bit and 8-bit color
         if (bit_depth != 1)
             png_set_packing(png_ptr);
-        png_read_update_info(png_ptr, info_ptr);
-        png_get_IHDR(png_ptr, info_ptr, &width, &height, &bit_depth, &color_type, 0, 0, 0);
         QImage::Format format = bit_depth == 1 ? QImage::Format_Mono : QImage::Format_Indexed8;
         if (image.size() != QSize(width, height) || image.format() != format) {
             image = QImage(width, height, format);
