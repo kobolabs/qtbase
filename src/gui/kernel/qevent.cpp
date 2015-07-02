@@ -4567,4 +4567,11 @@ Qt::ApplicationState QApplicationStateChangeEvent::applicationState() const
     return m_applicationState;
 }
 
+QHardwareEvent::QHardwareEvent(HardwareType hardwareType)
+    : QEvent(HardwareEvent), m_hardwareType(hardwareType)
+{}
+
+QHardwareEvent::~QHardwareEvent()
+{}
+
 QT_END_NAMESPACE

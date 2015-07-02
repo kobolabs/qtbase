@@ -282,6 +282,7 @@ public:
         // 513 reserved for Qt Jambi's DeleteOnMainThread event
 
         Painted = 425,
+        HardwareEvent = 426,
 
         User = 1000,                            // first user event id
         MaxUser = 65535                         // last user event id

@@ -967,6 +967,25 @@ private:
     Qt::ApplicationState m_applicationState;
 };
 
+class Q_GUI_EXPORT QHardwareEvent : public QEvent
+{
+public:
+    enum class HardwareType {
+        Key,
+        Touch,
+        USB_Gadget,
+        USB_AC,
+        Storage
+    };
+    explicit QHardwareEvent(HardwareType hardwareType);
+    ~QHardwareEvent();
+
+    HardwareType hardwareType() const { return m_hardwareType; }
+
+protected:
+    HardwareType m_hardwareType;
+};
+
 QT_END_NAMESPACE
 
 #endif // QEVENT_H
