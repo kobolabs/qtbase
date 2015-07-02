@@ -159,6 +159,9 @@ void QEvdevKeyboardHandler::switchLed(int led, bool state)
 
 void QEvdevKeyboardHandler::readKeycode()
 {
+    QHardwareEvent e(QHardwareEvent::HardwareType::Key);
+    QCoreApplication::sendEvent(qApp, &e);
+
 #ifdef QT_QPA_KEYMAP_DEBUG
     qWarning() << "Read new keycode on" << m_device;
 #endif
