@@ -970,7 +970,7 @@ private:
 class Q_GUI_EXPORT QHardwareEvent : public QEvent
 {
 public:
-    enum class HardwareType {
+    enum HardwareType {
         Key,
         Touch,
         USB_Gadget,
