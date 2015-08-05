@@ -94,6 +94,8 @@
 #  define Q_AUTOTEST_EXPORT_HELPER static
 #endif
 
+#include <QProcess>
+
 // ************************************************************************
 // QConfFile
 
@@ -2795,6 +2797,10 @@ void QSettings::sync()
 {
     Q_D(QSettings);
     d->sync();
+#if defined(Q_OS_MAC)
+    QProcess process;
+    process.start("killall cfprefsd");
+#endif
 }
 
 /*!
