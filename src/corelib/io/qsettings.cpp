@@ -53,6 +53,7 @@
 #include "qmutex.h"
 #include "qlibraryinfo.h"
 #include "qtemporaryfile.h"
+#include "qprocess.h"
 
 #ifndef QT_NO_TEXTCODEC
 #  include "qtextcodec.h"
@@ -93,8 +94,6 @@
 #else
 #  define Q_AUTOTEST_EXPORT_HELPER static
 #endif
-
-#include <QProcess>
 
 // ************************************************************************
 // QConfFile
@@ -1565,6 +1564,9 @@ void QConfFileSettingsPrivate::syncConfFile(int confFileNo)
 #ifdef Q_OS_MAC
             if (format == QSettings::NativeFormat) {
                 ok = writePlistFile(confFile->name, mergedKeys);
+                QProcess defaults;
+                defaults.start("defaults", QStringList() << "read" << confFile->name);
+                defaults.waitForFinished(5000);
             } else
 #endif
             {
@@ -2797,10 +2799,6 @@ void QSettings::sync()
 {
     Q_D(QSettings);
     d->sync();
-#if defined(Q_OS_MAC)
-    QProcess process;
-    process.start("killall cfprefsd");
-#endif
 }
 
 /*!
