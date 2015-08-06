@@ -53,7 +53,10 @@
 #include "qmutex.h"
 #include "qlibraryinfo.h"
 #include "qtemporaryfile.h"
+
+#ifdef Q_OS_MAC
 #include "qprocess.h"
+#endif
 
 #ifndef QT_NO_TEXTCODEC
 #  include "qtextcodec.h"
