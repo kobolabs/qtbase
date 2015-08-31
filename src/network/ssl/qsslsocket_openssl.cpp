@@ -605,7 +605,8 @@ void QSslSocketPrivate::resetDefaultCiphers()
             if (cipher->valid) {
                 QSslCipher ciph = QSslSocketBackendPrivate::QSslCipher_from_SSL_CIPHER(cipher);
                 if (!ciph.isNull()) {
-                    if (!ciph.name().toLower().startsWith(QLatin1String("adh")))
+                    const QString name = ciph.name().toLower();
+                    if (!name.startsWith(QLatin1String("adh")) && !name.startsWith(QLatin1String("dhe")) && !name.startsWith(QLatin1String("edh")) && !name.contains(QLatin1String("rc4")) && !name.startsWith(QLatin1String("des-cbc-sha")))
                         ciphers << ciph;
                 }
             }
