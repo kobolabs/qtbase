@@ -1567,9 +1567,11 @@ void QConfFileSettingsPrivate::syncConfFile(int confFileNo)
 #ifdef Q_OS_MAC
             if (format == QSettings::NativeFormat) {
                 ok = writePlistFile(confFile->name, mergedKeys);
+#ifndef QT_BOOTSTRAPPED
                 QProcess defaults;
                 defaults.start("defaults", QStringList() << "read" << confFile->name);
                 defaults.waitForFinished(5000);
+#endif
             } else
 #endif
             {
