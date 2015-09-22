@@ -2822,12 +2822,12 @@ bool QRasterPaintEngine::drawCachedGlyphs(int numGlyphs, const glyph_t *glyphs,
             if (isCJKOrSymbol) {
                 isGlyphCJKOrSymbol = isCJKOrSymbol[i];
             }
-            QImage *alphaMap = fontEngine->lockedAlphaMapForGlyph(glyphs[i], spp, neededFormat, s->matrix,
+            const QImage *alphaMap = fontEngine->lockedAlphaMapForGlyph(glyphs[i], spp, neededFormat, s->matrix,
                                                                   &offset, isVertical && isGlyphCJKOrSymbol);
             if (alphaMap == 0 || alphaMap->isNull())
                 continue;
 
-            alphaPenBlt(alphaMap->bits(), alphaMap->bytesPerLine(), alphaMap->depth(),
+            alphaPenBlt(alphaMap->constBits(), alphaMap->bytesPerLine(), alphaMap->depth(),
                         qFloor(positions[i].x) + offset.x(),
                         qRound(positions[i].y) + offset.y(),
                         alphaMap->width(), alphaMap->height());
