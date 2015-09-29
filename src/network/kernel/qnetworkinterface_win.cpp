@@ -187,6 +187,12 @@ static QList<QNetworkInterfacePrivate *> interfaceListingWinXP()
             iface->flags |= QNetworkInterface::CanMulticast;
         if (ptr->IfType == IF_TYPE_PPP)
             iface->flags |= QNetworkInterface::IsPointToPoint;
+        if (ptr->IfType == IF_TYPE_SOFTWARE_LOOPBACK)
+            iface->flags |= QNetworkInterface::IsLoopBack;
+        if (ptr->IfType == IF_TYPE_TUNNEL)
+            iface->flags |= QNetworkInterface::IsTunnel;
+        if (ptr->IfType == IF_TYPE_IEEE1394)
+            iface->flags |= QNetworkInterface::IsFirewire;
 
         iface->name = QString::fromLocal8Bit(ptr->AdapterName);
         iface->friendlyName = QString::fromWCharArray(ptr->FriendlyName);

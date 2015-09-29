@@ -96,6 +96,9 @@ QT_BEGIN_NAMESPACE
 
 // definitions from Ipifcons.h
 #define IF_TYPE_PPP 23
+#define IF_TYPE_SOFTWARE_LOOPBACK 24
+#define IF_TYPE_TUNNEL 131
+#define IF_TYPE_IEEE1394 144
 
 #endif
 // copied from qnativesocketengine_win.cpp
