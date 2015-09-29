@@ -95,7 +95,9 @@ public:
         CanBroadcast = 0x4,
         IsLoopBack = 0x8,
         IsPointToPoint = 0x10,
-        CanMulticast = 0x20
+        CanMulticast = 0x20,
+        IsTunnel = 0x40,
+        IsFirewire = 0x80
     };
     Q_DECLARE_FLAGS(InterfaceFlags, InterfaceFlag)
 

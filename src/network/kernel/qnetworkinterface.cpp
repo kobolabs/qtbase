@@ -603,6 +603,10 @@ static inline QDebug flagsDebug(QDebug debug, QNetworkInterface::InterfaceFlags 
         debug.nospace() << "IsPointToPoint ";
     if (flags & QNetworkInterface::CanMulticast)
         debug.nospace() << "CanMulticast ";
+    if (flags & QNetworkInterface::IsTunnel)
+        debug.nospace() << "IsTunnel ";
+    if (flags & QNetworkInterface::IsFirewire)
+        debug.nospace() << "IsFirewire ";
     return debug.nospace();
 }
 
