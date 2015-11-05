@@ -2384,6 +2384,14 @@ QString QWidget::styleSheet() const
     return d->extra->styleSheet;
 }
 
+QString QWidget::styleSheetFile() const
+{
+    Q_D(const QWidget);
+    if (!d->extra)
+        return QString();
+    return d->extra->styleSheetFile;
+}
+
 void QWidget::setStyleSheet(const QString& styleSheet)
 {
     Q_D(QWidget);
@@ -2409,6 +2417,14 @@ void QWidget::setStyleSheet(const QString& styleSheet)
     } else {
         d->setStyle_helper(new QStyleSheetStyle(0), true);
     }
+}
+
+void QWidget::setStyleSheetFile(const QString& styleSheetFile)
+{
+    QFile file(styleSheetFile);
+    file.open(QIODevice::ReadOnly | QIODevice::Text);
+    QByteArray contents = file.readAll();
+    setStyleSheet(QString::fromUtf8(contents));
 }
 
 #endif // QT_NO_STYLE_STYLESHEET
