@@ -237,6 +237,7 @@ struct QWExtra {
     // Implicit pointers (shared_empty/shared_null).
     QRegion mask; // widget mask
     QString styleSheet;
+    QString styleSheetFile;
 
     // Other variables.
     qint32 minw;

@@ -195,6 +195,7 @@ class Q_WIDGETS_EXPORT QWidget : public QObject, public QPaintDevice
     Q_PROPERTY(bool autoFillBackground READ autoFillBackground WRITE setAutoFillBackground)
 #ifndef QT_NO_STYLE_STYLESHEET
     Q_PROPERTY(QString styleSheet READ styleSheet WRITE setStyleSheet)
+    Q_PROPERTY(QString styleSheetFile READ styleSheetFile WRITE setStyleSheetFile)
 #endif
     Q_PROPERTY(QLocale locale READ locale WRITE setLocale RESET unsetLocale)
     Q_PROPERTY(QString windowFilePath READ windowFilePath WRITE setWindowFilePath DESIGNABLE isWindow)
@@ -355,10 +356,12 @@ public Q_SLOTS:
     void setWindowTitle(const QString &);
 #ifndef QT_NO_STYLE_STYLESHEET
     void setStyleSheet(const QString& styleSheet);
+    void setStyleSheetFile(const QString& styleSheetFile);
 #endif
 public:
 #ifndef QT_NO_STYLE_STYLESHEET
     QString styleSheet() const;
+    QString styleSheetFile() const;
 #endif
     QString windowTitle() const;
     void setWindowIcon(const QIcon &icon);
