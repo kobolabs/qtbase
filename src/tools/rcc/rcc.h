@@ -84,6 +84,9 @@ public:
     void setVerbose(bool b) { m_verbose = b; }
     bool verbose() const { return m_verbose; }
 
+    void setFuture(bool b) { m_future = b; }
+    bool future() const { return m_future; }
+
     void setInitName(const QString &name) { m_initName = name; }
     QString initName() const { return m_initName; }
 
@@ -112,6 +115,7 @@ private:
         const QString ATTRIBUTE_ALIAS;
         const QString ATTRIBUTE_THRESHOLD;
         const QString ATTRIBUTE_COMPRESS;
+        const QString ATTRIBUTE_FUTURE;
     };
     friend class RCCFileInfo;
     void reset();
@@ -139,6 +143,7 @@ private:
     QString m_initName;
     Format m_format;
     bool m_verbose;
+    bool m_future;
     int m_compressLevel;
     int m_compressThreshold;
     int m_treeOffset;
