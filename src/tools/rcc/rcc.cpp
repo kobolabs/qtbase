@@ -335,7 +335,8 @@ RCCResourceLibrary::Strings::Strings() :
    ATTRIBUTE_PREFIX(QLatin1String("prefix")),
    ATTRIBUTE_ALIAS(QLatin1String("alias")),
    ATTRIBUTE_THRESHOLD(QLatin1String("threshold")),
-   ATTRIBUTE_COMPRESS(QLatin1String("compress"))
+   ATTRIBUTE_COMPRESS(QLatin1String("compress")),
+   ATTRIBUTE_FUTURE(QLatin1String("future"))
 {
 }
 
@@ -343,6 +344,7 @@ RCCResourceLibrary::RCCResourceLibrary()
   : m_root(0),
     m_format(C_Code),
     m_verbose(false),
+    m_future(false),
     m_compressLevel(CONSTANT_COMPRESSLEVEL_DEFAULT),
     m_compressThreshold(CONSTANT_COMPRESSTHRESHOLD_DEFAULT),
     m_treeOffset(0),
@@ -382,6 +384,7 @@ bool RCCResourceLibrary::interpretResourceFile(QIODevice *inputDevice,
     QString alias;
     int compressLevel = m_compressLevel;
     int compressThreshold = m_compressThreshold;
+    bool future = false;
 
     while (!reader.atEnd()) {
         QXmlStreamReader::TokenType t = reader.readNext();
@@ -440,6 +443,10 @@ bool RCCResourceLibrary::interpretResourceFile(QIODevice *inputDevice,
                     compressThreshold = m_compressThreshold;
                     if (attributes.hasAttribute(m_strings.ATTRIBUTE_THRESHOLD))
                         compressThreshold = attributes.value(m_strings.ATTRIBUTE_THRESHOLD).toString().toInt();
+
+                    future = false;
+                    if (attributes.hasAttribute(m_strings.ATTRIBUTE_FUTURE))
+                        future = attributes.value(m_strings.ATTRIBUTE_FUTURE).toString() == QLatin1String("true");
 
                     // Special case for -no-compress. Overrides all other settings.
                     if (m_compressLevel == -2)
@@ -502,6 +509,9 @@ bool RCCResourceLibrary::interpretResourceFile(QIODevice *inputDevice,
                     else
                         return false;
                 } else if (file.isFile()) {
+                    if (future && !m_future) {
+                        continue;
+                    }
                     const bool arc =
                         addFile(alias,
                                 RCCFileInfo(alias.section(slash, -1),
@@ -531,6 +541,9 @@ bool RCCResourceLibrary::interpretResourceFile(QIODevice *inputDevice,
                         it.next();
                         QFileInfo child(it.fileInfo());
                         if (child.fileName() != QLatin1String(".") && child.fileName() != QLatin1String("..")) {
+                            if (future && !m_future) {
+                                continue;
+                            }
                             const bool arc =
                                 addFile(alias + child.fileName(),
                                         RCCFileInfo(child.fileName(),

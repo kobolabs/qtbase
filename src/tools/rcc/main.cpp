@@ -153,6 +153,9 @@ int runRcc(int argc, char *argv[])
     QCommandLineOption projectOption(QStringLiteral("project"), QStringLiteral("Output a resource file containing all files from the current directory."));
     parser.addOption(projectOption);
 
+    QCommandLineOption futureOption(QStringLiteral("future"), QStringLiteral("Include resources marked with the attribute future=true."));
+    parser.addOption(futureOption);
+
     parser.addPositionalArgument(QStringLiteral("inputs"), QStringLiteral("Input files (*.qrc)."));
 
 
@@ -182,6 +185,8 @@ int runRcc(int argc, char *argv[])
         library.setUseNameSpace(!library.useNameSpace());
     if (parser.isSet(verboseOption))
         library.setVerbose(true);
+    if (parser.isSet(futureOption))
+        library.setFuture(true);
 
     const bool list = parser.isSet(listOption);
     const bool projectRequested = parser.isSet(projectOption);
