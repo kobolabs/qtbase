@@ -333,15 +333,13 @@ int QEventDispatcherUNIX::select(int nfds, fd_set *readfds, fd_set *writefds, fd
 */
 void QEventDispatcherUNIX::registerTimer(int timerId, int interval, Qt::TimerType timerType, QObject *obj)
 {
-#ifndef QT_NO_DEBUG
     if (timerId < 1 || interval < 0 || !obj) {
         qWarning("QEventDispatcherUNIX::registerTimer: invalid arguments");
         return;
     } else if (obj->thread() != thread() || thread() != QThread::currentThread()) {
-        qWarning("QObject::startTimer: timers cannot be started from another thread");
+        qWarning("QEventDispatcherUNIX::registerTimer: timers cannot be started from another thread");
         return;
     }
-#endif
 
     Q_D(QEventDispatcherUNIX);
     d->timerList.registerTimer(timerId, interval, timerType, obj);
@@ -352,15 +350,13 @@ void QEventDispatcherUNIX::registerTimer(int timerId, int interval, Qt::TimerTyp
 */
 bool QEventDispatcherUNIX::unregisterTimer(int timerId)
 {
-#ifndef QT_NO_DEBUG
     if (timerId < 1) {
         qWarning("QEventDispatcherUNIX::unregisterTimer: invalid argument");
         return false;
     } else if (thread() != QThread::currentThread()) {
-        qWarning("QObject::killTimer: timers cannot be stopped from another thread");
+        qWarning("QEventDispatcherUNIX::unregisterTimer: timers cannot be stopped from another thread");
         return false;
     }
-#endif
 
     Q_D(QEventDispatcherUNIX);
     return d->timerList.unregisterTimer(timerId);
@@ -371,15 +367,13 @@ bool QEventDispatcherUNIX::unregisterTimer(int timerId)
 */
 bool QEventDispatcherUNIX::unregisterTimers(QObject *object)
 {
-#ifndef QT_NO_DEBUG
     if (!object) {
         qWarning("QEventDispatcherUNIX::unregisterTimers: invalid argument");
         return false;
     } else if (object->thread() != thread() || thread() != QThread::currentThread()) {
-        qWarning("QObject::killTimers: timers cannot be stopped from another thread");
+        qWarning("QEventDispatcherUNIX::unregisterTimers: timers cannot be stopped from another thread");
         return false;
     }
-#endif
 
     Q_D(QEventDispatcherUNIX);
     return d->timerList.unregisterTimers(object);
@@ -631,12 +625,10 @@ bool QEventDispatcherUNIX::hasPendingEvents()
 
 int QEventDispatcherUNIX::remainingTime(int timerId)
 {
-#ifndef QT_NO_DEBUG
     if (timerId < 1) {
         qWarning("QEventDispatcherUNIX::remainingTime: invalid argument");
         return -1;
     }
-#endif
 
     Q_D(QEventDispatcherUNIX);
     return d->timerList.timerRemainingTime(timerId);
