@@ -870,7 +870,6 @@ void QEventDispatcherWin32::unregisterSocketNotifier(QSocketNotifier *notifier)
 
 void QEventDispatcherWin32::registerTimer(int timerId, int interval, Qt::TimerType timerType, QObject *object)
 {
-#ifndef QT_NO_DEBUG
     if (timerId < 1 || interval < 0 || !object) {
         qWarning("QEventDispatcherWin32::registerTimer: invalid arguments");
         return;
@@ -878,7 +877,6 @@ void QEventDispatcherWin32::registerTimer(int timerId, int interval, Qt::TimerTy
         qWarning("QEventDispatcherWin32::registerTimer: timers cannot be started from another thread");
         return;
     }
-#endif
 
     Q_D(QEventDispatcherWin32);
 
@@ -900,7 +898,6 @@ void QEventDispatcherWin32::registerTimer(int timerId, int interval, Qt::TimerTy
 
 bool QEventDispatcherWin32::unregisterTimer(int timerId)
 {
-#ifndef QT_NO_DEBUG
     if (timerId < 1) {
         qWarning("QEventDispatcherWin32::unregisterTimer: invalid argument");
         return false;
@@ -910,7 +907,6 @@ bool QEventDispatcherWin32::unregisterTimer(int timerId)
         qWarning("QEventDispatcherWin32::unregisterTimer: timers cannot be stopped from another thread");
         return false;
     }
-#endif
 
     Q_D(QEventDispatcherWin32);
     if (d->timerVec.isEmpty() || timerId <= 0)
@@ -928,7 +924,6 @@ bool QEventDispatcherWin32::unregisterTimer(int timerId)
 
 bool QEventDispatcherWin32::unregisterTimers(QObject *object)
 {
-#ifndef QT_NO_DEBUG
     if (!object) {
         qWarning("QEventDispatcherWin32::unregisterTimers: invalid argument");
         return false;
@@ -938,7 +933,6 @@ bool QEventDispatcherWin32::unregisterTimers(QObject *object)
         qWarning("QEventDispatcherWin32::unregisterTimers: timers cannot be stopped from another thread");
         return false;
     }
-#endif
 
     Q_D(QEventDispatcherWin32);
     if (d->timerVec.isEmpty())
@@ -1031,12 +1025,10 @@ void QEventDispatcherWin32::activateEventNotifiers()
 
 int QEventDispatcherWin32::remainingTime(int timerId)
 {
-#ifndef QT_NO_DEBUG
     if (timerId < 1) {
         qWarning("QEventDispatcherWin32::remainingTime: invalid argument");
         return -1;
     }
-#endif
 
     Q_D(QEventDispatcherWin32);
 
