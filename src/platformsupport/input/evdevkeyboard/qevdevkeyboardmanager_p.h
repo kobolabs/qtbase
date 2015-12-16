@@ -52,11 +52,17 @@
 
 QT_BEGIN_NAMESPACE
 
+class QEvdevEventHandler
+{
+public:
+    virtual void handleMiscEvent(quint32 code, quint32 value) = 0;
+};
+
 class QEvdevKeyboardManager : public QObject
 {
     Q_OBJECT
 public:
-    QEvdevKeyboardManager(const QString &key, const QString &specification, QObject *parent = 0);
+    QEvdevKeyboardManager(const QString &key, const QString &specification, QObject *parent = 0, QEvdevEventHandler *eventHandler = 0);
     ~QEvdevKeyboardManager();
 
 private slots:
@@ -67,6 +73,7 @@ private:
     QString m_spec;
     QHash<QString,QEvdevKeyboardHandler*> m_keyboards;
     QDeviceDiscovery *m_deviceDiscovery;
+    QEvdevEventHandler *m_eventHandler;
 };
 
 QT_END_NAMESPACE

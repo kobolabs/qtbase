@@ -52,8 +52,8 @@
 
 QT_BEGIN_NAMESPACE
 
-QEvdevKeyboardManager::QEvdevKeyboardManager(const QString &key, const QString &specification, QObject *parent)
-    : QObject(parent)
+QEvdevKeyboardManager::QEvdevKeyboardManager(const QString &key, const QString &specification, QObject *parent, QEvdevEventHandler *eventHandler)
+    : QObject(parent), m_eventHandler(eventHandler)
 {
     Q_UNUSED(key);
 
@@ -113,7 +113,7 @@ void QEvdevKeyboardManager::addKeyboard(const QString &deviceNode)
 #endif
 
     QEvdevKeyboardHandler *keyboard;
-    keyboard = QEvdevKeyboardHandler::create(deviceNode, m_spec);
+    keyboard = QEvdevKeyboardHandler::create(deviceNode, m_spec, m_eventHandler);
     if (keyboard)
         m_keyboards.insert(deviceNode, keyboard);
     else
