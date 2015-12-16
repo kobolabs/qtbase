@@ -48,6 +48,8 @@
 
 QT_BEGIN_NAMESPACE
 
+class QEvdevEventHandler;
+
 namespace QEvdevKeyboardMap {
     const quint32 FileMagic = 0x514d4150; // 'QMAP'
 
@@ -123,7 +125,7 @@ class QEvdevKeyboardHandler : public QObject
 {
     Q_OBJECT
 public:
-    QEvdevKeyboardHandler(const QString &device, int fd, bool disableZap, bool enableCompose, const QString &keymapFile);
+    QEvdevKeyboardHandler(const QString &device, int fd, bool disableZap, bool enableCompose, const QString &keymapFile, QEvdevEventHandler *eventHandler);
     ~QEvdevKeyboardHandler();
 
     enum KeycodeAction {
@@ -145,7 +147,7 @@ public:
         SwitchConsoleMask  = 0x0000007f
     };
 
-    static QEvdevKeyboardHandler *create(const QString &device, const QString &specification);
+    static QEvdevKeyboardHandler *create(const QString &device, const QString &specification, QEvdevEventHandler *eventHandler);
 
     static Qt::KeyboardModifiers toQtModifiers(quint8 mod)
     {
@@ -191,6 +193,8 @@ private:
 
     static const QEvdevKeyboardMap::Mapping s_keymap_default[];
     static const QEvdevKeyboardMap::Composing s_keycompose_default[];
+
+    QEvdevEventHandler *m_eventHandler;
 };
 
 

@@ -62,11 +62,14 @@ QT_BEGIN_NAMESPACE
 // simple builtin US keymap
 #include "qevdevkeyboard_defaultmap_p.h"
 
-QEvdevKeyboardHandler::QEvdevKeyboardHandler(const QString &device, int fd, bool disableZap, bool enableCompose, const QString &keymapFile)
+#include "qevdevkeyboardmanager_p.h"
+
+QEvdevKeyboardHandler::QEvdevKeyboardHandler(const QString &device, int fd, bool disableZap, bool enableCompose, const QString &keymapFile, QEvdevEventHandler *eventHandler)
     : m_device(device), m_fd(fd),
       m_modifiers(0), m_composing(0), m_dead_unicode(0xffff),
       m_no_zap(disableZap), m_do_compose(enableCompose),
-      m_keymap(0), m_keymap_size(0), m_keycompose(0), m_keycompose_size(0)
+      m_keymap(0), m_keymap_size(0), m_keycompose(0), m_keycompose_size(0),
+      m_eventHandler(eventHandler)
 {
 #ifdef QT_QPA_KEYMAP_DEBUG
     qWarning() << "Create keyboard handler with for device" << device;
@@ -93,7 +96,7 @@ QEvdevKeyboardHandler::~QEvdevKeyboardHandler()
         qt_safe_close(m_fd);
 }
 
-QEvdevKeyboardHandler *QEvdevKeyboardHandler::create(const QString &device, const QString &specification)
+QEvdevKeyboardHandler *QEvdevKeyboardHandler::create(const QString &device, const QString &specification, QEvdevEventHandler *eventHandler)
 {
 #ifdef QT_QPA_KEYMAP_DEBUG
     qWarning() << "Try to create keyboard handler for" << device << specification;
@@ -135,7 +138,7 @@ QEvdevKeyboardHandler *QEvdevKeyboardHandler::create(const QString &device, cons
             ::ioctl(fd, EVIOCSREP, kbdrep);
         }
 
-        return new QEvdevKeyboardHandler(device, fd, disableZap, enableCompose, keymapFile);
+        return new QEvdevKeyboardHandler(device, fd, disableZap, enableCompose, keymapFile, eventHandler);
     } else {
         qWarning("Cannot open keyboard input device '%s': %s", qPrintable(device), strerror(errno));
         return 0;
@@ -190,6 +193,8 @@ void QEvdevKeyboardHandler::readKeycode()
     n /= sizeof(buffer[0]);
 
     for (int i = 0; i < n; ++i) {
+        if (buffer[i].type == EV_MSC && m_eventHandler)
+            m_eventHandler->handleMiscEvent(buffer[i].code, buffer[i].value);
         if (buffer[i].type != EV_KEY)
             continue;
 
