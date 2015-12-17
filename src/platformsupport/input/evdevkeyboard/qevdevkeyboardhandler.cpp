@@ -162,9 +162,6 @@ void QEvdevKeyboardHandler::switchLed(int led, bool state)
 
 void QEvdevKeyboardHandler::readKeycode()
 {
-    QHardwareEvent e(QHardwareEvent::HardwareType::Key);
-    QCoreApplication::sendEvent(qApp, &e);
-
 #ifdef QT_QPA_KEYMAP_DEBUG
     qWarning() << "Read new keycode on" << m_device;
 #endif
@@ -197,6 +194,9 @@ void QEvdevKeyboardHandler::readKeycode()
             m_eventHandler->handleMiscEvent(buffer[i].code, buffer[i].value);
         if (buffer[i].type != EV_KEY)
             continue;
+
+        QHardwareEvent e(QHardwareEvent::HardwareType::Key);
+        QCoreApplication::sendEvent(qApp, &e);
 
         quint16 code = buffer[i].code;
         qint32 value = buffer[i].value;
