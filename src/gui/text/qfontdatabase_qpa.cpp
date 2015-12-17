@@ -237,7 +237,12 @@ static void registerFont(QFontDatabasePrivate::ApplicationFont *fnt)
 {
     QFontDatabasePrivate *db = privateDb();
 
-    fnt->families = QGuiApplicationPrivate::platformIntegration()->fontDatabase()->addApplicationFont(fnt->data,fnt->fileName);
+    bool shouldLazyLoad = QGuiApplicationPrivate::platformIntegration()->fontDatabase()->shouldLazyLoadFontFile(fnt->fileName);
+    if (shouldLazyLoad) {
+        fnt->families = QGuiApplicationPrivate::platformIntegration()->fontDatabase()->registerLazyLoadFontFile(fnt->fileName);
+    } else {
+        fnt->families = QGuiApplicationPrivate::platformIntegration()->fontDatabase()->addApplicationFont(fnt->data,fnt->fileName);
+    }
 
     db->reregisterAppFonts = true;
 }

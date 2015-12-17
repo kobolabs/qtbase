@@ -208,6 +208,24 @@ QStringList QBasicFontDatabase::addApplicationFont(const QByteArray &fontData, c
     return addTTFile(fontData,fileName.toLocal8Bit());
 }
 
+QString QBasicFontDatabase::getLazyLoadFontInfo(const QString &fileName, const int index, QString &styleName, QString &foundryName, QFont::Weight &weight, QFont::Style &style, QFont::Stretch &stretch, bool &antialiased, bool &scalable, int &pixelSize, bool &fixedPitch, quint32 unicodeRange[4], quint32 codePageRange[2]) const
+{
+    Q_UNUSED(fileName)
+    Q_UNUSED(index)
+    Q_UNUSED(styleName)
+    Q_UNUSED(foundryName)
+    Q_UNUSED(weight)
+    Q_UNUSED(style)
+    Q_UNUSED(stretch)
+    Q_UNUSED(antialiased)
+    Q_UNUSED(scalable)
+    Q_UNUSED(pixelSize)
+    Q_UNUSED(fixedPitch)
+    Q_UNUSED(unicodeRange)
+    Q_UNUSED(codePageRange)
+    return QString();
+}
+
 void QBasicFontDatabase::releaseHandle(void *handle)
 {
     FontFile *file = static_cast<FontFile *>(handle);
@@ -324,6 +342,35 @@ QStringList QBasicFontDatabase::addTTFile(const QByteArray &fontData, const QByt
         FT_Done_Face(face);
         ++index;
     } while (index < numFaces);
+    return families;
+}
+
+QStringList QBasicFontDatabase::registerLazyLoadFontFile(const QString &fileName) const
+{
+    QStringList families;
+    int numFaces = numFacesLazyFont(fileName);
+    for (int i = 0; i < numFaces; i++) {
+        QString styleName;
+        QString foundryName;
+        QFont::Weight weight;
+        QFont::Style style;
+        QFont::Stretch stretch;
+        bool antialiased;
+        bool scalable;
+        int pixelSize;
+        bool fixedPitch;
+        QString fontFamily;
+        QSupportedWritingSystems writingSystems;
+        quint32 unicodeRange[4];
+        quint32 codePageRange[2];
+        fontFamily = getLazyLoadFontInfo(fileName, i, styleName, foundryName, weight, style, stretch, antialiased, scalable, pixelSize, fixedPitch, unicodeRange, codePageRange);
+        writingSystems = QPlatformFontDatabase::writingSystemsFromTrueTypeBits(unicodeRange, codePageRange);
+        FontFile *fontFile = new FontFile;
+        fontFile->fileName = fileName;
+        fontFile->indexValue = i;
+        registerFont(fontFamily, styleName, QString(), weight, style, stretch, antialiased, scalable, pixelSize, fixedPitch, writingSystems, fontFile);
+        families << fontFamily;
+    }
     return families;
 }
 
