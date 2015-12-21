@@ -100,6 +100,8 @@ public:
     virtual QFontEngine *fontEngine(const QFontDef &fontDef, QChar::Script script, void *handle);
     virtual QStringList fallbacksForFamily(const QString &family, QFont::Style style, QFont::StyleHint styleHint, QChar::Script script) const;
     virtual QStringList addApplicationFont(const QByteArray &fontData, const QString &fileName);
+    virtual bool shouldLazyLoadFontFile(const QString &fileName) const { Q_UNUSED(fileName) return false; }
+    virtual QStringList registerLazyLoadFontFile(const QString &fileName) const { Q_UNUSED(fileName) return QStringList(); }
     virtual void releaseHandle(void *handle);
 
     virtual QFontEngine *fontEngine(const QByteArray &fontData, qreal pixelSize, QFont::HintingPreference hintingPreference);

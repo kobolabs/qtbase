@@ -65,6 +65,9 @@ public:
     void releaseHandle(void *handle);
 
     virtual bool canRegisterFamily(const QString &family) const { Q_UNUSED(family) return true; }
+    QStringList registerLazyLoadFontFile(const QString &fileName) const;
+    virtual QString getLazyLoadFontInfo(const QString &fileName, const int index, QString &styleName, QString &foundryName, QFont::Weight &weight, QFont::Style &style, QFont::Stretch &stretch, bool &antialiased, bool &scalable, int &pixelSize, bool &fixedPitch, quint32 unicodeRange[4], quint32 codePageRange[2]) const;
+    virtual int numFacesLazyFont(const QString &fileName) const { Q_UNUSED(fileName) return 1;}
 
     QStringList addTTFile(const QByteArray &fontData, const QByteArray &file);
     static QString fontNameFromTTFile(const QString &filename);
