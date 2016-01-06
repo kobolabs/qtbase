@@ -243,7 +243,9 @@ int QEventDispatcherUNIXPrivate::doSelect(QEventLoop::ProcessEventsFlags flags, 
                         static const char *t[] = { "Read", "Write", "Exception" };
                         qWarning("QSocketNotifier: Invalid socket %d and type '%s', disabling...",
                                  sn->fd, t[type]);
-                        sn->obj->setEnabled(false);
+                        if (!sn->obj.isNull()) {
+                            sn->obj.data()->setEnabled(false);
+                        }
                     }
                 }
             }
@@ -265,7 +267,7 @@ int QEventDispatcherUNIXPrivate::doSelect(QEventLoop::ProcessEventsFlags flags, 
             for (int j = 0; j < list.size(); ++j) {
                 QSockNot *sn = list[j];
                 if (FD_ISSET(sn->fd, &sn_vec[i].select_fds))
-                    q->setSocketNotifierPending(sn->obj);
+                    q->setSocketNotifierPending(sn->obj.data());
             }
         }
     }
@@ -564,7 +566,7 @@ int QEventDispatcherUNIX::activateSocketNotifiers()
         QSockNot *sn = d->sn_pending_list.takeFirst();
         if (FD_ISSET(sn->fd, sn->queue)) {
             FD_CLR(sn->fd, sn->queue);
-            QCoreApplication::sendEvent(sn->obj, &event);
+            QCoreApplication::sendEvent(sn->obj.data(), &event);
             ++n_act;
         }
     }

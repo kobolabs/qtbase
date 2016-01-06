@@ -72,7 +72,7 @@ QT_BEGIN_NAMESPACE
 
 struct QSockNot
 {
-    QSocketNotifier *obj;
+    QPointer<QSocketNotifier> obj;
     int fd;
     fd_set *queue;
 };
