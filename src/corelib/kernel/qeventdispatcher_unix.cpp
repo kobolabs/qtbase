@@ -506,6 +506,8 @@ void QEventDispatcherUNIX::unregisterSocketNotifier(QSocketNotifier *notifier)
 void QEventDispatcherUNIX::setSocketNotifierPending(QSocketNotifier *notifier)
 {
     Q_ASSERT(notifier);
+    if (!notifier)
+        return;
     int sockfd = notifier->socket();
     int type = notifier->type();
 #ifndef QT_NO_DEBUG
