@@ -53,6 +53,8 @@
 #include <qtextstream.h>
 #include <qdebug.h>
 
+#include "future.h"
+
 QT_BEGIN_NAMESPACE
 
 namespace {
@@ -228,6 +230,10 @@ void WriteDeclaration::acceptUI(DomUI *node)
 
 void WriteDeclaration::acceptWidget(DomWidget *node)
 {
+    const bool future = hasFutureProperty(node->elementProperty()) && !m_option.future;
+    if (future) {
+        m_output << "\n#if 0 // future\n";
+    }
     QString className = QLatin1String("QWidget");
     if (node->hasAttributeClass())
         className = node->attributeClass();
@@ -235,6 +241,10 @@ void WriteDeclaration::acceptWidget(DomWidget *node)
     m_output << m_option.indent << m_uic->customWidgetsInfo()->realClassName(className) << " *" << m_driver->findOrInsertWidget(node) << ";\n";
 
     TreeWalker::acceptWidget(node);
+
+    if (future) {
+        m_output << "\n#endif // future\n";
+    }
 }
 
 void WriteDeclaration::acceptSpacer(DomSpacer *node)

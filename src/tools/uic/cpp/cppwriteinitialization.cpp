@@ -55,6 +55,8 @@
 
 #include <ctype.h>
 
+#include "future.h"
+
 QT_BEGIN_NAMESPACE
 
 namespace {
@@ -631,6 +633,11 @@ void WriteInitialization::acceptWidget(DomWidget *node)
     const QString varName = m_driver->findOrInsertWidget(node);
     m_registeredWidgets.insert(varName, node); // register the current widget
 
+    const bool future = hasFutureProperty(node->elementProperty()) && !m_option.future;
+    if (future) {
+        m_output << "\n#if 0 // future\n";
+    }
+
     QString parentWidget, parentClass;
     if (m_widgetChain.top()) {
         parentWidget = m_driver->findOrInsertWidget(m_widgetChain.top());
@@ -660,7 +667,9 @@ void WriteInitialization::acceptWidget(DomWidget *node)
     if (m_uic->isButton(className))
         addButtonGroup(node, varName);
 
-    writeProperties(varName, className, node->elementProperty());
+    if (!future) {
+        writeProperties(varName, className, node->elementProperty());
+    }
 
     if (m_uic->customWidgetsInfo()->extends(className, QLatin1String("QMenu")) && parentWidget.size()) {
         initializeMenu(node, parentWidget);
@@ -858,6 +867,10 @@ void WriteInitialization::acceptWidget(DomWidget *node)
 
         m_output << m_indent << name << "->raise();\n";
     }
+
+    if (future) {
+        m_output << "\n#endif // future\n";
+    }
 }
 
 void WriteInitialization::addButtonGroup(const DomWidget *buttonNode, const QString &varName)
@@ -1045,6 +1058,11 @@ void WriteInitialization::acceptLayoutItem(DomLayoutItem *node)
         }
     }
 
+    const bool future = node->kind() == DomLayoutItem::Widget && hasFutureProperty(node->elementWidget()->elementProperty()) && !m_option.future;
+    if (future) {
+        m_output << "\n#if 0 // future\n";
+    }
+
     // figure out "add" method
     m_output << "\n" << m_indent << layoutName << "->";
     switch (node->kind()) {
@@ -1062,6 +1080,9 @@ void WriteInitialization::acceptLayoutItem(DomLayoutItem *node)
         break;
     }
     m_output << ");\n\n";
+    if (future) {
+        m_output << "\n#endif // future\n";
+    }
 }
 
 void WriteInitialization::acceptActionGroup(DomActionGroup *node)
@@ -1183,6 +1204,10 @@ void WriteInitialization::writeProperties(const QString &varName,
             continue;
         QString propertyName = p->attributeName();
         QString propertyValue;
+
+        if (propertyName == QLatin1String("future")) {
+            continue;
+        }
 
         // special case for the property `geometry': Do not use position
         if (isTopLevel && propertyName == QLatin1String("geometry") && p->elementRect()) {
