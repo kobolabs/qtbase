@@ -100,6 +100,11 @@ int runUic(int argc, char *argv[])
     generatorOption.setValueName(QStringLiteral("java|cpp"));
     parser.addOption(generatorOption);
 
+    QCommandLineOption futureOption(QStringList() << QStringLiteral("f") << QStringLiteral("future"));
+    futureOption.setDescription(QStringLiteral("Build for the future!"));
+    futureOption.setValueName(QStringLiteral("true|false"));
+    parser.addOption(futureOption);
+
     parser.addPositionalArgument(QStringLiteral("[uifile]"), QStringLiteral("Input file (*.ui), otherwise stdin."));
 
     parser.process(app);
@@ -111,6 +116,7 @@ int runUic(int argc, char *argv[])
     driver.option().postfix = parser.value(postfixOption);
     driver.option().translateFunction = parser.value(translateOption);
     driver.option().generator = (parser.value(generatorOption).toLower() == QLatin1String("java")) ? Option::JavaGenerator : Option::CppGenerator;
+    driver.option().future = parser.value(futureOption) == QLatin1String("true");
 
     QString inputFile;
     if (!parser.positionalArguments().isEmpty())

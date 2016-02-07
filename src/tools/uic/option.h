@@ -78,6 +78,8 @@ struct Option
     QString javaOutputDirectory;
 #endif
 
+    bool future;
+
     Option()
         : headerProtection(1),
           copyrightHeader(1),
@@ -89,7 +91,8 @@ struct Option
           limitXPM_LineLength(0),
           implicitIncludes(1),
           generator(CppGenerator),
-          prefix(QLatin1String("Ui_"))
+          prefix(QLatin1String("Ui_")),
+          future(0)
     { indent.fill(QLatin1Char(' '), 4); }
 
     QString messagePrefix() const
