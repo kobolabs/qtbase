@@ -20,6 +20,23 @@ namespace {
         }
         return false;
     }
+
+    static bool hasFutureProperty(const CPP::WriteInitialization::DomPropertyList &lst, const QStack<DomWidget*> &widgetChain) {
+        if (hasFutureProperty(lst)) {
+            return true;
+        }
+        auto w(widgetChain);
+        while (!w.isEmpty()) {
+            auto o = w.pop();
+            if (!o) {
+                return false;
+            }
+            if (hasFutureProperty(o->elementProperty())) {
+                return true;
+            }
+        }
+        return false;
+    }
 }
 
 QT_END_NAMESPACE
