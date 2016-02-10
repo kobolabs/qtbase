@@ -633,7 +633,7 @@ void WriteInitialization::acceptWidget(DomWidget *node)
     const QString varName = m_driver->findOrInsertWidget(node);
     m_registeredWidgets.insert(varName, node); // register the current widget
 
-    const bool future = hasFutureProperty(node->elementProperty()) && !m_option.future;
+    const bool future = hasFutureProperty(node->elementProperty(), m_widgetChain) && !m_option.future;
     if (future) {
         m_output << "\n#if 0 // future\n";
     }
@@ -1058,7 +1058,7 @@ void WriteInitialization::acceptLayoutItem(DomLayoutItem *node)
         }
     }
 
-    const bool future = node->kind() == DomLayoutItem::Widget && hasFutureProperty(node->elementWidget()->elementProperty()) && !m_option.future;
+    const bool future = node->kind() == DomLayoutItem::Widget && hasFutureProperty(node->elementWidget()->elementProperty(), m_widgetChain) && !m_option.future;
     if (future) {
         m_output << "\n#if 0 // future\n";
     }
