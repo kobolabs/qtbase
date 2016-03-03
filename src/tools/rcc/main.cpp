@@ -156,6 +156,9 @@ int runRcc(int argc, char *argv[])
     QCommandLineOption futureOption(QStringLiteral("future"), QStringLiteral("Include resources marked with the attribute future=true."));
     parser.addOption(futureOption);
 
+    QCommandLineOption dependsOption(QStringLiteral("depends"), QStringLiteral("Only print gcc -M style make dependencies."));
+    parser.addOption(dependsOption);
+
     parser.addPositionalArgument(QStringLiteral("inputs"), QStringLiteral("Input files (*.qrc)."));
 
 
@@ -228,16 +231,20 @@ int runRcc(int argc, char *argv[])
     if (library.format() == RCCResourceLibrary::C_Code)
         mode |= QIODevice::Text;
 
-    if (outFilename.isEmpty() || outFilename == QLatin1String("-")) {
-        // using this overload close() only flushes.
-        out.open(stdout, mode);
-    } else {
-        out.setFileName(outFilename);
-        if (!out.open(mode)) {
-            const QString msg = QString::fromUtf8("Unable to open %1 for writing: %2\n").arg(outFilename).arg(out.errorString());
-            errorDevice.write(msg.toUtf8());
-            return 1;
+    if (!parser.isSet(dependsOption)) {
+        if (outFilename.isEmpty() || outFilename == QLatin1String("-")) {
+            // using this overload close() only flushes.
+            out.open(stdout, mode);
+        } else {
+            out.setFileName(outFilename);
+            if (!out.open(mode)) {
+                const QString msg = QString::fromUtf8("Unable to open %1 for writing: %2\n").arg(outFilename).arg(out.errorString());
+                errorDevice.write(msg.toUtf8());
+                return 1;
+            }
         }
+    } else {
+        printf("%s: ", outFilename.toUtf8().constData());
     }
 
     // do the task
@@ -250,6 +257,14 @@ int runRcc(int argc, char *argv[])
         return 0;
     }
 
+    if (parser.isSet(dependsOption)) {
+        const QStringList data = library.dataFiles();
+        for (int i = 0; i < data.size(); ++i) {
+            printf("%s ", qPrintable(QDir::cleanPath(data.at(i))));
+        }
+        printf("\n");
+        return 0;
+    }
     return library.output(out, errorDevice) ? 0 : 1;
 }
 
