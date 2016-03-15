@@ -4567,8 +4567,8 @@ Qt::ApplicationState QApplicationStateChangeEvent::applicationState() const
     return m_applicationState;
 }
 
-QHardwareEvent::QHardwareEvent(HardwareType hardwareType)
-    : QEvent(HardwareEvent), m_hardwareType(hardwareType)
+QHardwareEvent::QHardwareEvent(HardwareType hardwareType, const QVariant &data)
+    : QEvent(HardwareEvent), m_hardwareType(hardwareType), m_data(data)
 {}
 
 QHardwareEvent::~QHardwareEvent()
