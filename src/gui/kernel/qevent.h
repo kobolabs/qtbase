@@ -975,15 +975,19 @@ public:
         Touch,
         USB_Gadget,
         USB_AC,
-        Storage
+        Storage,
+        Display,
+        Sensor,
     };
-    explicit QHardwareEvent(HardwareType hardwareType);
+    explicit QHardwareEvent(HardwareType hardwareType, const QVariant &data = QVariant());
     ~QHardwareEvent();
 
     HardwareType hardwareType() const { return m_hardwareType; }
+    QVariant data() const { return m_data; }
 
 protected:
     HardwareType m_hardwareType;
+    QVariant m_data;
 };
 
 QT_END_NAMESPACE
