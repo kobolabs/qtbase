@@ -147,9 +147,8 @@ QLocale::Script QLocalePrivate::codeToScript(const QString &code)
     return QLocale::AnyScript;
 }
 
-QLocale::Country QLocalePrivate::codeToCountry(const QString &code)
+QLocale::Country QLocalePrivate::codeToCountry(const QChar *code, int len) Q_DECL_NOTHROW
 {
-    int len = code.length();
     if (len != 2 && len != 3)
         return QLocale::AnyCountry;
     ushort uc1 = len-- > 0 ? code[0].toUpper().unicode() : 0;
