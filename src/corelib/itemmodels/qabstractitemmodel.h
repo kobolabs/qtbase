@@ -500,7 +500,7 @@ inline Qt::ItemFlags QModelIndex::flags() const
 { return m ? m->flags(*this) : Qt::ItemFlags(); }
 
 inline uint qHash(const QModelIndex &index)
-{ return uint((index.row() << 4) + index.column() + index.internalId()); }
+{ return uint((uint(index.row()) << 4) + index.column() + index.internalId()); }
 
 QT_END_NAMESPACE
 
