@@ -2803,6 +2803,7 @@ bool QApplication::notify(QObject *receiver, QEvent *e)
     if (d->gestureManager) {
         switch (e->type()) {
         case QEvent::Paint:
+        case QEvent::Painted:
         case QEvent::MetaCall:
         case QEvent::DeferredDelete:
         case QEvent::DragEnter: case QEvent::DragMove: case QEvent::DragLeave:
@@ -2821,6 +2822,7 @@ bool QApplication::notify(QObject *receiver, QEvent *e)
         case QEvent::GraphicsSceneDrop:
         case QEvent::DynamicPropertyChange:
         case QEvent::NetworkReplyUpdated:
+        case QEvent::HardwareEvent:
             break;
         default:
             if (receiver->isWidgetType()) {
