@@ -451,7 +451,8 @@ void QGraphicsProxyWidgetPrivate::embedSubWindow(QWidget *subWin)
 {
     QWExtra *extra;
     if (!((extra = subWin->d_func()->extra) && extra->proxyWidget)) {
-        QGraphicsProxyWidget *subProxy = new QGraphicsProxyWidget(q_func(), subWin->windowFlags());
+        QGraphicsProxyWidget *subProxy = q_func()->createProxyForChildWidget(subWin);
+        subProxy->setWindowFlags(subWin->windowFlags());
         subProxy->d_func()->setWidget_helper(subWin, false);
     }
 }
