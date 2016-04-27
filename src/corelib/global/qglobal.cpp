@@ -1743,10 +1743,23 @@ Q_CORE_EXPORT QString qt_mac_from_pascal_string(const Str255 pstr) {
 QSysInfo::MacVersion QSysInfo::macVersion()
 {
 #if defined(Q_OS_OSX)
-    SInt32 gestalt_version;
-    if (Gestalt(gestaltSystemVersion, &gestalt_version) == noErr) {
-        return QSysInfo::MacVersion(((gestalt_version & 0x00F0) >> 4) + 2);
+    typedef qint16 (*GestaltFunction)(quint32 selector, qint32 *response);
+    static GestaltFunction pGestalt = 0;
+    if (!pGestalt) {
+        CFBundleRef b = CFBundleGetBundleWithIdentifier(CFSTR("com.apple.CoreServices"));
+        pGestalt = reinterpret_cast<GestaltFunction>(CFBundleGetFunctionPointerForName(b,
+                                                     CFSTR("Gestalt")));
     }
+    if (!pGestalt)
+        return MV_Unknown;
+    qint32 major = 0, minor = 0;
+    if (pGestalt('sys1', &major) != 0)
+        return MV_Unknown;
+    if (pGestalt('sys2', &minor) != 0)
+        return MV_Unknown;
+    if (major != 10)
+        return QSysInfo::MacVersion(MV_9);
+    return QSysInfo::MacVersion(minor + 2);
 #elif defined(Q_OS_IOS)
     return qt_ios_version(); // qtcore_mac_objc.mm
 #endif
