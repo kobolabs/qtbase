@@ -72,10 +72,10 @@
 QT_BEGIN_NAMESPACE
 
 static unsigned char ORDERED_DITHER_MATRIX[4][4] = {
-  { 1, 13, 4, 16},
-  { 9, 5, 12, 8},
-  { 3, 15, 2, 14},
-  { 11, 7, 10, 6}
+  { 13, 5, 14, 16 },
+  { 6, 1, 4, 11 },
+  { 7, 2, 3, 10 },
+  { 14, 8, 9, 15 }
 };
 
 #define MASK(src, a) src = BYTE_MUL(src, a)
