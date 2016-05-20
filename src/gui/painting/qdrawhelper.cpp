@@ -338,11 +338,10 @@ inline void ditherBuffer(ushort *buffer, int prevPix)
     *buffer = (newRandB << 11) | (newG << 5) | newRandB;
 }
 
-template <typename T, bool Sharpen>
+template <typename T>
 Q_STATIC_TEMPLATE_FUNCTION
 void ditherAndSharpenLine(T *buffer, const uint row, const uint length)
 {
-    int diffs[4];
     int pix;
     int prevPix;
 
@@ -351,21 +350,13 @@ void ditherAndSharpenLine(T *buffer, const uint row, const uint length)
     ditherBuffer<T>(buffer, pix);
     buffer++;
 
-    prevPix = diffs[0] = diffs[1] = diffs[2] = diffs[3] = pix;
+    prevPix = pix;
 
     const uchar *order = ORDERED_DITHER_MATRIX[row & 3];
     for (uint col = 1; col < length; ++col) {
         const int idxC = col & 3;
         const uchar threshold = order[idxC];
         pix = toGrayscale<T>(buffer);
-
-        if (Sharpen) {
-            diffs[idxC] = pix;
-            const unsigned int average = (diffs[0] + diffs[1] + diffs[2] + diffs[3]) >> 2;
-            const int diff = prevPix - average;
-            prevPix += (diff >> 1);
-            prevPix = qMax(prevPix, 0);
-        }
 
         const unsigned int t = (prevPix * 17) >> 4;
         const static libdivide::divider<unsigned int> fast_17(17);
@@ -1555,7 +1546,7 @@ static const uint * QT_FASTCALL fetchTransformedBilinearARGB32PM(uint *buffer, c
 
     // Do ordered dithering 3x3,16
     if (data->dither) {
-        ditherAndSharpenLine<uint, true>(buffer, y, length);
+        ditherAndSharpenLine<uint>(buffer, y, length);
     }
 
     return buffer;
@@ -1895,7 +1886,7 @@ static const uint *QT_FASTCALL fetchTransformedBilinear(uint *buffer, const Oper
 
     // Do ordered dithering 3x3,16
     if (data->dither) {
-        ditherAndSharpenLine<uint, true>(buffer, y, originalLength);
+        ditherAndSharpenLine<uint>(buffer, y, originalLength);
     }
 
     return buffer;
@@ -4376,7 +4367,7 @@ static void blend_untransformed_generic(int count, const QSpan *spans, void *use
                     uint *dest = op.dest_fetch ? op.dest_fetch(buffer, data->rasterBuffer, x, spans->y, l) : buffer;
                     op.func(dest, src, l, coverage);
                     if (data->dither) {
-                        ditherAndSharpenLine<uint, false>(dest, sy, l);
+                        ditherAndSharpenLine<uint>(dest, sy, l);
                     }
                     if (op.dest_store)
                         op.dest_store(data->rasterBuffer, x, spans->y, dest, l);
