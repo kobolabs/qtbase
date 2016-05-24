@@ -340,7 +340,7 @@ inline void ditherBuffer(ushort *buffer, int prevPix)
 
 template <typename T>
 Q_STATIC_TEMPLATE_FUNCTION
-void ditherAndSharpenLine(T *buffer, const uint row, const uint length)
+void ditherLine(T *buffer, const uint row, const uint length)
 {
     int pix;
     int prevPix;
@@ -352,9 +352,9 @@ void ditherAndSharpenLine(T *buffer, const uint row, const uint length)
 
     prevPix = pix;
 
-    const uchar *order = ORDERED_DITHER_MATRIX[row & 3];
     for (uint col = 1; col < length; ++col) {
-        const int idxC = col & 3;
+        const uchar *order = ORDERED_DITHER_MATRIX[(col * row) & 3];
+        const int idxC = (col + row) & 3;
         const uchar threshold = order[idxC];
         pix = toGrayscale<T>(buffer);
 
@@ -1546,7 +1546,7 @@ static const uint * QT_FASTCALL fetchTransformedBilinearARGB32PM(uint *buffer, c
 
     // Do ordered dithering 3x3,16
     if (data->dither) {
-        ditherAndSharpenLine<uint>(buffer, y, length);
+        ditherLine<uint>(buffer, y, length);
     }
 
     return buffer;
@@ -1886,7 +1886,7 @@ static const uint *QT_FASTCALL fetchTransformedBilinear(uint *buffer, const Oper
 
     // Do ordered dithering 3x3,16
     if (data->dither) {
-        ditherAndSharpenLine<uint>(buffer, y, originalLength);
+        ditherLine<uint>(buffer, y, originalLength);
     }
 
     return buffer;
@@ -4367,7 +4367,7 @@ static void blend_untransformed_generic(int count, const QSpan *spans, void *use
                     uint *dest = op.dest_fetch ? op.dest_fetch(buffer, data->rasterBuffer, x, spans->y, l) : buffer;
                     op.func(dest, src, l, coverage);
                     if (data->dither) {
-                        ditherAndSharpenLine<uint>(dest, sy, l);
+                        ditherLine<uint>(dest, sy, l);
                     }
                     if (op.dest_store)
                         op.dest_store(data->rasterBuffer, x, spans->y, dest, l);
