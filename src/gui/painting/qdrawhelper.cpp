@@ -353,7 +353,7 @@ void ditherLine(T *buffer, const uint row, const uint length)
     prevPix = pix;
 
     for (uint col = 1; col < length; ++col) {
-        const uchar threshold = ORDERED_DITHER_MATRIX[(col * row) & 3][(col + row) & 3];
+        const uchar threshold = ORDERED_DITHER_MATRIX[row & 3][col & 3];
         pix = toGrayscale<T>(buffer);
 
         const unsigned int t = (prevPix * 17) >> 4;
