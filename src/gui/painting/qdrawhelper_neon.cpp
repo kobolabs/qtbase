@@ -1013,7 +1013,7 @@ void neon_convert_and_dither_row(uint *buffer, uint row, uint length)
         const uint16x8_t y = vshrq_n_u16(vaddq_u16(vaddq_u16(vaddq_u16(vshll_n_u8(rgb.val[0], 1), vshll_n_u8(rgb.val[1], 2)), vmovl_u8(rgb.val[0])), vmovl_u8(rgb.val[2])), 3);
         const uint8_t *dstart = &gDitherMatrix_Neon[(row & 3) * 12 + (n & 3)];
         const uint8x8_t vdither = vld1_u8(dstart);
-        const uint8x8_t vsrc_y = vsub_u8(vmovn_u16(y), vshr_n_u8(vsrc_y, 4));
+        const uint8x8_t vsrc_y = vsub_u8(vmovn_u16(y), vshr_n_u8(vmovn_u16(y), 4));
         const uint8x8_t vdst_y = vmovn_u16(vaddl_u8(vsrc_y, vdither));
         rgb.val[0] = vdst_y;
         rgb.val[1] = vdst_y;
