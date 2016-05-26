@@ -996,6 +996,44 @@ const uint * QT_FASTCALL qt_fetch_radial_gradient_neon(uint *buffer, const Opera
     return qt_fetch_radial_gradient_template<QRadialFetchSimd<QSimdNeon> >(buffer, op, data, y, x, length);
 }
 
+static const uint8_t gDitherMatrix_Neon[48] = {
+    12, 5, 6, 13, 12, 5, 6, 13, 12, 5, 6, 13,
+    4, 0, 1, 7, 4, 0, 1, 7, 4, 0, 1, 7,
+    11, 3, 2, 8, 11, 3, 2, 8, 11, 3, 2, 8,
+    15, 10, 9, 14, 15, 10, 9, 14
+};
+
+void neon_convert_and_dither_row(uint *buffer, uint row, uint length)
+{
+    uint8_t *buf = (uint8_t *) buffer;
+    int n = length / 8;
+
+    for (int i=0; i < n; ++i) {
+        uint8x8x4_t rgb  = vld4_u8(buf);
+        const uint16x8_t y = vshrq_n_u16(vaddq_u16(vaddq_u16(vaddq_u16(vshll_n_u8(rgb.val[0], 1), vshll_n_u8(rgb.val[1], 2)), vmovl_u8(rgb.val[0])), vmovl_u8(rgb.val[2])), 3);
+        const uint8_t *dstart = &gDitherMatrix_Neon[(row & 3) * 12 + (n & 3)];
+        const uint8x8_t vdither = vld1_u8(dstart);
+        const uint8x8_t vsrc_y = vsub_u8(vmovn_u16(y), vshr_n_u8(vsrc_y, 4));
+        const uint8x8_t vdst_y = vmovn_u16(vaddl_u8(vsrc_y, vdither));
+        rgb.val[0] = vdst_y;
+        rgb.val[1] = vdst_y;
+        rgb.val[2] = vdst_y;
+        vst4_u8(buf, rgb);
+        buf += 32;
+    }
+
+    n = length - (n * 8);
+    for (int i = 0; i < n; i++) {
+        auto p = (uint *) buf;
+        auto argb = *p;
+        auto y = qGray(argb);
+        y = y - (y >> 4) + gDitherMatrix_Neon[(row & 3) * 12 + (n & 3)];
+        y = y >> 4;
+        *p = y + (y << 8) + (y << 16) + (argb & 0xFF000000);
+        buf += 32;
+    }
+}
+
 QT_END_NAMESPACE
 
 #endif // QT_COMPILER_SUPPORTS_NEON

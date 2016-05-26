@@ -67,16 +67,8 @@
 #include <private/qmath_p.h>
 #include <private/qguiapplication_p.h>
 #include <qmath.h>
-#include "libdivide.h"
 
 QT_BEGIN_NAMESPACE
-
-static unsigned char ORDERED_DITHER_MATRIX[4][4] = {
-  { 13, 5, 14, 16 },
-  { 6, 1, 4, 11 },
-  { 7, 2, 3, 10 },
-  { 14, 8, 9, 15 }
-};
 
 #define MASK(src, a) src = BYTE_MUL(src, a)
 
@@ -290,86 +282,29 @@ static const uint *QT_FASTCALL convertRGBFromARGB32PM(uint *buffer, const uint *
     return buffer;
 }
 
-template <class T>
-Q_STATIC_TEMPLATE_FUNCTION
-inline int toGrayscale(const T* buffer)
-{
-    return *buffer;
-}
-
-template <>
-inline int toGrayscale(const uint *buffer)
-{
-    return qGray(*buffer);
-}
-
-template <>
-inline int toGrayscale(const ushort *buffer)
-{
-    ushort p = *buffer;
-    int r = (p & 0xf800) >> 11;
-    int g = (p & 0x07e0) >> 5; // only keep 5 bit
-    int b = p & 0x001f;
-    return qGray(r, g, b);
-}
-
-template <class T>
-Q_STATIC_TEMPLATE_FUNCTION
-inline void ditherBuffer(T *buffer, int prevPix)
-{
-    Q_UNUSED(buffer);
-    Q_UNUSED(prevPix);
-}
-
-template <>
-inline void ditherBuffer(uint *buffer, int prevPix)
-{
-    if (qAlpha(*buffer) != 0xFF) { // don't dither translucent pixels
-        return;
-    }
-    *buffer = prevPix + (prevPix << 8) + (prevPix << 16) + 0xFF000000;
-}
-
-template <>
-inline void ditherBuffer(ushort *buffer, int prevPix)
-{
-    int newRandB = prevPix >> 3;
-    int newG = prevPix >> 2;
-    *buffer = (newRandB << 11) | (newG << 5) | newRandB;
-}
-
 template <typename T>
 Q_STATIC_TEMPLATE_FUNCTION
 void ditherLine(T *buffer, const uint row, const uint length)
 {
-    int pix;
-    int prevPix;
-
-    // initial setup for line.
-    pix = toGrayscale<T>(buffer);
-    ditherBuffer<T>(buffer, pix);
-    buffer++;
-
-    prevPix = pix;
-
-    for (uint col = 1; col < length; ++col) {
-        const uchar threshold = ORDERED_DITHER_MATRIX[row & 3][col & 3];
-        pix = toGrayscale<T>(buffer);
-
-        const unsigned int t = (prevPix * 17) >> 4;
-        const static libdivide::divider<unsigned int> fast_17(17);
-        const uchar l = t / fast_17;
-        const uchar u = t - l * 17;
-        prevPix = (l + (u >= threshold)) << 4;
-        prevPix = prevPix & 0x100 ? 0xff : prevPix;
-
-        ditherBuffer<T>(buffer, prevPix);
-        buffer++;
-
-        prevPix = pix;
-    }
+    Q_UNUSED(buffer)
+    Q_UNUSED(row)
+    Q_UNUSED(length)
 }
 
+template <>
+inline void ditherLine(uint *buffer, const uint row, const uint length)
+{
+#if defined(__ARM_NEON__)
+    neon_convert_and_dither_row(buffer, row, length);
+#else
+    uint *buf = &buffer[row];
+    for (uint i = 0; i < length; i++) {
+        uint argb = buffer[i];
+        uint y = qGray(argb);
+        buffer[i] = y + (y << 8) + (y << 16) + (argb & 0xFF000000);
+    }
+#endif
+}
 
 template <QPixelLayout::BPP bpp> static
 uint QT_FASTCALL fetchPixel(const uchar *src, int index);
