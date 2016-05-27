@@ -1005,13 +1005,13 @@ static const uint8_t gDitherMatrix_Neon[48] = {
 
 void neon_convert_and_dither_row(uint *buffer, uint row, uint length)
 {
+    const int dither = (row & 3) * 12;
     uint8_t *buf = (uint8_t *) buffer;
     int n = length / 8;
-
-    for (int i=0; i < n; ++i) {
+    for (int i = 0; i < n; i++) {
         uint8x8x4_t rgb  = vld4_u8(buf);
         const uint16x8_t y = vshrq_n_u16(vaddq_u16(vaddq_u16(vaddq_u16(vshll_n_u8(rgb.val[0], 1), vshll_n_u8(rgb.val[2], 2)), vmovl_u8(rgb.val[0])), vmovl_u8(rgb.val[1])), 3);
-        const uint8_t *dstart = &gDitherMatrix_Neon[(row & 3) * 12 + (n & 3)];
+        const uint8_t *dstart = &gDitherMatrix_Neon[dither + (i & 3)];
         const uint8x8_t vdither = vld1_u8(dstart);
         const uint8x8_t vsrc_y = vsub_u8(vmovn_u16(y), vshr_n_u8(vmovn_u16(y), 4));
         const uint8x8_t vdst_y = vmovn_u16(vaddl_u8(vsrc_y, vdither));
@@ -1027,7 +1027,7 @@ void neon_convert_and_dither_row(uint *buffer, uint row, uint length)
         auto p = (uint *) buf;
         auto argb = *p;
         auto y = qGray(argb);
-        y = y - (y >> 4) + gDitherMatrix_Neon[(row & 3) * 12 + (n & 3)];
+        y = y - (y >> 4) + gDitherMatrix_Neon[dither + (i & 3)];
         y = y >> 4;
         *p = y + (y << 8) + (y << 16) + (argb & 0xFF000000);
         buf += 32;
