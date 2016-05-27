@@ -1000,7 +1000,7 @@ static const uint8_t gDitherMatrix_Neon[48] = {
     12, 5, 6, 13, 12, 5, 6, 13, 12, 5, 6, 13,
     4, 0, 1, 7, 4, 0, 1, 7, 4, 0, 1, 7,
     11, 3, 2, 8, 11, 3, 2, 8, 11, 3, 2, 8,
-    15, 10, 9, 14, 15, 10, 9, 14
+    15, 10, 9, 14, 15, 10, 9, 14, 15, 10, 9, 14
 };
 
 void neon_convert_and_dither_row(uint *buffer, uint row, uint length)
