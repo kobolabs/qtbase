@@ -1026,11 +1026,10 @@ void neon_convert_and_dither_row(uint *buffer, uint row, uint length)
     for (int i = 0; i < n; i++) {
         auto p = (uint *) buf;
         auto argb = *p;
-        auto y = qGray(argb);
+        uint8_t y = qGray(argb);
         y = y - (y >> 4) + gDitherMatrix_Neon[dither + (i & 3)];
-        y = y >> 4;
         *p = y + (y << 8) + (y << 16) + (argb & 0xFF000000);
-        buf += 32;
+        buf += 4;
     }
 }
 
