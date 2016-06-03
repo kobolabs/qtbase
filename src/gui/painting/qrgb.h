@@ -79,6 +79,8 @@ inline Q_DECL_CONSTEXPR int qGray(QRgb rgb)                // convert RGB to gra
 inline Q_DECL_CONSTEXPR bool qIsGray(QRgb rgb)
 { return qRed(rgb) == qGreen(rgb) && qRed(rgb) == qBlue(rgb); }
 
+extern Q_GUI_EXPORT unsigned char qDitheringMatrix[48];
+
 QT_END_NAMESPACE
 
 #endif // QRGB_H
