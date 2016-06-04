@@ -291,13 +291,19 @@ void ditherLine(T *buffer, const uint row, const uint length)
     Q_UNUSED(length)
 }
 
+unsigned char qDitheringMatrix[48] = {
+    12, 5, 6, 13, 12, 5, 6, 13, 12, 5, 6, 13,
+    4, 0, 1, 7, 4, 0, 1, 7, 4, 0, 1, 7,
+    11, 3, 2, 8, 11, 3, 2, 8, 11, 3, 2, 8,
+    15, 10, 9, 14, 15, 10, 9, 14, 15, 10, 9, 14
+};
+
 template <>
 inline void ditherLine(uint *buffer, const uint row, const uint length)
 {
 #if defined(__ARM_NEON__)
     neon_convert_and_dither_row(buffer, row, length);
 #else
-    uint *buf = &buffer[row];
     for (uint i = 0; i < length; i++) {
         uint argb = buffer[i];
         uint y = qGray(argb);

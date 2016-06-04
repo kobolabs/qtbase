@@ -996,13 +996,6 @@ const uint * QT_FASTCALL qt_fetch_radial_gradient_neon(uint *buffer, const Opera
     return qt_fetch_radial_gradient_template<QRadialFetchSimd<QSimdNeon> >(buffer, op, data, y, x, length);
 }
 
-static const uint8_t gDitherMatrix_Neon[48] = {
-    12, 5, 6, 13, 12, 5, 6, 13, 12, 5, 6, 13,
-    4, 0, 1, 7, 4, 0, 1, 7, 4, 0, 1, 7,
-    11, 3, 2, 8, 11, 3, 2, 8, 11, 3, 2, 8,
-    15, 10, 9, 14, 15, 10, 9, 14, 15, 10, 9, 14
-};
-
 void neon_convert_and_dither_row(uint *buffer, uint row, uint length)
 {
     const int dither = (row & 3) * 12;
@@ -1011,7 +1004,7 @@ void neon_convert_and_dither_row(uint *buffer, uint row, uint length)
     for (int i = 0; i < n; i++) {
         uint8x8x4_t rgb  = vld4_u8(buf);
         const uint16x8_t y = vshrq_n_u16(vaddq_u16(vaddq_u16(vaddq_u16(vshll_n_u8(rgb.val[0], 1), vshll_n_u8(rgb.val[2], 2)), vmovl_u8(rgb.val[0])), vmovl_u8(rgb.val[1])), 3);
-        const uint8_t *dstart = &gDitherMatrix_Neon[dither + (i & 3)];
+        const uint8_t *dstart = &qDitheringMatrix[dither + (i & 3)];
         const uint8x8_t vdither = vld1_u8(dstart);
         const uint8x8_t vsrc_y = vsub_u8(vmovn_u16(y), vshr_n_u8(vmovn_u16(y), 4));
         const uint8x8_t vdst_y = vmovn_u16(vaddl_u8(vsrc_y, vdither));
@@ -1027,7 +1020,7 @@ void neon_convert_and_dither_row(uint *buffer, uint row, uint length)
         auto p = (uint *) buf;
         auto argb = *p;
         uint8_t y = qGray(argb);
-        y = y - (y >> 4) + gDitherMatrix_Neon[dither + (i & 3)];
+        y = y - (y >> 4) + qDitheringMatrix[dither + (i & 3)];
         *p = y + (y << 8) + (y << 16) + (argb & 0xFF000000);
         buf += 4;
     }
