@@ -2408,7 +2408,8 @@ void QWidget::setStyleSheet(const QString& styleSheet)
     }
 
     if (proxy) { // style sheet update
-        proxy->repolish(this);
+        if (d->polished)
+            proxy->repolish(this);
         return;
     }
 
