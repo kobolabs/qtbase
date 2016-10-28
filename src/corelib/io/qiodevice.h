@@ -114,7 +114,7 @@ public:
 
     qint64 read(char *data, qint64 maxlen);
     virtual QByteArray read(qint64 maxlen);
-    QByteArray readAll();
+    virtual QByteArray readAll();
     qint64 readLine(char *data, qint64 maxlen);
     QByteArray readLine(qint64 maxlen = 0);
     virtual bool canReadLine() const;
