@@ -2624,7 +2624,7 @@ static const int fast_timeout =  10000; // 10s
 static const int slow_timeout = 300000; //  5m
 #endif // QFONTCACHE_DEBUG
 
-const uint QFontCache::min_cost = 4*1024; // 4mb
+const uint QFontCache::min_cost = 96;
 
 #ifdef QT_NO_THREAD
 Q_GLOBAL_STATIC(QFontCache, theFontCache)
