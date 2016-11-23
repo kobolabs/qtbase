@@ -813,6 +813,12 @@ int QSQLiteDriver::busyHandler(int(*handler)(void*, int), void* pArg)
     return sqlite3_busy_handler(d->access, handler, pArg);
 }
 
+void QSQLiteDriver::trace(void(*xTrace)(void*,const char*))
+{
+	Q_D(QSQLiteDriver);
+	sqlite3_trace(d->access, xTrace, 0);
+}
+
 QString QSQLiteDriver::escapeIdentifier(const QString &identifier, IdentifierType type) const
 {
     Q_UNUSED(type);

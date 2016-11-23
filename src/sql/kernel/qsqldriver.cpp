@@ -384,6 +384,14 @@ int QSqlDriver::busyHandler(int(*handler)(void*, int), void* pArg)
 }
 
 /*!
+    Registers a sqlite trace callback function
+*/
+void QSqlDriver::trace(void(*xTrace)(void*,const char*))
+{
+	Q_UNUSED(xTrace);
+}
+
+/*!
     Returns a QSqlRecord populated with the names of the fields in
     table \a tableName. If no such table exists, an empty record is
     returned. The default implementation returns an empty record.
