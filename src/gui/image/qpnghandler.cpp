@@ -265,10 +265,11 @@ void setup_qt(QImage& image, png_structp png_ptr, png_infop info_ptr, QSize scal
     png_colorp palette = 0;
     int num_palette;
     int interlace_method;
+    int num_passes;
     png_get_IHDR(png_ptr, info_ptr, &width, &height, &bit_depth, &color_type, &interlace_method, 0, 0);
-    png_set_interlace_handling(png_ptr);
+    num_passes = png_set_interlace_handling(png_ptr);
 
-    if (color_type == PNG_COLOR_TYPE_GRAY) {
+    if (color_type == PNG_COLOR_TYPE_GRAY && num_passes == 1) {
         // Black & White or 8-bit grayscale
         if (bit_depth == 1 && png_get_channels(png_ptr, info_ptr) == 1) {
             png_set_invert_mono(png_ptr);
@@ -329,7 +330,7 @@ void setup_qt(QImage& image, png_structp png_ptr, png_infop info_ptr, QSize scal
         }
     } else if (color_type == PNG_COLOR_TYPE_PALETTE
                && png_get_PLTE(png_ptr, info_ptr, &palette, &num_palette)
-               && num_palette <= 256)
+               && num_palette <= 256 && num_passes == 1)
     {
         // 1-bit and 8-bit color
         if (bit_depth != 1)
