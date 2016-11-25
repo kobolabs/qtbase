@@ -666,8 +666,11 @@ QImage::Format QPngHandlerPrivate::readImageFormat()
         int bit_depth, color_type;
         png_colorp palette;
         int num_palette;
-        png_get_IHDR(png_ptr, info_ptr, &width, &height, &bit_depth, &color_type, 0, 0, 0);
-        if (color_type == PNG_COLOR_TYPE_GRAY) {
+        int interlace_method;
+        int num_passes;
+        png_get_IHDR(png_ptr, info_ptr, &width, &height, &bit_depth, &color_type, &interlace_method, 0, 0);
+        num_passes = png_set_interlace_handling(png_ptr);
+        if (color_type == PNG_COLOR_TYPE_GRAY && num_passes == 1) {
             // Black & White or 8-bit grayscale
             if (bit_depth == 1 && png_get_channels(png_ptr, info_ptr) == 1) {
                 format = QImage::Format_Mono;
@@ -678,7 +681,7 @@ QImage::Format QPngHandlerPrivate::readImageFormat()
             }
         } else if (color_type == PNG_COLOR_TYPE_PALETTE
                    && png_get_PLTE(png_ptr, info_ptr, &palette, &num_palette)
-                   && num_palette <= 256)
+                   && num_palette <= 256 && num_passes == 1)
         {
             // 1-bit and 8-bit color
             if (bit_depth != 1)
