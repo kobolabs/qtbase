@@ -115,6 +115,8 @@ public:
     static void addGlyphToPath(FT_Face face, FT_GlyphSlot g, const QFixedPoint &point, QPainterPath *path, FT_Fixed x_scale, FT_Fixed y_scale);
     static void addBitmapToPath(FT_GlyphSlot slot, const QFixedPoint &point, QPainterPath *path, bool = false);
 
+    QByteArray fontData;
+
 private:
     friend class QFontEngineFT;
     friend class QtFreetypeData;
@@ -124,7 +126,6 @@ private:
     void cleanup();
     QAtomicInt ref;
     QMutex _lock;
-    QByteArray fontData;
 
     void *hbFace;
     qt_destroy_func_t hbFace_destroy_func;

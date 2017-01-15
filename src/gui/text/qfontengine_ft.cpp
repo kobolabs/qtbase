@@ -350,10 +350,20 @@ QFreetypeFace *QFreetypeFace::getFace(const QFontEngine::FaceId &face_id,
                 if (!file.open(QIODevice::ReadOnly)) {
                     return 0;
                 }
-                if (QFontDatabase::decryptFontData) {
-                    newFreetype->fontData = QFontDatabase::decryptFontData(file);
-                } else {
-                    newFreetype->fontData = file.readAll();
+                for (QHash<QFontEngine::FaceId, QFreetypeFace *>::ConstIterator iter = freetypeData->faces.begin(); iter != freetypeData->faces.end(); ++iter) {
+                    QFontEngine::FaceId f = iter.key();
+                    if (f.filename == face_id.filename) {
+                        QFreetypeFace *cachedFreetype = iter.value();
+                        newFreetype->fontData = cachedFreetype->fontData;
+                        break;
+                    }
+                }
+                if (newFreetype->fontData.isEmpty()) {
+                    if (QFontDatabase::decryptFontData) {
+                        newFreetype->fontData = QFontDatabase::decryptFontData(file);
+                    } else {
+                        newFreetype->fontData = file.readAll();
+                    }
                 }
             }
         } else {
