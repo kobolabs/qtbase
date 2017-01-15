@@ -246,10 +246,16 @@ QStringList QBasicFontDatabase::addTTFile(const QByteArray &fontData, const QByt
         FT_Face face;
         FT_Error error;
         if (!file.startsWith(":qmemoryfonts") && QFontDatabase::decryptFontData) {
-            QFile f(QString::fromUtf8(file));
-            f.open(QIODevice::ReadOnly);
-            data = QFontDatabase::decryptFontData(f);
-            f.close();
+            QFontEngine::FaceId fid;
+            fid.filename = file;
+            fid.index = index;
+            fid.edgeRendering = false;
+            QFreetypeFace* freetypeFace = QFreetypeFace::getFace(fid, QByteArray());
+            if (freetypeFace == nullptr) {
+                qDebug() << "FT_New_Face failed with index" << index << ":" << hex << error;
+                break;
+            }
+            data = freetypeFace->fontData;
         }
         if (!data.isEmpty()) {
             error = FT_New_Memory_Face(library, (const FT_Byte *)data.constData(), data.size(), index, &face);
