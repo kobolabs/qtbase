@@ -211,7 +211,7 @@ public:
     void operator =(int t) {
         uint i = qFromLittleEndian(val);
         i &= ~mask;
-        i |= t << pos;
+        i |= t * (1 << pos);
         val = qToLittleEndian(i);
     }
     operator int() const {
