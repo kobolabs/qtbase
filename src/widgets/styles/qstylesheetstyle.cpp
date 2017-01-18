@@ -3827,7 +3827,7 @@ void QStyleSheetStyle::drawControl(ControlElement ce, const QStyleOption *opt, Q
 
                 QRect r = rect;
                 Q_D(const QWindowsStyle);
-                if (pb->minimum == 0 && pb->maximum == 0) {
+                if (chunkWidth != 0 && pb->minimum == 0 && pb->maximum == 0) {
                     int chunkCount = fillWidth/chunkWidth;
                     int offset = 0;
                     if (QProgressStyleAnimation *animation = qobject_cast<QProgressStyleAnimation*>(d->animation(opt->styleObject)))
@@ -3855,7 +3855,7 @@ void QStyleSheetStyle::drawControl(ControlElement ce, const QStyleOption *opt, Q
                         x += reverse ? -chunkWidth : chunkWidth;
                         --chunkCount;
                     };
-                } else {
+                } else if (chunkWidth != 0) {
                     int x = reverse ? r.left() + r.width() - chunkWidth : r.x();
 
                     for (int i = 0; i < ceil(qreal(fillWidth)/chunkWidth); ++i) {
