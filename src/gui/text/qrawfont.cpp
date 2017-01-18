@@ -190,7 +190,6 @@ QRawFont::QRawFont(const QByteArray &fontData,
 */
 QRawFont::QRawFont(const QRawFont &other)
 {
-    d->loadPlugin();
     d = other.d;
 }
 
