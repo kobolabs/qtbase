@@ -722,6 +722,11 @@ CFG_COREWLAN=auto
 CFG_PROCESS=yes
 CFG_ICU=auto
 CFG_FORCE_ASSERTS=no
+CFG_SANITIZERS=none
+CFG_SANITIZE_ADDRESS=no
+CFG_SANITIZE_THREAD=no
+CFG_SANITIZE_MEMORY=no
+CFG_SANITIZE_UNDEFINED=no
 CFG_PCRE=auto
 QPA_PLATFORM_GUARD=yes
 CFG_CXX11=auto
@@ -893,6 +898,8 @@ while [ "$#" -gt 0 ]; do
     -qpa| \
     -qconfig| \
     -qreal| \
+    -sanitize| \
+    -xkb-config-root| \
     -android-sdk| \
     -android-ndk| \
     -android-ndk-platform| \
@@ -1145,6 +1152,25 @@ while [ "$#" -gt 0 ]; do
         ;;
     qreal)
         CFG_QREAL="$VAL"
+        ;;
+    sanitize)
+        if [ "$VAL" = "address" ]; then
+            CFG_SANITIZE_ADDRESS=yes
+        elif [ "$VAL" = "thread" ]; then
+            CFG_SANITIZE_THREAD=yes
+        elif [ "$VAL" = "memory" ]; then
+            CFG_SANITIZE_MEMORY=yes
+        elif [ "$VAL" = "undefined" ]; then
+            CFG_SANITIZE_UNDEFINED=yes
+        else
+            echo "Unknown sanitizer: '$VAL'"
+            ERROR=true
+        fi
+        if [ "$CFG_SANITIZERS" = "none" ]; then
+            CFG_SANITIZERS=$VAL
+        else
+            CFG_SANITIZERS="$CFG_SANITIZERS $VAL"
+        fi
         ;;
     sysroot)
         CFG_SYSROOT="$VAL"
@@ -2423,6 +2449,8 @@ Additional options:
                               experimental; needs GNU ld >= 2.18).
 
     -force-asserts ........ Force Q_ASSERT to be enabled even in release builds.
+
+    -sanitize [address|thread|memory|undefined] Enables the specified compiler sanitizer.
 
     -device <name> ............... Cross-compile for device <name> (experimental)
     -device-option <key=value> ... Add device specific options for the device mkspec
@@ -5957,6 +5985,27 @@ if [ "$CFG_FORCE_ASSERTS" = "yes" ]; then
     QT_CONFIG="$QT_CONFIG force_asserts"
 fi
 
+if [ "$CFG_SANITIZERS" != "none" ]; then
+
+    QTCONFIG_CONFIG="$QTCONFIG_CONFIG sanitizer"
+
+    if [ "$CFG_SANITIZE_ADDRESS" = "yes" ]; then
+        QTCONFIG_CONFIG="$QTCONFIG_CONFIG sanitize_address"
+    fi
+
+    if [ "$CFG_SANITIZE_THREAD" = "yes" ]; then
+        QTCONFIG_CONFIG="$QTCONFIG_CONFIG sanitize_thread"
+    fi
+
+    if [ "$CFG_SANITIZE_MEMORY" = "yes" ]; then
+        QTCONFIG_CONFIG="$QTCONFIG_CONFIG sanitize_memory"
+    fi
+
+    if [ "$CFG_SANITIZE_UNDEFINED" = "yes" ]; then
+        QTCONFIG_CONFIG="$QTCONFIG_CONFIG sanitize_undefined"
+    fi
+fi
+
 if [ "$CFG_PCRE" = "qt" ]; then
     QMAKE_CONFIG="$QMAKE_CONFIG pcre"
 fi
@@ -6673,6 +6722,7 @@ else
    echo "  Mode ................... $build_mode"
 fi
 unset build_mode release
+echo "  Using sanitizer(s)...... $CFG_SANITIZERS"
 echo "  Using C++11 ............ $CFG_CXX11"
 echo "  Using PCH .............. $CFG_PRECOMPILE"
 echo "  Target compiler supports:"
