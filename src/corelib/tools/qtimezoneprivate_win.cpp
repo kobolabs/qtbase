@@ -321,7 +321,7 @@ static QLocale::Country userCountry()
     const GEOID id = GetUserGeoID(GEOCLASS_NATION);
     wchar_t code[3];
     const int size = GetGeoInfo(id, GEO_ISO2, code, 3, 0);
-    return (size == 3) ? QLocalePrivate::codeToCountry(QString::fromWCharArray(code))
+    return (size == 3) ? QLocalePrivate::codeToCountry(reinterpret_cast<const QChar*>(code), size)
                        : QLocale::AnyCountry;
 #endif // Q_OS_WINCE
 }
@@ -377,7 +377,7 @@ void QWinTimeZonePrivate::init(const QByteArray &ianaId)
             m_standardName = readRegistryString(baseKey, L"Std");
             m_daylightName = readRegistryString(baseKey, L"Dlt");
             // On Vista and later the optional dynamic key holds historic data
-            const QString dynamicKeyPath = baseKeyPath + QStringLiteral("\\Dynamic DST");
+            const QString dynamicKeyPath = baseKeyPath + QLatin1String("\\Dynamic DST");
             HKEY dynamicKey = NULL;
             if (openRegistryKey(dynamicKeyPath, &dynamicKey)) {
                 // Find out the start and end years stored, then iterate over them

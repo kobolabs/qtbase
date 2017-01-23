@@ -162,7 +162,7 @@ static inline bool isParentDomain(QString domain, QString reference)
     if (!reference.startsWith(QLatin1Char('.')))
         return domain == reference;
 
-    return domain.endsWith(reference) || domain == reference.mid(1);
+    return domain.endsWith(reference) || domain == reference.midRef(1);
 }
 
 /*!
