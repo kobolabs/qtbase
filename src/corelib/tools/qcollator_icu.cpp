@@ -137,6 +137,23 @@ int QCollator::compare(const QStringRef &s1, const QStringRef &s2) const
     return compare(s1.constData(), s1.size(), s2.constData(), s2.size());
 }
 
+int QCollator::compare(const char *s1, int len1, const char *s2, int len2) const
+{
+    UErrorCode status = U_ZERO_ERROR;
+    UCharIterator iter1, iter2;
+    uiter_setUTF8(&iter1, s1, len1);
+    uiter_setUTF8(&iter2, s2, len2);
+    int result = ucol_strcollIter(d->collator, &iter1, &iter2, &status);
+    if (U_FAILURE(status))
+        qWarning("ucol_strcollIter: %d", status);
+    return result;
+}
+
+int QCollator::compare(const QByteArray &s1, const QByteArray &s2) const
+{
+    return compare(s1.constData(), s1.size(), s2.constData(), s2.size());
+}
+
 QCollatorSortKey QCollator::sortKey(const QString &string) const
 {
     QByteArray result(16 + string.size() + (string.size() >> 2), Qt::Uninitialized);
