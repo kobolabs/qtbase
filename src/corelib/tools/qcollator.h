@@ -115,7 +115,12 @@ public:
     int compare(const QStringRef &s1, const QStringRef &s2) const;
     int compare(const QChar *s1, int len1, const QChar *s2, int len2) const;
 
+    int compare(const QByteArray &s1, const QByteArray &s2) const;
+    int compare(const char *s1, int len1, const char *s2, int len2) const;
+
     bool operator()(const QString &s1, const QString &s2) const
+    { return compare(s1, s2) < 0; }
+    bool operator()(const QByteArray &s1, const QByteArray &s2) const
     { return compare(s1, s2) < 0; }
 
     QCollatorSortKey sortKey(const QString &string) const;
