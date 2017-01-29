@@ -1249,10 +1249,12 @@ bool QImageReader::read(QImage *image)
         }
     }
 
+#if defined(Q_OS_IOS)
     // successful read; check for "@2x" file name suffix and set device pixel ratio.
     if (QFileInfo(fileName()).baseName().endsWith(QLatin1String("@2x"))) {
         image->setDevicePixelRatio(2.0);
     }
+#endif
 
     return true;
 }
