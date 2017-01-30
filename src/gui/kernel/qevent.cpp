@@ -1052,6 +1052,8 @@ bool QKeyEvent::matches(QKeySequence::StandardKey matchKey) const
     uint searchkey = (modifiers() | key()) & ~(Qt::KeypadModifier | Qt::GroupSwitchModifier);
 
     const QList<QKeySequence> bindings = QKeySequence::keyBindings(matchKey);
+    if (bindings.isEmpty())
+        return false;
     return bindings.contains(QKeySequence(searchkey));
 }
 #endif // QT_NO_SHORTCUT
