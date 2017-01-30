@@ -98,6 +98,9 @@ public:
     inline int size() const { return m_size; }
     inline const char *data() const { return m_data; }
 
+    inline bool isNull() const { return !data(); }
+    inline bool isEmpty() const { return !size(); }
+
     inline bool operator==(const QString &s) const;
     inline bool operator!=(const QString &s) const;
     inline bool operator>(const QString &s) const;
