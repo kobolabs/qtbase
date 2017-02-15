@@ -434,7 +434,7 @@ bool QSQLiteResult::exec()
                 switch (value.type()) {
                 case QVariant::ByteArray: {
                     const QByteArray *ba = static_cast<const QByteArray*>(value.constData());
-                    res = sqlite3_bind_blob(d->stmt, i + 1, ba->constData(),
+                    res = sqlite3_bind_text(d->stmt, i + 1, ba->constData(),
                                             ba->size(), SQLITE_STATIC);
                     break; }
                 case QVariant::Int:
