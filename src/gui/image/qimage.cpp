@@ -4004,6 +4004,11 @@ QImage QImage::convertToFormat(Format format, Qt::ImageConversionFlags flags) co
 
     const Image_Converter *converterPtr = &converter_map[d->format][format];
     Image_Converter converter = *converterPtr;
+    if (converter == mask_alpha_converter) {
+        converter(d, d, flags);
+        d->format = format;
+        return *this;
+    }
     if (converter) {
         QImage image(d->width, d->height, format);
 
