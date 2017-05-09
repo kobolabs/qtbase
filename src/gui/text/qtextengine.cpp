@@ -2085,6 +2085,8 @@ void QTextEngine::justify(const QScriptLine &line)
         int ge = (end == length(firstItem+i) ? si.num_glyphs : log_clusters[end]);
 
         Q_ASSERT(ge <= si.num_glyphs);
+        if (ge > si.num_glyphs)
+            continue;
 
         const QGlyphLayout g = shapedGlyphs(&si);
 
