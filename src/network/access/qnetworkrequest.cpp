@@ -967,9 +967,16 @@ void QNetworkHeadersPrivate::parseAndSetHeader(const QByteArray &key, const QByt
             // Only set the cooked header "Content-Length" once.
             // See bug QTBUG-15311
         } else {
-            cookedHeaders.insert(parsedKey, parseHeaderValue(parsedKey, value));
+            QVariant parsedValue = parseHeaderValue(parsedKey, value);
+            if (parsedKey == QNetworkRequest::ContentTypeHeader && cookedHeaders.contains(QNetworkRequest::ContentTypeHeader)) {
+                if (cookedHeaders.value(QNetworkRequest::ContentTypeHeader) != parsedValue) {
+                    cookedHeaders.insert(parsedKey, QString());
+                }
+            }
+            else {
+                cookedHeaders.insert(parsedKey, parsedValue);
+            }
         }
-
     }
 }
 
