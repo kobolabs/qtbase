@@ -297,7 +297,7 @@ static inline bool isEmptyBlockBeforeTable(const QTextBlock &block, const QTextB
            ;
 }
 
-static inline bool isEmptyBlockBeforeTable(QTextFrame::Iterator it)
+static inline bool isEmptyBlockBeforeTable(const QTextFrame::Iterator &it)
 {
     QTextFrame::Iterator next = it; ++next;
     if (it.currentFrame())
@@ -421,7 +421,7 @@ Q_STATIC_GLOBAL_OPERATOR bool operator<(int pos, const QCheckPoint &checkPoint)
 
 #endif
 
-static void fillBackground(QPainter *p, const QRectF &rect, QBrush brush, const QPointF &origin, QRectF gradientRect = QRectF())
+static void fillBackground(QPainter *p, const QRectF &rect, QBrush brush, const QPointF &origin, const QRectF &gradientRect = QRectF())
 {
     p->save();
     if (brush.style() >= Qt::LinearGradientPattern && brush.style() <= Qt::ConicalGradientPattern) {
@@ -1493,7 +1493,7 @@ void QTextDocumentLayoutPrivate::drawListItem(const QPointF &offset, QPainter *p
     painter->restore();
 }
 
-static QFixed flowPosition(const QTextFrame::iterator it)
+static QFixed flowPosition(const QTextFrame::iterator &it)
 {
     if (it.atEnd())
         return 0;

@@ -879,7 +879,7 @@ static QBrush brushFromData(const BrushData& c, const QPalette &pal)
     }
 }
 
-static BorderStyle parseStyleValue(QCss::Value v)
+static BorderStyle parseStyleValue(const QCss::Value &v)
 {
     if (v.type == Value::KnownIdentifier) {
         switch (v.variant.toInt()) {
