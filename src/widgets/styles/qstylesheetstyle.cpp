@@ -5815,6 +5815,11 @@ void QStyleSheetStyle::updateStyleSheetFont(QWidget* w) const
             PseudoClass_Active | PseudoClass_Enabled | extendedPseudoClass(container));
     QFont font = rule.font.resolve(w->font());
 
+    auto property = qApp->property("fontScale");
+    if (font.pixelSize() != -1 && property.isValid()) {
+        font.setPixelSize(qRound(font.pixelSize() * property.toFloat()));
+    }
+
     if ((!w->isWindow() || w->testAttribute(Qt::WA_WindowPropagation))
         && isNaturalChild(w) && qobject_cast<QWidget *>(w->parent())) {
 
