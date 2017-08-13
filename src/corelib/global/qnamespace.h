@@ -511,7 +511,12 @@ public:
 
         WA_KoboEpdFlagInvert,
         WA_KoboEpdFlagMonochrome,
-        WA_KoboEpdFlagUseReaglD,
+        WA_KoboEpdFlagUseAAD,
+        WA_KoboEpdFlagUseDitheringY1,
+        WA_KoboEpdFlagUseDitheringY4,
+        WA_KoboEpdFlagUseDitheringFloydSteinberg,
+        WA_KoboEpdFlagUseDitheringAtkinson,
+        WA_KoboEpdFlagUseDitheringOrdered,
         WA_KoboEpdFlagExpandToScreenGeometry,
         WA_KoboEpdFlagCanCollide,
 
