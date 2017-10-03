@@ -107,9 +107,9 @@ QT_BEGIN_NAMESPACE
 
 /* FreeType 2.1.10 starts to provide FT_GlyphSlot_Embolden */
 #if (FREETYPE_MAJOR*10000+FREETYPE_MINOR*100+FREETYPE_PATCH) >= 20110
-#define Q_FT_GLYPHSLOT_EMBOLDEN(slot)   GlyphSlot_Embolden(slot)
+#define Q_FT_GLYPHSLOT_EMBOLDEN(slot, scale)   GlyphSlot_Embolden(slot, scale)
 #else
-#define Q_FT_GLYPHSLOT_EMBOLDEN(slot)
+#define Q_FT_GLYPHSLOT_EMBOLDEN(slot, scale)
 #endif
 
 /* FreeType 2.1.10 starts to provide FT_GlyphSlot_Oblique */
@@ -129,7 +129,7 @@ QT_BEGIN_NAMESPACE
 #if (FREETYPE_MAJOR*10000+FREETYPE_MINOR*100+FREETYPE_PATCH) >= 20110
 /* see FT_GlyphSlot_Embolden@freetype/src/base/ftsynth.c */
 static void
-GlyphSlot_Embolden(FT_GlyphSlot slot)
+GlyphSlot_Embolden(FT_GlyphSlot slot, FT_Fixed scale)
 {
     FT_Library  library = slot->library;
     FT_Face     face    = slot->face;
@@ -141,8 +141,8 @@ GlyphSlot_Embolden(FT_GlyphSlot slot)
         return;
 
     /* some reasonable strength */
-    xstr = FT_MulFix(face->units_per_EM,
-                     face->size->metrics.y_scale) / 24;
+    xstr = FT_MulFix(face->size->metrics.y_scale, scale);
+    xstr = FT_MulFix(face->units_per_EM, xstr) / 24;
     ystr = xstr;
 
     if (slot->format == FT_GLYPH_FORMAT_OUTLINE) {
@@ -1043,7 +1043,7 @@ QFontEngineFT::Glyph *QFontEngineFT::loadGlyph(QGlyphSet *set, uint glyph,
 
     FT_GlyphSlot slot = face->glyph;
 
-    if (embolden) Q_FT_GLYPHSLOT_EMBOLDEN(slot);
+    if (embolden) Q_FT_GLYPHSLOT_EMBOLDEN(slot, matrix.yy);
     if (obliquen) {
         Q_FT_GLYPHSLOT_OBLIQUE(slot);
 
@@ -1459,6 +1459,18 @@ void QFontEngineFT::doKerning(QGlyphLayout *g, QFontEngine::ShaperFlags flags) c
     QFontEngine::doKerning(g, flags);
 }
 
+static FT_Matrix QTransformToFTMatrix(const QTransform &matrix)
+{
+    FT_Matrix m;
+
+    m.xx = FT_Fixed(matrix.m11() * 65536);
+    m.xy = FT_Fixed(-matrix.m21() * 65536);
+    m.yx = FT_Fixed(-matrix.m12() * 65536);
+    m.yy = FT_Fixed(matrix.m22() * 65536);
+
+    return m;
+}
+
 QFontEngineFT::QGlyphSet *QFontEngineFT::loadTransformedGlyphSet(const QTransform &matrix)
 {
     if (matrix.type() > QTransform::TxShear)
@@ -1468,11 +1480,7 @@ QFontEngineFT::QGlyphSet *QFontEngineFT::loadTransformedGlyphSet(const QTransfor
     if (!FT_IS_SCALABLE(freetype->face))
         return 0;
 
-    FT_Matrix m;
-    m.xx = FT_Fixed(matrix.m11() * 65536);
-    m.xy = FT_Fixed(-matrix.m21() * 65536);
-    m.yx = FT_Fixed(-matrix.m12() * 65536);
-    m.yy = FT_Fixed(matrix.m22() * 65536);
+    FT_Matrix m = QTransformToFTMatrix(matrix);
 
     QGlyphSet *gs = 0;
 
@@ -1639,7 +1647,7 @@ void QFontEngineFT::addGlyphsToPath(glyph_t *glyphs, QFixedPoint *positions, int
         FT_GlyphSlot g = face->glyph;
         if (g->format != FT_GLYPH_FORMAT_OUTLINE)
             continue;
-        if (embolden) Q_FT_GLYPHSLOT_EMBOLDEN(g);
+        if (embolden) Q_FT_GLYPHSLOT_EMBOLDEN(g, 0x10000);
         if (obliquen) Q_FT_GLYPHSLOT_OBLIQUE(g);
         QPainterPath tmpPath;
         QFreetypeFace::addGlyphToPath(face, g, positions[gl], &tmpPath, xsize, ysize);
@@ -1871,18 +1879,6 @@ glyph_metrics_t QFontEngineFT::boundingBox(glyph_t glyph)
 glyph_metrics_t QFontEngineFT::boundingBox(glyph_t glyph, const QTransform &matrix)
 {
     return alphaMapBoundingBox(glyph, 0, matrix, QFontEngine::Format_None);
-}
-
-static FT_Matrix QTransformToFTMatrix(const QTransform &matrix)
-{
-    FT_Matrix m;
-
-    m.xx = FT_Fixed(matrix.m11() * 65536);
-    m.xy = FT_Fixed(-matrix.m21() * 65536);
-    m.yx = FT_Fixed(-matrix.m12() * 65536);
-    m.yy = FT_Fixed(matrix.m22() * 65536);
-
-    return m;
 }
 
 glyph_metrics_t QFontEngineFT::alphaMapBoundingBox(glyph_t glyph, QFixed subPixelPosition, const QTransform &matrix, QFontEngine::GlyphFormat format)
