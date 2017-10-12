@@ -150,6 +150,8 @@ typedef void (*QtMessageHandler)(QtMsgType, const QMessageLogContext &, const QS
 Q_CORE_EXPORT QtMessageHandler qInstallMessageHandler(QtMessageHandler);
 
 Q_CORE_EXPORT void qSetMessagePattern(const QString &messagePattern);
+Q_CORE_EXPORT QString qMessageFormatString(QtMsgType type, const QMessageLogContext &context,
+const QString &str);
 
 QT_END_NAMESPACE
 #endif // QLOGGING_H

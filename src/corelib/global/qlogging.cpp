@@ -798,7 +798,7 @@ Q_GLOBAL_STATIC(QMessagePattern, qMessagePattern)
 /*!
     \internal
 */
-Q_CORE_EXPORT QString qMessageFormatString(QtMsgType type, const QMessageLogContext &context,
+QString qMessageFormatString(QtMsgType type, const QMessageLogContext &context,
                                               const QString &str)
 {
     QString message;
