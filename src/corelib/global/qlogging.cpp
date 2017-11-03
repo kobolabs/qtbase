@@ -551,6 +551,7 @@ static const char functionTokenC[] = "%{function}";
 static const char pidTokenC[] = "%{pid}";
 static const char appnameTokenC[] = "%{appname}";
 static const char threadidTokenC[] = "%{threadid}";
+static const char threadnameTokenC[] = "%{threadname}";
 static const char timeTokenC[] = "%{time";
 static const char ifCategoryTokenC[] = "%{if-category}";
 static const char ifDebugTokenC[] = "%{if-debug}";
@@ -682,6 +683,8 @@ void QMessagePattern::setPattern(const QString &pattern)
                 tokens[i] = appnameTokenC;
             else if (lexeme == QLatin1String(threadidTokenC))
                 tokens[i] = threadidTokenC;
+            else if (lexeme == QLatin1String(threadnameTokenC))
+                tokens[i] = threadnameTokenC;
             else if (lexeme.startsWith(QLatin1String(timeTokenC))) {
                 tokens[i] = timeTokenC;
                 int spaceIdx = lexeme.indexOf(QChar::fromLatin1(' '));
@@ -857,6 +860,8 @@ QString qMessageFormatString(QtMsgType type, const QMessageLogContext &context,
         } else if (token == threadidTokenC) {
             message.append(QLatin1String("0x"));
             message.append(QString::number(qlonglong(QThread::currentThread()->currentThread()), 16));
+        } else if (token == threadnameTokenC) {
+            message.append(QThread::currentThread()->currentThread()->objectName());
         } else if (token == timeTokenC) {
             quint64 ms = pattern->timer.elapsed();
             if (pattern->timeFormat.isEmpty())
