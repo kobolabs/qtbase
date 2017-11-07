@@ -130,7 +130,7 @@ inline QString writeString(const QString &s, const QString &indent)
     // use QLatin1String instead (all platforms to avoid cross-compiling issues).
     if (flags & MultiLineString)
         return QLatin1String("QLatin1String(") + ret + QLatin1Char(')');
-    return QLatin1String("QStringLiteral(") + ret + QLatin1Char(')');
+    return QLatin1String("QString::fromUtf8(") + ret + QLatin1Char(')');
 }
 
 inline QHash<QString, DomProperty *> propertyMap(const QList<DomProperty *> &properties)
