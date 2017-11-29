@@ -160,9 +160,9 @@ typedef ushort qunicodechar;
 Q_STATIC_ASSERT_X(sizeof(qunicodechar) == 2,
         "qunicodechar must typedef an integral type of size 2");
 
-#if 0 //ndef QT_NO_UNICODE_LITERAL
+#ifndef QT_NO_UNICODE_LITERAL
 #  define QT_UNICODE_LITERAL(str) QT_UNICODE_LITERAL_II(str)
-# if defined(Q_COMPILER_LAMBDA)
+# if 0 //defined(Q_COMPILER_LAMBDA)
 
 #  define QStringLiteral(str) \
     ([]() -> QString { \
