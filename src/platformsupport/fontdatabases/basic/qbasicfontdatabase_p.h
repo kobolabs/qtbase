@@ -64,7 +64,7 @@ public:
     QStringList addApplicationFont(const QByteArray &fontData, const QString &fileName);
     void releaseHandle(void *handle);
 
-    virtual bool canRegisterFamily(const QString &family) const { Q_UNUSED(family) return true; }
+    virtual void overrideFontFamilyAndWeight(QString &family, QFont::Weight& weight) const { Q_UNUSED(family); Q_UNUSED(weight); }
     QStringList registerLazyLoadFontFile(const QString &fileName) const;
     virtual QString getLazyLoadFontInfo(const QString &fileName, const int index, QString &styleName, QString &foundryName, QFont::Weight &weight, QFont::Style &style, QFont::Stretch &stretch, bool &antialiased, bool &scalable, int &pixelSize, bool &fixedPitch, quint32 unicodeRange[4], quint32 codePageRange[2]) const;
     virtual int numFacesLazyFont(const QString &fileName) const { Q_UNUSED(fileName) return 1;}
