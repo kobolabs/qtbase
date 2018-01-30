@@ -110,7 +110,7 @@ private:
     void invalidateRectCache() { mIsUpToDate = false; }
     void generateRects();
 
-    QList<QPair<QRect, int> > mCachedRects;
+    QVector<QPair<QRect, int> > mCachedRects;
     QList<QFbBackingStore*> mBackingStores;
 
     friend class QFbWindow;
