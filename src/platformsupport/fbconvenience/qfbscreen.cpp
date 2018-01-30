@@ -262,11 +262,11 @@ QRegion QFbScreen::doRedraw()
     if (!mCompositePainter)
         initializeCompositor();
 
-    for (int rectIndex = 0; rectIndex < mRepaintRegion.rectCount(); rectIndex++) {
-        QRegion rectRegion = rects[rectIndex];
+    for (auto rectIndex = rects.constBegin(); rectIndex != rects.constEnd(); rectIndex++) {
+        QRegion rectRegion = *rectIndex;
 
-        for (int i = 0; i < mCachedRects.length(); i++) {
-            QRect screenSubRect = mCachedRects[i].first;
+        for (auto i = mCachedRects.constBegin(); i != mCachedRects.constEnd(); i++) {
+            const QRect &screenSubRect = i->first;
             QRegion intersect = rectRegion.intersected(screenSubRect);
 
             if (intersect.isEmpty())
@@ -294,8 +294,10 @@ QRegion QFbScreen::doRedraw()
                     continue;
                 QRect windowRect = mWindowStack[layerIndex]->geometry().translated(-screenOffset);
                 QRect windowIntersect = rect.translated(-windowRect.left(), -windowRect.top());
-                QTransform transform = map(screen()->angleBetween(nativeOrientation(), orientation()), mGeometry);
-                mCompositePainter->setTransform(transform, false);
+                if (nativeOrientation() != orientation()) {
+                    QTransform transform = map(screen()->angleBetween(nativeOrientation(), orientation()), mGeometry);
+                    mCompositePainter->setTransform(transform, false);
+                }
                 mCompositePainter->drawImage(rect, mWindowStack[layerIndex]->backingStore()->image(), windowIntersect);
                 touchedRegion += rect;
             }
