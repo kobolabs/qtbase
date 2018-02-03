@@ -335,8 +335,6 @@ QStringList QBasicFontDatabase::addTTFile(const QByteArray &fontData, const QByt
 
         QString family = QString::fromLatin1(face->family_name);
 
-        overrideFontFamilyAndWeight(family, weight);
-
         FontFile *fontFile = new FontFile;
         fontFile->fileName = QFile::decodeName(file);
         fontFile->indexValue = index;
