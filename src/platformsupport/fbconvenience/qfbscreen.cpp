@@ -294,7 +294,7 @@ QRegion QFbScreen::doRedraw()
                     continue;
                 QRect windowRect = mWindowStack[layerIndex]->geometry().translated(-screenOffset);
                 QRect windowIntersect = rect.translated(-windowRect.left(), -windowRect.top());
-                if (nativeOrientation() != orientation()) {
+                if (!hasAcceleratedRotation() && nativeOrientation() != orientation()) {
                     QTransform transform = map(screen()->angleBetween(nativeOrientation(), orientation()), mGeometry);
                     mCompositePainter->setTransform(transform, false);
                 }
