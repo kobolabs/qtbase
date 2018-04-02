@@ -90,6 +90,10 @@ void QFbScreen::addWindow(QFbWindow *window)
             }
         }
     }
+
+    connect(window->window(), &QWindow::destroyed, this, [=] {
+        mWindowStack.removeAll(window);
+    });
     invalidateRectCache();
     setDirty(mapToDevice(window->geometry()));
     QWindow *w = window->window();
@@ -99,7 +103,7 @@ void QFbScreen::addWindow(QFbWindow *window)
 
 void QFbScreen::removeWindow(QFbWindow *window)
 {
-    mWindowStack.removeOne(window);
+    mWindowStack.removeAll(window);
     invalidateRectCache();
     setDirty(mapToDevice(window->geometry()), window->window()->dirtyFlags());
     QWindow *w = topWindow();
