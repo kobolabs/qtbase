@@ -1673,6 +1673,9 @@ void QGuiApplicationPrivate::processKeyEvent(QWindowSystemInterfacePrivate::KeyE
 #endif
             ) {
         window = QGuiApplication::focusWindow();
+        if (!window) {
+            window = QGuiApplication::topLevelAt(QPoint(0, 0));
+        }
     }
 
     QKeyEvent ev(e->keyType, e->key, e->modifiers,
