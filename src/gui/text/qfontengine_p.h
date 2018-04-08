@@ -136,6 +136,24 @@ public:
     QFontEngine();
     virtual ~QFontEngine();
 
+    /* we don't cache glyphs that are too large anyway, so we can make this struct rather small */
+    struct Glyph {
+        Glyph() = default;
+        ~Glyph() { delete [] data; }
+        short linearHoriAdvance = 0;
+        short linearVertAdvance = 0;
+        unsigned char width = 0;
+        unsigned char height = 0;
+        short x = 0;
+        short y = 0;
+        short horiAdvance = 0;
+        short vertAdvance = 0;
+        signed char format = 0;
+        uchar *data = nullptr;
+    private:
+        Q_DISABLE_COPY(Glyph);
+    };
+
     // all of these are in unscaled metrics if the engine supports uncsaled metrics,
     // otherwise in design metrics
     struct Properties {
@@ -199,7 +217,7 @@ public:
     virtual QImage alphaMapForGlyph(glyph_t, QFixed subPixelPosition, const QTransform &t);
     virtual QImage alphaRGBMapForGlyph(glyph_t, QFixed subPixelPosition, const QTransform &t);
     virtual QImage bitmapForGlyph(glyph_t, QFixed subPixelPosition, const QTransform &t);
-    virtual QImage *lockedAlphaMapForGlyph(glyph_t glyph, QFixed subPixelPosition,
+    virtual Glyph *lockedAlphaMapForGlyph(glyph_t glyph, QFixed subPixelPosition,
                                            GlyphFormat neededFormat,
                                            const QTransform &t = QTransform(),
                                            QPoint *offset = 0, bool isVertical = false);
@@ -313,7 +331,6 @@ public:
     void loadKerningPairs(QFixed scalingFactor);
 
     int glyphFormat;
-    QImage currentlyLockedAlphaMap;
     int m_subPixelPositionCount; // Number of positions within a single pixel for this cache
 
     inline QVariant userData() const { return m_userData; }

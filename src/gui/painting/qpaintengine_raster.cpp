@@ -2822,15 +2822,34 @@ bool QRasterPaintEngine::drawCachedGlyphs(int numGlyphs, const glyph_t *glyphs,
             if (isCJKOrSymbol) {
                 isGlyphCJKOrSymbol = isCJKOrSymbol[i];
             }
-            const QImage *alphaMap = fontEngine->lockedAlphaMapForGlyph(glyphs[i], spp, neededFormat, s->matrix,
+            const QFontEngine::Glyph *alphaMap = fontEngine->lockedAlphaMapForGlyph(glyphs[i], spp, neededFormat, s->matrix,
                                                                   &offset, isVertical && isGlyphCJKOrSymbol);
-            if (alphaMap == 0 || alphaMap->isNull())
+            if (!alphaMap)
                 continue;
 
-            alphaPenBlt(alphaMap->constBits(), alphaMap->bytesPerLine(), alphaMap->depth(),
+            int depth;
+            int bytesPerLine;
+            switch (alphaMap->format) {
+            case QFontEngine::Format_Mono:
+                depth = 1;
+                bytesPerLine = ((alphaMap->width + 31) & ~31) >> 3;
+                break;
+            case QFontEngine::Format_A8:
+                depth = 8;
+                bytesPerLine = (alphaMap->width + 3) & ~3;
+                break;
+            case QFontEngine::Format_A32:
+                depth = 32;
+                bytesPerLine = alphaMap->width * 4;
+                break;
+            default:
+                Q_UNREACHABLE();
+            };
+
+            alphaPenBlt(alphaMap->data, bytesPerLine, depth,
                         qFloor(positions[i].x) + offset.x(),
                         qRound(positions[i].y) + offset.y(),
-                        alphaMap->width(), alphaMap->height());
+                        alphaMap->width, alphaMap->height);
 
             fontEngine->unlockAlphaMapForGlyph();
         }

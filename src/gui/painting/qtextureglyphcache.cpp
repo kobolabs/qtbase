@@ -159,9 +159,9 @@ bool QTextureGlyphCache::populate(QFontEngine *fontEngine, int numGlyphs, const 
         // we ask for the alphaMapBoundingBox(), the glyph will be loaded, rasterized and its
         // proper metrics will be cached and used later.
         if (fontEngine->hasInternalCaching()) {
-            QImage *locked = fontEngine->lockedAlphaMapForGlyph(glyph, subPixelPosition, format);
-            if (locked && !locked->isNull())
-                fontEngine->unlockAlphaMapForGlyph();
+            QFontEngine::Glyph *locked = fontEngine->lockedAlphaMapForGlyph(glyph, subPixelPosition, format);
+            Q_UNUSED(locked);
+            fontEngine->unlockAlphaMapForGlyph();
         }
 
         glyph_metrics_t metrics = fontEngine->alphaMapBoundingBox(glyph, subPixelPosition, m_transform, format);
