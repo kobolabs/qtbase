@@ -138,18 +138,18 @@ public:
 
     /* we don't cache glyphs that are too large anyway, so we can make this struct rather small */
     struct Glyph {
-        Glyph() = default;
+        Glyph() : linearHoriAdvance(0), linearVertAdvance(0), width(0), height(0), x(0), y(0), horiAdvance(0), vertAdvance(0), format(0), data(nullptr) {}
         ~Glyph() { delete [] data; }
-        short linearHoriAdvance = 0;
-        short linearVertAdvance = 0;
-        unsigned char width = 0;
-        unsigned char height = 0;
-        short x = 0;
-        short y = 0;
-        short horiAdvance = 0;
-        short vertAdvance = 0;
-        signed char format = 0;
-        uchar *data = nullptr;
+        short linearHoriAdvance;
+        short linearVertAdvance;
+        unsigned char width;
+        unsigned char height;
+        short x;
+        short y;
+        short horiAdvance;
+        short vertAdvance;
+        signed char format;
+        uchar *data;
     private:
         Q_DISABLE_COPY(Glyph);
     };
