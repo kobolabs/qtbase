@@ -114,7 +114,7 @@ private:
         ObjectGesture(QObject *o, const Qt::GestureType &g) : object(o), gesture(g) { }
         inline bool operator<(const ObjectGesture &rhs) const
         {
-            if (std::less<QObject *>{}(object, rhs.object))
+            if (std::less<QObject *>()(object, rhs.object))
                 return true;
             if (object == rhs.object)
                 return gesture < rhs.gesture;
