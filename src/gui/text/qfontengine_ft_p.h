@@ -141,21 +141,6 @@ class QFontEngineFT : public QFontEngine
 {
 public:
 
-    /* we don't cache glyphs that are too large anyway, so we can make this struct rather small */
-    struct Glyph {
-        ~Glyph();
-        short linearHoriAdvance;
-        short linearVertAdvance;
-        unsigned char width;
-        unsigned char height;
-        short x;
-        short y;
-        short horiAdvance;
-        short vertAdvance;
-        signed char format;
-        uchar *data;
-    };
-
     enum SubpixelAntialiasingType {
         Subpixel_None,
         Subpixel_RGB,
@@ -267,7 +252,7 @@ private:
                                                 QFixed subPixelPosition,
                                                 const QTransform &matrix,
                                                 QFontEngine::GlyphFormat format);
-    virtual QImage *lockedAlphaMapForGlyph(glyph_t glyph, QFixed subPixelPosition,
+    virtual QFontEngine::Glyph *lockedAlphaMapForGlyph(glyph_t glyph, QFixed subPixelPosition,
                                            GlyphFormat neededFormat, const QTransform &t,
                                            QPoint *offset, bool isVertical = false);
     virtual bool hasInternalCaching() const { return cacheEnabled; }

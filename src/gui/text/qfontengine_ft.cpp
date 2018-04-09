@@ -206,7 +206,7 @@ static bool ft_getSfntTable(void *user_data, uint tag, uchar *buffer, uint *leng
     return result;
 }
 
-static QFontEngineFT::Glyph emptyGlyph = {0, 0, 0, 0, 0, 0, 0, 0, 0};
+static QFontEngineFT::Glyph emptyGlyph;
 
 // -------------------------- Freetype support ------------------------------
 
@@ -664,11 +664,6 @@ void QFreetypeFace::addBitmapToPath(FT_GlyphSlot slot, const QFixedPoint &point,
     QPointF cp = point.toPointF();
     qt_addBitmapToPath(cp.x() + TRUNC(slot->metrics.horiBearingX), cp.y() - TRUNC(slot->metrics.horiBearingY),
                        slot->bitmap.buffer, slot->bitmap.pitch, slot->bitmap.width, slot->bitmap.rows, path);
-}
-
-QFontEngineFT::Glyph::~Glyph()
-{
-    delete [] data;
 }
 
 static const uint subpixel_filter[3][3] = {
@@ -1955,11 +1950,10 @@ glyph_metrics_t QFontEngineFT::alphaMapBoundingBox(glyph_t glyph, QFixed subPixe
     return overall;
 }
 
-QImage *QFontEngineFT::lockedAlphaMapForGlyph(glyph_t glyphIndex, QFixed subPixelPosition,
+QFontEngine::Glyph *QFontEngineFT::lockedAlphaMapForGlyph(glyph_t glyphIndex, QFixed subPixelPosition,
                                               QFontEngine::GlyphFormat neededFormat,
                                               const QTransform &t, QPoint *offset, bool isVertical)
 {
-    Q_ASSERT(currentlyLockedAlphaMap.isNull());
     lockFace();
 
     QTransform transform = t;
@@ -1974,23 +1968,7 @@ QImage *QFontEngineFT::lockedAlphaMapForGlyph(glyph_t glyphIndex, QFixed subPixe
     else if (neededFormat == Format_None)
         neededFormat = Format_A8;
 
-    QImage::Format format;
-    switch (neededFormat) {
-    case Format_Mono:
-        format = QImage::Format_Mono;
-        break;
-    case Format_A8:
-        format = QImage::Format_Indexed8;
-        break;
-    case Format_A32:
-        format = QImage::Format_ARGB32;
-        break;
-    default:
-        Q_ASSERT(false);
-        format = QImage::Format_Invalid;
-    };
-
-    QFontEngineFT::Glyph *glyph;
+    QFontEngine::Glyph *glyph;
     if (cacheEnabled) {
         QFontEngineFT::QGlyphSet *gset = &defaultGlyphSet;
         QFontEngine::HintStyle hintStyle = default_hint_style;
@@ -2033,22 +2011,6 @@ QImage *QFontEngineFT::lockedAlphaMapForGlyph(glyph_t glyphIndex, QFixed subPixe
         return 0;
     }
 
-    int pitch;
-    switch (neededFormat) {
-    case Format_Mono:
-        pitch = ((glyph->width + 31) & ~31) >> 3;
-        break;
-    case Format_A8:
-        pitch = (glyph->width + 3) & ~3;
-        break;
-    case Format_A32:
-        pitch = glyph->width * 4;
-        break;
-    default:
-        Q_ASSERT(false);
-        pitch = 0;
-    };
-
     if (offset != 0) {
         if (isVertical) {
             int xOffset = glyph->x - qRound(descent()); // shift vertical text to be closer to the left edge of the layout rect
@@ -2059,24 +2021,12 @@ QImage *QFontEngineFT::lockedAlphaMapForGlyph(glyph_t glyphIndex, QFixed subPixe
         }
     }
 
-    currentlyLockedAlphaMap = QImage(glyph->data, glyph->width, glyph->height, pitch, format);
-    if (!cacheEnabled && glyph != &emptyGlyph) {
-        currentlyLockedAlphaMap = currentlyLockedAlphaMap.copy();
-        delete glyph;
-    }
-    Q_ASSERT(!currentlyLockedAlphaMap.isNull());
-
-    QImageData *data = currentlyLockedAlphaMap.data_ptr();
-    data->is_locked = true;
-
-    return &currentlyLockedAlphaMap;
+    return glyph;
 }
 
 void QFontEngineFT::unlockAlphaMapForGlyph()
 {
-    Q_ASSERT(!currentlyLockedAlphaMap.isNull());
     unlockFace();
-    currentlyLockedAlphaMap = QImage();
 }
 
 QFontEngineFT::Glyph *QFontEngineFT::loadGlyphFor(glyph_t g, QFixed subPixelPosition, GlyphFormat format)
