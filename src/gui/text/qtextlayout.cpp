@@ -1013,10 +1013,11 @@ QList<QGlyphRun> QTextLayout::glyphRuns(int from, int length) const
                 QFontEngine *fontEngine = rawFont.d->fontEngine;
                 QGlyphRun::GlyphRunFlags flags = glyphRun.flags();
                 QPair<QFontEngine *, int> key(fontEngine, int(flags));
+                QGlyphRun &oldGlyphRun = glyphRunHash[key];
                 // merge the glyph runs using the same font
-                if (glyphRunHash.contains(key)) {
-                    QGlyphRun &oldGlyphRun = glyphRunHash[key];
-
+                if (oldGlyphRun.isEmpty()) {
+                    glyphRunHash[key] = glyphRun;
+                } else {
                     QVector<quint32> indexes = oldGlyphRun.glyphIndexes();
                     QVector<QPointF> positions = oldGlyphRun.positions();
 
@@ -1025,8 +1026,6 @@ QList<QGlyphRun> QTextLayout::glyphRuns(int from, int length) const
 
                     oldGlyphRun.setGlyphIndexes(indexes);
                     oldGlyphRun.setPositions(positions);
-                } else {
-                    glyphRunHash[key] = glyphRun;
                 }
             }
         }
