@@ -435,15 +435,21 @@ void QWidgetTextControlPrivate::setContent(Qt::TextFormat format, const QString 
 
 // ####        doc->documentLayout()->setPaintDevice(viewport);
 
-        QObject::connect(doc, SIGNAL(contentsChanged()), q, SLOT(_q_updateCurrentCharFormatAndSelection()));
-        QObject::connect(doc, SIGNAL(cursorPositionChanged(QTextCursor)), q, SLOT(_q_emitCursorPosChanged(QTextCursor)));
-        QObject::connect(doc, SIGNAL(documentLayoutChanged()), q, SLOT(_q_documentLayoutChanged()));
+        QObject::connect(doc, &QTextDocument::contentsChanged, q, [=] {
+            _q_updateCurrentCharFormatAndSelection();
+        });
+        QObject::connect(doc, &QTextDocument::cursorPositionChanged, q, [=] (QTextCursor cursor) {
+            _q_emitCursorPosChanged(cursor);
+        });
+        QObject::connect(doc, &QTextDocument::documentLayoutChanged, q, [=] {
+            _q_documentLayoutChanged();
+        });
 
         // convenience signal forwards
-        QObject::connect(doc, SIGNAL(undoAvailable(bool)), q, SIGNAL(undoAvailable(bool)));
-        QObject::connect(doc, SIGNAL(redoAvailable(bool)), q, SIGNAL(redoAvailable(bool)));
-        QObject::connect(doc, SIGNAL(modificationChanged(bool)), q, SIGNAL(modificationChanged(bool)));
-        QObject::connect(doc, SIGNAL(blockCountChanged(int)), q, SIGNAL(blockCountChanged(int)));
+        QObject::connect(doc, &QTextDocument::undoAvailable, q, &QWidgetTextControl::undoAvailable);
+        QObject::connect(doc, &QTextDocument::redoAvailable, q, &QWidgetTextControl::redoAvailable);
+        QObject::connect(doc, &QTextDocument::modificationChanged, q, &QWidgetTextControl::modificationChanged);
+        QObject::connect(doc, &QTextDocument::blockCountChanged, q, &QWidgetTextControl::blockCountChanged);
     }
 
     bool previousUndoRedoState = doc->isUndoRedoEnabled();
