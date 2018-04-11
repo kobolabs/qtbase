@@ -722,13 +722,16 @@ static void convertRGBToARGB_V(const uchar *src, uint *dst, int width, int heigh
     }
 }
 
-static void convertGRAYToARGB(const uchar *src, uint *dst, int width, int height, int src_pitch) {
-    for (int y = 0; y < height; ++y) {
-        int readpos =  (y * src_pitch);
-        int writepos = (y * width);
-        for (int x = 0; x < width; ++x) {
-            dst[writepos + x] = (0xFF << 24) + (src[readpos + x] << 16) + (src[readpos + x] << 8) + src[readpos + x];
+static inline void convertGRAYToARGB(const uchar *src, uint *dst, int width, int height, int src_pitch)
+{
+    while (height--) {
+        const uchar *p = src;
+        const uchar * const e = p + width;
+        while (p < e) {
+            uchar gray = *p++;
+            *dst++ = (0xFF << 24) | (gray << 16) | (gray << 8) | gray;
         }
+        src += src_pitch;
     }
 }
 
@@ -1347,7 +1350,7 @@ QFixed QFontEngineFT::xHeight() const
     TT_OS2 *os2 = (TT_OS2 *)FT_Get_Sfnt_Table(freetype->face, ft_sfnt_os2);
     if (os2 && os2->sxHeight) {
         lockFace();
-        QFixed answer = QFixed(os2->sxHeight*freetype->face->size->metrics.y_ppem)/freetype->face->units_per_EM;
+        QFixed answer = QFixed(os2->sxHeight * freetype->face->size->metrics.y_ppem) / emSquareSize();
         unlockFace();
         return answer;
     }
@@ -1359,7 +1362,7 @@ QFixed QFontEngineFT::averageCharWidth() const
     TT_OS2 *os2 = (TT_OS2 *)FT_Get_Sfnt_Table(freetype->face, ft_sfnt_os2);
     if (os2 && os2->xAvgCharWidth) {
         lockFace();
-        QFixed answer = QFixed(os2->xAvgCharWidth*freetype->face->size->metrics.x_ppem)/freetype->face->units_per_EM;
+        QFixed answer = QFixed(os2->xAvgCharWidth * freetype->face->size->metrics.x_ppem) / emSquareSize();
         unlockFace();
         return answer;
     }
@@ -1438,7 +1441,7 @@ void QFontEngineFT::doKerning(QGlyphLayout *g, QFontEngine::ShaperFlags flags) c
         kerning_pairs_loaded = true;
         lockFace();
         if (freetype->face->size->metrics.x_ppem != 0) {
-            QFixed scalingFactor(freetype->face->units_per_EM/freetype->face->size->metrics.x_ppem);
+            QFixed scalingFactor = emSquareSize() / QFixed(freetype->face->size->metrics.x_ppem);
             unlockFace();
             const_cast<QFontEngineFT *>(this)->loadKerningPairs(scalingFactor);
         } else {
