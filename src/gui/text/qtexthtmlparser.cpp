@@ -1458,7 +1458,7 @@ QStringList QTextHtmlParser::parseAttributes()
         if (hasPrefix(QLatin1Char('>')) || hasPrefix(QLatin1Char('/')))
             break;
         QString key = parseWord().toLower();
-        QString value = QLatin1String("1");
+        QString value;
         if (key.size() == 0)
             break;
         eatSpace();
@@ -1466,6 +1466,8 @@ QStringList QTextHtmlParser::parseAttributes()
             pos++;
             eatSpace();
             value = parseWord();
+        } else {
+            value = QLatin1String("1");
         }
         if (value.size() == 0)
             continue;
