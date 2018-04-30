@@ -1454,6 +1454,19 @@ bool QIODevicePrivate::putCharHelper(char c)
 */
 qint64 QIODevicePrivate::peek(char *data, qint64 maxSize)
 {
+    if (maxSize < QIODEVICE_BUFFERSIZE) {
+        char buf[16384];
+        qint64 readBytes = q_func()->read(buf, QIODEVICE_BUFFERSIZE);
+        if (readBytes <= 0)
+            return readBytes;
+
+        buffer.ungetBlock(buf, readBytes);
+        *pPos -= readBytes;
+        readBytes = qMin(maxSize, readBytes);
+        memcpy(data, buf, readBytes);
+        return readBytes;
+    }
+
     qint64 readBytes = q_func()->read(data, maxSize);
     if (readBytes <= 0)
         return readBytes;
