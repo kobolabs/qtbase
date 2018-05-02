@@ -999,6 +999,12 @@ QList<QGlyphRun> QTextLayout::glyphRuns(int from, int length) const
     if (length < 0)
         length = text().length();
 
+    if (d->lines.size() == 1) {
+        if (d->lines[0].from <= from + length) {
+            return QTextLine(0, d).glyphRuns(from, length);
+        }
+    }
+
     QHash<QPair<QFontEngine *, int>, QGlyphRun> glyphRunHash;
     for (int i=0; i<d->lines.size(); ++i) {
         if (d->lines[i].from > from + length)
