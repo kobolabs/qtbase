@@ -66,6 +66,7 @@ public:
     Q_DECLARE_FLAGS(GlyphRunFlags, GlyphRunFlag)
 
     QGlyphRun();
+    QGlyphRun(const QRawFont &rawFont);
     QGlyphRun(const QGlyphRun &other);
     ~QGlyphRun();
 

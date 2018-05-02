@@ -108,6 +108,9 @@ public:
     // does itemization
     QTextLayout();
     QTextLayout(const QString& text);
+#ifndef QT_NO_RAWFONT
+    QTextLayout(const QString& text, const QRawFont &rawFont);
+#endif
     QTextLayout(const QString& text, const QFont &font, QPaintDevice *paintdevice = 0);
     QTextLayout(const QTextBlock &b);
     ~QTextLayout();

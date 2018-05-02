@@ -119,6 +119,10 @@ QGlyphRun::QGlyphRun() : d(new QGlyphRunPrivate)
 {
 }
 
+QGlyphRun::QGlyphRun(const QRawFont &rawFont) : d(new QGlyphRunPrivate(rawFont))
+{
+}
+
 /*!
     Constructs a QGlyphRun object which is a copy of \a other.
 */

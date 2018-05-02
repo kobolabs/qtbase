@@ -74,6 +74,16 @@ public:
     {
     }
 
+    QGlyphRunPrivate(const QRawFont &rawFont)
+        : rawFont(rawFont)
+        , flags(0)
+        , glyphIndexData(glyphIndexes.constData())
+        , glyphIndexDataSize(0)
+        , glyphPositionData(glyphPositions.constData())
+        , glyphPositionDataSize(0)
+    {
+    }
+
     QGlyphRunPrivate(const QGlyphRunPrivate &other)
       : QSharedData(other)
       , glyphIndexes(other.glyphIndexes)
