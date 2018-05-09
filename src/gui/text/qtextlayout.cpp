@@ -322,6 +322,14 @@ Qt::LayoutDirection QTextInlineObject::textDirection() const
 QTextLayout::QTextLayout()
 { d = new QTextEngine(); }
 
+#ifndef QT_NO_RAWFONT
+QTextLayout::QTextLayout(const QString& text, const QRawFont &rawFont)
+{
+    d = new QTextEngine(rawFont);
+    d->text = text;
+}
+#endif
+
 /*!
     Constructs a text layout to lay out the given \a text.
 */
@@ -998,6 +1006,12 @@ QList<QGlyphRun> QTextLayout::glyphRuns(int from, int length) const
         from = 0;
     if (length < 0)
         length = text().length();
+
+    if (d->lines.size() == 1) {
+        if (d->lines[0].from <= from + length) {
+            return QTextLine(0, d).glyphRuns(from, length);
+        }
+    }
 
     QHash<QPair<QFontEngine *, int>, QGlyphRun> glyphRunHash;
     for (int i=0; i<d->lines.size(); ++i) {
@@ -2113,14 +2127,16 @@ static QGlyphRun glyphRunWithInfo(QFontEngine *fontEngine, const QGlyphLayout &g
                                   const QPointF &pos, const QGlyphRun::GlyphRunFlags &flags,
                                   const QFixed &selectionX, const QFixed &selectionWidth, const QTextItemInt& textItem)
 {
-    QGlyphRun glyphRun;
-
     // Make a font for this particular engine
-    QRawFont font;
+    static QRawFont font;
     QRawFontPrivate *fontD = QRawFontPrivate::get(font);
-    fontD->fontEngine = fontEngine;
-    fontD->thread = QThread::currentThread();
-    fontD->fontEngine->ref.ref();
+    if (fontD->fontEngine != fontEngine) {
+        font = QRawFont();
+        fontD = QRawFontPrivate::get(font);
+        fontD->fontEngine = fontEngine;
+        fontD->thread = QThread::currentThread();
+        fontD->fontEngine->ref.ref();
+    }
     QVarLengthArray<glyph_t> glyphsArray;
     QVarLengthArray<QFixedPoint> positionsArray;
 
@@ -2165,10 +2181,10 @@ static QGlyphRun glyphRunWithInfo(QFontEngine *fontEngine, const QGlyphLayout &g
 
     qreal height = maxY + fontHeight - minY;
 
+    QGlyphRun glyphRun(font);
     glyphRun.setGlyphIndexes(glyphs);
     glyphRun.setPositions(positions);
     glyphRun.setFlags(flags);
-    glyphRun.setRawFont(font);
     glyphRun.setGlyphIsCJKOrSymbol(isCJKOrSymbolVector);
 
     glyphRun.setBoundingRect(QRectF(selectionX.toReal(), minY - font.ascent(),

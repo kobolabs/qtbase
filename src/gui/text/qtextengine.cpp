@@ -1350,6 +1350,14 @@ QTextEngine::QTextEngine()
     init(this);
 }
 
+#ifndef QT_NO_RAWFONT
+QTextEngine::QTextEngine(const QRawFont &rawFont) : rawFont(rawFont)
+{
+    init(this);
+    useRawFont = true;
+}
+#endif
+
 QTextEngine::QTextEngine(const QString &str, const QFont &f)
     : text(str),
       fnt(f)

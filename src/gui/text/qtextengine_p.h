@@ -461,6 +461,9 @@ public:
 
     QTextEngine(LayoutData *data);
     QTextEngine();
+#ifndef QT_NO_RAWFONT
+    QTextEngine(const QRawFont &font);
+#endif
     QTextEngine(const QString &str, const QFont &f);
     ~QTextEngine();
 
