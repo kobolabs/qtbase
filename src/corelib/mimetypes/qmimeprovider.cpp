@@ -246,7 +246,10 @@ void QMimeBinaryProvider::checkCache()
         m_mimetypeListLoaded = false;
 
     // Then check if new cache files appeared
-    const QStringList cacheFileNames = QStandardPaths::locateAll(QStandardPaths::GenericDataLocation, QLatin1String("mime/mime.cache"));
+    QStringList cacheFileNames = QStandardPaths::locateAll(QStandardPaths::GenericDataLocation, QLatin1String("mime/mime.cache"));
+
+    cacheFileNames.append(QLatin1String(":/qt-project.org/qmime/mime.cache"));
+
     if (cacheFileNames != m_cacheFileNames) {
         foreach (const QString &cacheFileName, cacheFileNames) {
             CacheFile *cacheFile = m_cacheFiles.findCacheFile(cacheFileName);
