@@ -124,6 +124,11 @@ HB_Error qHBBufferNew(HB_Buffer *buffer)
     return hb_buffer_new(buffer);
 }
 
+void qHBBufferFree(HB_Buffer buffer)
+{
+    hb_buffer_free(buffer);
+}
+
 HB_Error qHBBufferAddGlyph(HB_Buffer buffer,
                            HB_UInt glyph_index,
                            HB_UInt properties,

@@ -411,6 +411,7 @@ Q_CORE_EXPORT HB_Error qHB_GSUB_Add_Feature(HB_GSUB gsub,
                                             HB_UInt property);
 
 Q_CORE_EXPORT HB_Error qHBBufferNew(HB_Buffer *buffer);
+Q_CORE_EXPORT void qHBBufferFree(HB_Buffer buffer);
 Q_CORE_EXPORT HB_Error qHBBufferAddGlyph(HB_Buffer buffer,
                                          HB_UInt glyph_index,
                                          HB_UInt properties,
