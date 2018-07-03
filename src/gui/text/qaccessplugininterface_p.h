@@ -42,7 +42,10 @@ public:
         pluginsDir = QDir(QCoreApplication::instance()->applicationDirPath());
 #if defined(Q_OS_MAC)
         pluginsDir.cdUp();
-        pluginsDir.cd(QStringLiteral("Frameworks"));
+        if (!pluginsDir.cd(QStringLiteral("Frameworks"))) {
+            pluginsDir = QDir(QCoreApplication::instance()->applicationDirPath());
+            pluginsDir.cd(QStringLiteral("plugins"));
+        }
 #else
         pluginsDir.cd(QStringLiteral("plugins"));
 #endif
