@@ -2199,8 +2199,12 @@ void QFontEngineFT::QGlyphSet::removeGlyphFromCache(glyph_t index, QFixed subPix
 void QFontEngineFT::QGlyphSet::setGlyph(glyph_t index, QFixed subPixelPosition, Glyph *glyph)
 {
     if (useFastGlyphData(index, subPixelPosition)) {
-        if (!fast_glyph_data[index])
-            ++fast_glyph_count;
+        if (fast_glyph_data[index] != glyph) {
+            if (fast_glyph_data[index])
+                delete fast_glyph_data[index];
+            else
+                ++fast_glyph_count;
+        }
         fast_glyph_data[index] = glyph;
     } else {
         glyph_data.insert(GlyphAndSubPixelPosition(index, subPixelPosition), glyph);
