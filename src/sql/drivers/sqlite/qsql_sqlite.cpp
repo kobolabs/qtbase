@@ -468,10 +468,20 @@ bool QSQLiteResult::exec()
                                               (str->size()) * sizeof(QChar), SQLITE_STATIC);
                     break; }
                 default: {
-                    QString str = value.toString();
-                    // SQLITE_TRANSIENT makes sure that sqlite buffers the data
-                    res = sqlite3_bind_text16(d->stmt, i + 1, str.utf16(),
+                    if (value.canConvert<QString>()) {
+                        QString str = value.toString();
+                        // SQLITE_TRANSIENT makes sure that sqlite buffers the data
+                        res = sqlite3_bind_text16(d->stmt, i + 1, str.utf16(),
                                               (str.size()) * sizeof(QChar), SQLITE_TRANSIENT);
+                    } else if (value.canConvert<int>()) {
+                        res = sqlite3_bind_int(d->stmt, i + 1, value.toInt());
+                    } else {
+                        // convert to string anyway, this was the original behaviour
+                        QString str = value.toString();
+                        // SQLITE_TRANSIENT makes sure that sqlite buffers the data
+                        res = sqlite3_bind_text16(d->stmt, i + 1, str.utf16(),
+                                              (str.size()) * sizeof(QChar), SQLITE_TRANSIENT);
+                    }
                     break; }
                 }
             }
