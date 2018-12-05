@@ -904,8 +904,9 @@ public:
     inline QString toCurrencyString(ushort, const QString &symbol = QString()) const;
     inline QString toCurrencyString(int, const QString &symbol = QString()) const;
     inline QString toCurrencyString(uint, const QString &symbol = QString()) const;
-    QString toCurrencyString(double, const QString &symbol = QString()) const;
-    inline QString toCurrencyString(float, const QString &symbol = QString()) const;
+    QString toCurrencyString(double, const QString &symbol = QString(), int precision = -1) const;
+    inline QString toCurrencyString(float i, const QString &symbol = QString(), int precision = -1) const
+    { return toCurrencyString(double(i), symbol, precision); }
 
     QStringList uiLanguages() const;
 
@@ -959,8 +960,6 @@ inline QString QLocale::toCurrencyString(int i, const QString &symbol) const
 { return toCurrencyString(qlonglong(i), symbol); }
 inline QString QLocale::toCurrencyString(uint i, const QString &symbol) const
 { return toCurrencyString(qulonglong(i), symbol); }
-inline QString QLocale::toCurrencyString(float i, const QString &symbol) const
-{ return toCurrencyString(double(i), symbol); }
 
 #ifndef QT_NO_DATASTREAM
 Q_CORE_EXPORT QDataStream &operator<<(QDataStream &, const QLocale &);
