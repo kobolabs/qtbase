@@ -356,7 +356,8 @@ int QGIFFormat::decode(QImage *image, const uchar *buffer, int length,
                     (*image) = QImage(swidth, sheight, format);
                     bpl = image->bytesPerLine();
                     bits = image->bits();
-                    memset(bits, 0, image->byteCount());
+                    if (bits)
+                        memset(bits, 0, image->byteCount());
                 }
 
                 disposePrevious(image);
@@ -410,7 +411,11 @@ int QGIFFormat::decode(QImage *image, const uchar *buffer, int length,
                         backingstore = QImage(qMax(backingstore.width(), w),
                                               qMax(backingstore.height(), h),
                                               QImage::Format_RGB32);
-                        memset(bits, 0, image->byteCount());
+                        if (backingstore.isNull()) {
+                            state = Error;
+                            return -1;
+                        }
+                        memset(backingstore.bits(), 0, backingstore.byteCount());
                     }
                     const int dest_bpl = backingstore.bytesPerLine();
                     unsigned char *dest_data = backingstore.bits();
