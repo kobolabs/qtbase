@@ -5520,6 +5520,12 @@ void QWidget::unsetLocale()
     d->resolveLocale();
 }
 
+QString QWidget::localeName()
+{
+    Q_D(QWidget);
+    return d->locale.bcp47Name();
+}
+
 /*!
     \property QWidget::windowTitle
     \brief the window title (caption)
