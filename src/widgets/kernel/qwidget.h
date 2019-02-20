@@ -198,6 +198,7 @@ class Q_WIDGETS_EXPORT QWidget : public QObject, public QPaintDevice
     Q_PROPERTY(QString styleSheetFile READ styleSheetFile WRITE setStyleSheetFile)
 #endif
     Q_PROPERTY(QLocale locale READ locale WRITE setLocale RESET unsetLocale)
+    Q_PROPERTY(QString localeName READ localeName)
     Q_PROPERTY(QString windowFilePath READ windowFilePath WRITE setWindowFilePath DESIGNABLE isWindow)
     Q_PROPERTY(Qt::InputMethodHints inputMethodHints READ inputMethodHints WRITE setInputMethodHints)
 
@@ -405,6 +406,8 @@ public:
     void setLocale(const QLocale &locale);
     QLocale locale() const;
     void unsetLocale();
+
+    QString localeName();
 
     inline bool isRightToLeft() const { return layoutDirection() == Qt::RightToLeft; }
     inline bool isLeftToRight() const { return layoutDirection() == Qt::LeftToRight; }
