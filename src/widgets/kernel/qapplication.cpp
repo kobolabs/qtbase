@@ -4016,25 +4016,8 @@ bool QApplicationPrivate::translateRawTouchEvent(QWidget *window,
         touchEvent.setWindow(window->windowHandle());
         touchEvent.setTarget(widget);
 
-        switch (touchEvent.type()) {
-        case QEvent::TouchBegin:
-        {
-            // if the TouchBegin handler recurses, we assume that means the event
-            // has been implicitly accepted and continue to send touch events
-            if (QApplication::sendSpontaneousEvent(widget, &touchEvent) && touchEvent.isAccepted()) {
-                accepted = true;
-                widget->setAttribute(Qt::WA_WState_AcceptedTouchBeginEvent);
-            }
-            break;
-        }
-        default:
-            if (widget->testAttribute(Qt::WA_WState_AcceptedTouchBeginEvent)) {
-                if (touchEvent.type() == QEvent::TouchEnd)
-                    widget->setAttribute(Qt::WA_WState_AcceptedTouchBeginEvent, false);
-                if (QApplication::sendSpontaneousEvent(widget, &touchEvent) && touchEvent.isAccepted())
-                    accepted = true;
-            }
-            break;
+        if (QApplication::sendSpontaneousEvent(widget, &touchEvent) && touchEvent.isAccepted()) {
+            accepted = true;
         }
     }
     return accepted;
