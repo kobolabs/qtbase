@@ -2207,7 +2207,14 @@ void QFontEngineFT::QGlyphSet::setGlyph(glyph_t index, QFixed subPixelPosition, 
         }
         fast_glyph_data[index] = glyph;
     } else {
-        glyph_data.insert(GlyphAndSubPixelPosition(index, subPixelPosition), glyph);
+        GlyphAndSubPixelPosition key(index, subPixelPosition);
+        if (glyph_data.contains(key)) {
+            Glyph *g = glyph_data.take(key);
+            if (g != glyph) {
+                delete g;
+            }
+        }
+        glyph_data.insert(key, glyph);
     }
 }
 
