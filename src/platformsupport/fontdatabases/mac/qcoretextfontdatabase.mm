@@ -214,7 +214,7 @@ void QCoreTextFontDatabase::populateFromDescriptor(CTFontDescriptorRef font)
         if (CFNumberRef weightValue = (CFNumberRef) CFDictionaryGetValue(styles, kCTFontWeightTrait)) {
             Q_ASSERT(CFNumberIsFloatType(weightValue));
             double d;
-            if (CFNumberGetValue(weightValue, kCFNumberDoubleType, &d))
+            if (CFNumberGetValue(weightValue, kCFNumberFloat64Type, &d))
                 weight = (d > 0.0) ? QFont::Bold : QFont::Normal;
         }
         if (CFNumberRef italic = (CFNumberRef) CFDictionaryGetValue(styles, kCTFontSlantTrait)) {
