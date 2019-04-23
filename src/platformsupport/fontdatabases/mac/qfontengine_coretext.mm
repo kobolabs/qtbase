@@ -517,7 +517,7 @@ QImage QCoreTextFontEngine::imageForGlyph(glyph_t glyph, QFixed subPixelPosition
     CGContextSetFontSize(ctx, fontDef.pixelSize);
     CGContextSetShouldAntialias(ctx, (aa || fontDef.pointSize > antialiasingThreshold)
                                  && !(fontDef.styleStrategy & QFont::NoAntialias));
-    CGContextSetShouldSmoothFonts(ctx, aa);
+    CGContextSetShouldSmoothFonts(ctx, QSysInfo::MacintoshVersion >= QSysInfo::MV_10_14? NO : aa);
 
     CGAffineTransform cgMatrix = CGAffineTransformIdentity;
 
