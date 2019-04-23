@@ -140,6 +140,9 @@ public:
         MV_10_9 = 0x000B,
         MV_10_10 = 0x000C,
         MV_10_11 = 0x000D,
+        MV_10_12 = 0x000E,
+        MV_10_13 = 0x000F,
+        MV_10_14 = 0x0010,
 
         /* codenames */
         MV_CHEETAH = MV_10_0,
@@ -154,6 +157,9 @@ public:
         MV_MAVERICKS = MV_10_9,
         MV_YOSEMITE = MV_10_10,
         MV_ELCAPITAN = MV_10_11,
+        MV_SIERRA = MV_10_12,
+        MV_HIGHSIERRA = MV_10_13,
+        MV_MOJAVE = MV_10_14,
 
         /* iOS */
         MV_IOS     = 1 << 8,
