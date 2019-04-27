@@ -124,6 +124,9 @@ public:
     static int antialiasingThreshold;
     static QFontEngineGlyphCache::Type defaultGlyphFormat;
 
+    static bool ct_getSfntTable(void *user_data, uint tag, uchar *buffer, uint *length);
+    static QFont::Weight qtWeightFromCFWeight(float value);
+
 private:
     friend class QRawFontPrivate;
 
