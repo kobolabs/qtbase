@@ -46,9 +46,72 @@
 
 #include <private/qimage_p.h>
 
+#if defined(Q_OS_MACOS)
+#import <AppKit/AppKit.h>
+#endif
+
 QT_BEGIN_NAMESPACE
 
 static float SYNTHETIC_ITALIC_SKEW = tanf(14 * acosf(0) / 90);
+
+// These are available cross platform, exported as kCTFontWeightXXX from CoreText.framework,
+// but they are not documented and are not in public headers so are private API and exposed
+// only through the NSFontWeightXXX and UIFontWeightXXX aliases in AppKit and UIKit (rdar://26109857)
+#define kCTFontWeightUltraLight -0.8
+#define kCTFontWeightThin -0.6
+#define kCTFontWeightLight -0.4
+#define kCTFontWeightRegular 0
+#define kCTFontWeightMedium 0.23
+#define kCTFontWeightSemibold 0.3
+#define kCTFontWeightBold 0.4
+#define kCTFontWeightHeavy 0.56
+#define kCTFontWeightBlack 0.62
+
+bool QCoreTextFontEngine::ct_getSfntTable(void *user_data, uint tag, uchar *buffer, uint *length)
+{
+    CTFontRef ctfont = *(CTFontRef *)user_data;
+
+    QCFType<CFDataRef> table = CTFontCopyTable(ctfont, tag, 0);
+    if (!table)
+        return false;
+
+    CFIndex tableLength = CFDataGetLength(table);
+    if (buffer && int(*length) >= tableLength)
+        CFDataGetBytes(table, CFRangeMake(0, tableLength), buffer);
+    *length = tableLength;
+    Q_ASSERT(int(*length) > 0);
+    return true;
+}
+
+QFont::Weight QCoreTextFontEngine::qtWeightFromCFWeight(float value)
+{
+#define COMPARE_WEIGHT_DISTANCE(ct_weight, qt_weight) \
+    { \
+        float d; \
+        if ((d = qAbs(value - ct_weight)) < distance) { \
+            distance = d; \
+            ret = qt_weight; \
+        } \
+    }
+
+    float distance = qAbs(value - kCTFontWeightBlack);
+    QFont::Weight ret = QFont::Black;
+
+    // Compare distance to system weight to find the closest match.
+    // (Note: Must go from high to low, so that midpoints are rounded up)
+    COMPARE_WEIGHT_DISTANCE(kCTFontWeightHeavy, QFont::Black);
+    COMPARE_WEIGHT_DISTANCE(kCTFontWeightBold, QFont::Bold);
+    COMPARE_WEIGHT_DISTANCE(kCTFontWeightSemibold, QFont::Normal);
+    COMPARE_WEIGHT_DISTANCE(kCTFontWeightMedium, QFont::Normal);
+    COMPARE_WEIGHT_DISTANCE(kCTFontWeightRegular, QFont::Normal);
+    COMPARE_WEIGHT_DISTANCE(kCTFontWeightLight, QFont::Light);
+    COMPARE_WEIGHT_DISTANCE(kCTFontWeightThin, QFont::Light);
+    COMPARE_WEIGHT_DISTANCE(kCTFontWeightUltraLight, QFont::Light);
+
+#undef COMPARE_WEIGHT_DISTANCE
+
+    return ret;
+}
 
 static void loadAdvancesForGlyphs(CTFontRef ctfont,
                                   QVarLengthArray<CGGlyph> &cgGlyphs,
