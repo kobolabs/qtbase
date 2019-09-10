@@ -2014,8 +2014,9 @@ QFontEngine::Glyph *QFontEngineFT::lockedAlphaMapForGlyph(glyph_t glyphIndex, QF
 
     if (offset != 0) {
         if (isVertical) {
-            int xOffset = glyph->x - qRound(descent()); // shift vertical text to be closer to the left edge of the layout rect
-            int yOffset = qRound(ascent()) - glyph->y; // shift vertical text down so that it maintains reasonable spacing at the top
+            auto scale = QFixed::fromReal(sqrt(transform.determinant()));
+            int xOffset = glyph->x - qRound(descent() * scale); // shift vertical text to be closer to the left edge of the layout rect
+            int yOffset = qRound(ascent() * scale) - glyph->y; // shift vertical text down so that it maintains reasonable spacing at the top
             *offset = QPoint(xOffset, yOffset);
         } else {
             *offset = QPoint(glyph->x, -glyph->y);
