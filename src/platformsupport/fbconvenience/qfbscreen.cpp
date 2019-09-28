@@ -106,6 +106,7 @@ void QFbScreen::removeWindow(QFbWindow *window)
     mWindowStack.removeAll(window);
     invalidateRectCache();
     setDirty(mapToDevice(window->geometry()), window->window()->dirtyFlags());
+    doRedraw();
     QWindow *w = topWindow();
     QWindowSystemInterface::handleWindowActivated(w);
     topWindowChanged(w);
