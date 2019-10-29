@@ -5463,6 +5463,16 @@ QRect QStyleSheetStyle::subControlRect(ComplexControl cc, const QStyleOptionComp
                     QRect sr = (sb->orientation == Qt::Horizontal)
                                ? QRect(sliderstart, contentRect.top(), sliderlen, contentRect.height())
                                : QRect(contentRect.left(), sliderstart, contentRect.width(), sliderlen);
+
+                    if (hasStyleRule(w, PseudoElement_ScrollBarSlider)) {
+                        QRenderRule sliderRule = renderRule(w, opt, PseudoElement_ScrollBarSlider);
+                        if (sliderRule.hasBox() || sliderRule.hasGeometry()) {
+                            QPoint oldCenter = sr.center();
+                            sr.setSize(sliderRule.adjustSize(sr.size()));
+                            sr.moveCenter(oldCenter);
+                        }
+                    }
+
                     if (sc == SC_ScrollBarSlider) {
                         return sr;
                     } else if (sc == SC_ScrollBarSubPage) {
