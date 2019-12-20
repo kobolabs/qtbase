@@ -155,7 +155,7 @@ void QPlatformWindow::setVisible(bool visible)
     Q_UNUSED(visible);
     QRect rect(QPoint(), geometry().size());
     QWindowSystemInterface::handleExposeEvent(window(), rect);
-    QWindowSystemInterface::flushWindowSystemEvents();
+    QWindowSystemInterface::flushWindowSystemEvents(QEventLoop::ExcludeUserInputEvents | QEventLoop::ExcludeSocketNotifiers);
 }
 
 /*!
