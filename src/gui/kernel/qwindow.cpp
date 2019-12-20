@@ -1499,7 +1499,7 @@ void QWindow::destroy()
     setVisible(false);
     QPlatformWindow *platformWindow = d->platformWindow;
     d->platformWindow = nullptr;
-    QWindowSystemInterface::flushWindowSystemEvents();
+    QWindowSystemInterface::flushWindowSystemEvents(QEventLoop::ExcludeUserInputEvents | QEventLoop::ExcludeSocketNotifiers);
     delete platformWindow;
     d->resizeEventPending = true;
     d->receivedExpose = false;
@@ -1524,7 +1524,7 @@ void QWindow::destroy()
     if (QGuiApplicationPrivate::tabletPressTarget == this)
         QGuiApplicationPrivate::tabletPressTarget = parent();
 
-    QWindowSystemInterface::flushWindowSystemEvents();
+    QWindowSystemInterface::flushWindowSystemEvents(QEventLoop::ExcludeUserInputEvents | QEventLoop::ExcludeSocketNotifiers);
 }
 
 /*!
