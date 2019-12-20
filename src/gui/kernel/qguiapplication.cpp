@@ -1427,8 +1427,9 @@ void QGuiApplicationPrivate::processWindowSystemEvent(QWindowSystemInterfacePriv
     case QWindowSystemInterfacePrivate::ApplicationStateChanged:
         QGuiApplicationPrivate::setApplicationState(static_cast<QWindowSystemInterfacePrivate::ApplicationStateChangedEvent *>(e)->newState);
         break;
-    case QWindowSystemInterfacePrivate::FlushEvents:
-        QWindowSystemInterface::deferredFlushWindowSystemEvents();
+    case QWindowSystemInterfacePrivate::FlushEvents: {
+        QWindowSystemInterfacePrivate::FlushEventsEvent *flushEventsEvent = static_cast<QWindowSystemInterfacePrivate::FlushEventsEvent *>(e);
+        QWindowSystemInterface::deferredFlushWindowSystemEvents(flushEventsEvent->flags); }
         break;
     case QWindowSystemInterfacePrivate::Close:
         QGuiApplicationPrivate::processCloseEvent(
