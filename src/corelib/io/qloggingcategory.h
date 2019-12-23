@@ -52,6 +52,7 @@ class Q_CORE_EXPORT QLoggingCategory
     Q_DISABLE_COPY(QLoggingCategory)
 public:
     explicit QLoggingCategory(const char *category);
+    QLoggingCategory(const char *category, QtMsgType severityLevel);
     ~QLoggingCategory();
 
     bool isEnabled(QtMsgType type) const;
@@ -74,6 +75,8 @@ public:
     static void setFilterRules(const QString &rules);
 
 private:
+    void init(const char *category, QtMsgType severityLevel);
+
     void *d; // reserved for future use
     const char *name;
 
@@ -84,15 +87,28 @@ private:
 };
 
 #define Q_DECLARE_LOGGING_CATEGORY(name) \
-    extern QLoggingCategory &name();
+    extern const QLoggingCategory &name();
 
-// relies on QLoggingCategory(QString) being thread safe!
-#define Q_LOGGING_CATEGORY(name, string) \
-    QLoggingCategory &name() \
+#if defined(Q_COMPILER_VARIADIC_MACROS) || defined(Q_MOC_RUN)
+
+#define Q_LOGGING_CATEGORY(name, ...) \
+    const QLoggingCategory &name() \
     { \
-        static QLoggingCategory category(string); \
+        static const QLoggingCategory category(__VA_ARGS__); \
         return category; \
     }
+
+#else // defined(Q_COMPILER_VARIADIC_MACROS) || defined(Q_MOC_RUN)
+
+// Optional msgType argument not supported
+#define Q_LOGGING_CATEGORY(name, string) \
+    const QLoggingCategory &name() \
+    { \
+        static const QLoggingCategory category(string); \
+        return category; \
+    }
+
+#endif
 
 #define qCDebug(category) \
     for (bool enabled = category().isDebugEnabled(); Q_UNLIKELY(enabled); enabled = false) \

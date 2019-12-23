@@ -110,13 +110,31 @@ Q_GLOBAL_STATIC_WITH_ARGS(QLoggingCategory, qtDefaultCategory,
 */
 QLoggingCategory::QLoggingCategory(const char *category)
     : d(0),
-      name(0),
-      enabledDebug(false),
-      enabledWarning(true),
-      enabledCritical(true)
+      name(0)
 {
-    Q_UNUSED(d);
-    Q_UNUSED(placeholder);
+    init(category, QtWarningMsg);
+}
+
+/*!
+    Constructs a QLoggingCategory object with the provided \a category name,
+    and enables all messages with types more severe or equal than \a enableForLevel.
+
+    If \a category is \c{0}, the category name is changed to \c "default".
+
+    \since 5.4
+*/
+QLoggingCategory::QLoggingCategory(const char *category, QtMsgType enableForLevel)
+    : d(0),
+      name(0)
+{
+    init(category, enableForLevel);
+}
+
+void QLoggingCategory::init(const char *category, QtMsgType severityLevel)
+{
+    enabledDebug = (severityLevel <= QtDebugMsg);
+    enabledWarning = (severityLevel <= QtWarningMsg);
+    enabledCritical = (severityLevel <= QtCriticalMsg);
 
     bool isDefaultCategory
             = (category == 0) || (strcmp(category, qtDefaultCategoryName) == 0);
