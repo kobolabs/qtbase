@@ -149,7 +149,7 @@ void QLoggingCategory::init(const char *category, QtMsgType severityLevel)
     }
 
     if (QLoggingRegistry *reg = QLoggingRegistry::instance())
-        reg->registerCategory(this);
+        reg->registerCategory(this, severityLevel);
 }
 
 /*!

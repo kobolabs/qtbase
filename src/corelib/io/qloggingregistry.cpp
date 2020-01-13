@@ -213,12 +213,12 @@ QLoggingRegistry::QLoggingRegistry()
 
     This method might be called concurrently for the same category object.
 */
-void QLoggingRegistry::registerCategory(QLoggingCategory *cat)
+void QLoggingRegistry::registerCategory(QLoggingCategory *cat, QtMsgType enableForLevel)
 {
     QMutexLocker locker(&registryMutex);
 
     if (!categories.contains(cat)) {
-        categories.append(cat);
+        categories.insert(cat, enableForLevel);
         (*categoryFilter)(cat);
     }
 }
@@ -231,7 +231,7 @@ void QLoggingRegistry::unregisterCategory(QLoggingCategory *cat)
 {
     QMutexLocker locker(&registryMutex);
 
-    categories.removeOne(cat);
+    categories.remove(cat);
 }
 
 /*!
@@ -247,7 +247,7 @@ void QLoggingRegistry::setRules(const QVector<QLoggingRule> &rules_)
     if (categoryFilter != defaultCategoryFilter)
         return;
 
-    foreach (QLoggingCategory *cat, categories)
+    foreach (QLoggingCategory *cat, categories.keys())
         (*categoryFilter)(cat);
 }
 
@@ -266,7 +266,7 @@ QLoggingRegistry::installFilter(QLoggingCategory::CategoryFilter filter)
     QLoggingCategory::CategoryFilter old = categoryFilter;
     categoryFilter = filter;
 
-    foreach (QLoggingCategory *cat, categories)
+    foreach (QLoggingCategory *cat, categories.keys())
         (*categoryFilter)(cat);
 
     return old;
@@ -283,14 +283,18 @@ QLoggingRegistry *QLoggingRegistry::instance()
 */
 void QLoggingRegistry::defaultCategoryFilter(QLoggingCategory *cat)
 {
-    // QLoggingCategory() normalizes all "default" strings
-    // to qtDefaultCategoryName
-    bool debug = (cat->categoryName() == qtDefaultCategoryName);
-    bool warning = true;
-    bool critical = true;
+    QLoggingRegistry *reg = QLoggingRegistry::instance();
+    Q_ASSERT(reg->categories.contains(cat));
+    QtMsgType enableForLevel = reg->categories.value(cat);
+
+    bool debug = (enableForLevel == QtDebugMsg) ? true : false;
+    bool warning = (enableForLevel <= QtWarningMsg) ? true : false;
+    bool critical = (enableForLevel <= QtCriticalMsg) ? true : false;
+
+    if (cat->categoryName() == qtDefaultCategoryName)
+        debug = true;
 
     QString categoryName = QLatin1String(cat->categoryName());
-    QLoggingRegistry *reg = QLoggingRegistry::instance();
     foreach (const QLoggingRule &item, reg->rules) {
         int filterpass = item.pass(categoryName, QtDebugMsg);
         if (filterpass != 0)
