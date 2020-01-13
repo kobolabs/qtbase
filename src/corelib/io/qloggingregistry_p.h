@@ -109,7 +109,7 @@ class QLoggingRegistry
 public:
     QLoggingRegistry();
 
-    void registerCategory(QLoggingCategory *category);
+    void registerCategory(QLoggingCategory *category, QtMsgType enableForLevel);
     void unregisterCategory(QLoggingCategory *category);
 
     void setRules(const QVector<QLoggingRule> &rules);
@@ -126,7 +126,7 @@ private:
 
     QMutex registryMutex;
     QVector<QLoggingRule> rules;
-    QList<QLoggingCategory*> categories;
+    QHash<QLoggingCategory*,QtMsgType> categories;
     QLoggingCategory::CategoryFilter categoryFilter;
 };
 
