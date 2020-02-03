@@ -407,9 +407,9 @@ void QWindowSystemInterface::handleTouchEvent(QWindow *w, QTouchDevice *device,
     handleTouchEvent(w, time, device, points, mods);
 }
 
-QList<QTouchEvent::TouchPoint> QWindowSystemInterfacePrivate::convertTouchPoints(const QList<QWindowSystemInterface::TouchPoint> &points, QEvent::Type *type)
+QVector<QTouchEvent::TouchPoint> QWindowSystemInterfacePrivate::convertTouchPoints(const QList<QWindowSystemInterface::TouchPoint> &points, QEvent::Type *type)
 {
-    QList<QTouchEvent::TouchPoint> touchPoints;
+    QVector<QTouchEvent::TouchPoint> touchPoints;
     Qt::TouchPointStates states;
     QTouchEvent::TouchPoint p;
 
@@ -459,7 +459,7 @@ void QWindowSystemInterface::handleTouchEvent(QWindow *tlw, ulong timestamp, QTo
         return;
 
     QEvent::Type type;
-    QList<QTouchEvent::TouchPoint> touchPoints = QWindowSystemInterfacePrivate::convertTouchPoints(points, &type);
+    QVector<QTouchEvent::TouchPoint> touchPoints = QWindowSystemInterfacePrivate::convertTouchPoints(points, &type);
 
     QWindowSystemInterfacePrivate::TouchEvent *e =
             new QWindowSystemInterfacePrivate::TouchEvent(tlw, timestamp, type, device, touchPoints, mods);
@@ -478,7 +478,7 @@ void QWindowSystemInterface::handleTouchCancelEvent(QWindow *w, ulong timestamp,
 {
     QWindowSystemInterfacePrivate::TouchEvent *e =
             new QWindowSystemInterfacePrivate::TouchEvent(w, timestamp, QEvent::TouchCancel, device,
-                                                         QList<QTouchEvent::TouchPoint>(), mods);
+                                                         QVector<QTouchEvent::TouchPoint>(), mods);
     QWindowSystemInterfacePrivate::handleWindowSystemEvent(e);
 }
 
@@ -746,12 +746,12 @@ Q_GUI_EXPORT void qt_handleKeyEvent(QWindow *w, QEvent::Type t, int k, Qt::Keybo
 }
 
 Q_GUI_EXPORT  void qt_handleTouchEvent(QWindow *w, QTouchDevice *device,
-                                const QList<QTouchEvent::TouchPoint> &points,
+                                const QVector<QTouchEvent::TouchPoint> &points,
                                 Qt::KeyboardModifiers mods = Qt::NoModifier)
 {
     Qt::TouchPointStates states;
-    QList<QTouchEvent::TouchPoint>::const_iterator point = points.constBegin();
-    QList<QTouchEvent::TouchPoint>::const_iterator end = points.constEnd();
+    QVector<QTouchEvent::TouchPoint>::const_iterator point = points.constBegin();
+    QVector<QTouchEvent::TouchPoint>::const_iterator end = points.constEnd();
     while (point != end) {
         states |= point->state();
         ++point;

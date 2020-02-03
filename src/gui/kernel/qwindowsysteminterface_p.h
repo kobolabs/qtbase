@@ -260,10 +260,10 @@ public:
     class TouchEvent : public InputEvent {
     public:
         TouchEvent(QWindow *w, ulong time, QEvent::Type t, QTouchDevice *dev,
-                   const QList<QTouchEvent::TouchPoint> &p, Qt::KeyboardModifiers mods)
+                   const QVector<QTouchEvent::TouchPoint> &p, Qt::KeyboardModifiers mods)
             :InputEvent(w, time, Touch, mods), device(dev), points(p), touchType(t) { }
         QTouchDevice *device;
-        QList<QTouchEvent::TouchPoint> points;
+        QVector<QTouchEvent::TouchPoint> points;
         QEvent::Type touchType;
     };
 
@@ -484,7 +484,7 @@ public:
     static QWaitCondition eventsFlushed;
     static QMutex flushEventMutex;
 
-    static QList<QTouchEvent::TouchPoint> convertTouchPoints(const QList<QWindowSystemInterface::TouchPoint> &points, QEvent::Type *type);
+    static QVector<QTouchEvent::TouchPoint> convertTouchPoints(const QList<QWindowSystemInterface::TouchPoint> &points, QEvent::Type *type);
 };
 
 QT_END_NAMESPACE
