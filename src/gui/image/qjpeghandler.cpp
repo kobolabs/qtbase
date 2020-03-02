@@ -233,7 +233,8 @@ inline static bool read_jpeg_format(QImage::Format &format, j_decompress_ptr cin
     case 3:
     case 4:
 #if JCS_EXTENSIONS == 1
-        cinfo->out_color_space = JCS_EXT_RGBA;
+        if (cinfo->out_color_space != JCS_CMYK)
+            cinfo->out_color_space = JCS_EXT_RGBA;
         format = QImage::Format_ARGB32;
 #else
         format = QImage::Format_RGB32;
