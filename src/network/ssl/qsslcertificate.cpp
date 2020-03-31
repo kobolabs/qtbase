@@ -1083,7 +1083,7 @@ QSslCertificate QSslCertificatePrivate::QSslCertificate_from_X509(X509 *x509)
     certificate.d->notValidBefore = q_getTimeFromASN1(nbef);
     certificate.d->notValidAfter = q_getTimeFromASN1(naft);
     certificate.d->null = false;
-    certificate.d->x509 = q_X509_dup(x509);
+    certificate.d->x509 = x509;
 
     return certificate;
 }
@@ -1139,7 +1139,6 @@ QList<QSslCertificate> QSslCertificatePrivate::certificatesFromPem(const QByteAr
 
         if (X509 *x509 = q_d2i_X509(0, &data, decoded.size())) {
             certificates << QSslCertificate_from_X509(x509);
-            q_X509_free(x509);
         }
     }
 
@@ -1162,7 +1161,6 @@ QList<QSslCertificate> QSslCertificatePrivate::certificatesFromDer(const QByteAr
     while (count == -1 || certificates.size() < count) {
         if (X509 *x509 = q_d2i_X509(0, &data, size)) {
             certificates << QSslCertificate_from_X509(x509);
-            q_X509_free(x509);
         } else {
             break;
         }
