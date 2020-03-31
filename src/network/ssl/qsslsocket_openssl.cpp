@@ -260,7 +260,7 @@ int q_X509Callback(int ok, X509_STORE_CTX *ctx)
         _q_sslErrorList()->errors << qMakePair<int, int>(q_X509_STORE_CTX_get_error(ctx), q_X509_STORE_CTX_get_error_depth(ctx));
 #ifdef QSSLSOCKET_DEBUG
         qDebug() << "verification error: dumping bad certificate";
-        qDebug() << QSslCertificatePrivate::QSslCertificate_from_X509(q_X509_STORE_CTX_get_current_cert(ctx)).toPem();
+        qDebug() << QSslCertificatePrivate::QSslCertificate_from_X509(q_X509_dup(q_X509_STORE_CTX_get_current_cert(ctx))).toPem();
         qDebug() << "dumping chain";
         foreach (QSslCertificate cert, QSslSocketBackendPrivate::STACKOFX509_to_QSslCertificates(q_X509_STORE_CTX_get_chain(ctx))) {
             QString certFormat(QStringLiteral("O=%1 CN=%2 L=%3 OU=%4 C=%5 ST=%6"));
@@ -1090,7 +1090,6 @@ bool QSslSocketBackendPrivate::startHandshake()
         configuration.peerCertificateChain = STACKOFX509_to_QSslCertificates(q_SSL_get_peer_cert_chain(ssl));
     X509 *x509 = q_SSL_get_peer_certificate(ssl);
     configuration.peerCertificate = QSslCertificatePrivate::QSslCertificate_from_X509(x509);
-    q_X509_free(x509);
 
     // Start translating errors.
     QList<QSslError> errors;
@@ -1499,7 +1498,7 @@ QList<QSslCertificate> QSslSocketBackendPrivate::STACKOFX509_to_QSslCertificates
     QList<QSslCertificate> certificates;
     for (int i = 0; i < q_sk_X509_num(x509); ++i) {
         if (X509 *entry = q_sk_X509_value(x509, i))
-            certificates << QSslCertificatePrivate::QSslCertificate_from_X509(entry);
+            certificates << QSslCertificatePrivate::QSslCertificate_from_X509(q_X509_dup(entry));
     }
     return certificates;
 }
