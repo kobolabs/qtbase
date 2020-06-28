@@ -144,7 +144,7 @@ public:
         MV_10_13 = 0x000F,
         MV_10_14 = 0x0010,
         MV_10_15 = 0x0011,
-        MV_10_16 = 0x0012,
+        MV_11_0 = 0x0012,
 
         /* codenames */
         MV_CHEETAH = MV_10_0,
@@ -163,7 +163,7 @@ public:
         MV_HIGHSIERRA = MV_10_13,
         MV_MOJAVE = MV_10_14,
         MV_CATALINA = MV_10_15,
-        MV_BIGSUR = MV_10_16,
+        MV_BIGSUR = MV_11_0,
 
         /* iOS */
         MV_IOS     = 1 << 8,
