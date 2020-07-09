@@ -301,7 +301,7 @@ unsigned char qDitheringMatrix[48] = {
 template <>
 inline void ditherLine(uint *buffer, const uint row, const uint length)
 {
-#if defined(__ARM_NEON__)
+#if defined(QT_COMPILER_SUPPORTS_NEON)
     neon_convert_and_dither_row(buffer, row, length);
 #else
     for (uint i = 0; i < length; i++) {
