@@ -63,7 +63,7 @@ QEvdevKeyboardManager::QEvdevKeyboardManager(const QString &key, const QString &
     if (spec.isEmpty())
         spec = specification;
 
-    QStringList args = spec.split(QLatin1Char(':'));
+    QStringList args = spec.split(QLatin1String("::"));
     QStringList devices;
 
     foreach (const QString &arg, args) {
@@ -75,7 +75,7 @@ QEvdevKeyboardManager::QEvdevKeyboardManager(const QString &key, const QString &
     }
 
     // build new specification without /dev/ elements
-    m_spec = args.join(QLatin1Char(':'));
+    m_spec = args.join(QLatin1String("::"));
 
     // add all keyboards for devices specified in the argument list
     foreach (const QString &device, devices)

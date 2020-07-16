@@ -109,7 +109,7 @@ QEvdevKeyboardHandler *QEvdevKeyboardHandler::create(const QString &device, cons
     bool enableCompose = false;
     int grab = 0;
 
-    QStringList args = specification.split(QLatin1Char(':'));
+    QStringList args = specification.split(QLatin1String("::"));
     foreach (const QString &arg, args) {
         if (arg.startsWith(QLatin1String("keymap=")))
             keymapFile = arg.mid(7);
