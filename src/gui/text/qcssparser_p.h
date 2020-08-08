@@ -103,6 +103,7 @@ enum Property {
     MarginRight,
     MarginTop,
     QtBlockIndent,
+    QtBorderAntiAlias,
     QtListIndent,
     QtParagraphType,
     QtTableType,

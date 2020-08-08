@@ -466,7 +466,7 @@ struct QStyleSheetImageData : public QSharedData
 class QRenderRule
 {
 public:
-    QRenderRule() : features(0), hasFont(false), pal(0), b(0), bg(0), bd(0), ou(0), geo(0), p(0), img(0), clipset(0) { }
+    QRenderRule() : features(0), hasFont(false), borderAntiAlias(true), pal(0), b(0), bg(0), bd(0), ou(0), geo(0), p(0), img(0), clipset(0) { }
     QRenderRule(const QVector<QCss::Declaration> &, const QObject *);
     ~QRenderRule() { }
 
@@ -570,6 +570,7 @@ public:
     QBrush defaultBackground;
     QFont font;
     bool hasFont;
+    bool borderAntiAlias;
 
     QHash<QString, QVariant> styleHints;
     bool hasStyleHint(const QString& sh) const { return styleHints.contains(sh); }
@@ -859,7 +860,7 @@ static QStyle::StandardPixmap subControlIcon(int pe)
 }
 
 QRenderRule::QRenderRule(const QVector<Declaration> &declarations, const QObject *object)
-: features(0), hasFont(false), pal(0), b(0), bg(0), bd(0), ou(0), geo(0), p(0), img(0), clipset(0)
+: features(0), hasFont(false), borderAntiAlias(true), pal(0), b(0), bg(0), bd(0), ou(0), geo(0), p(0), img(0), clipset(0)
 {
     QPalette palette = QApplication::palette(); // ###: ideally widget's palette
     ValueExtractor v(declarations, palette);
@@ -961,6 +962,9 @@ QRenderRule::QRenderRule(const QVector<Declaration> &declarations, const QObject
             int role = decl.d->values.at(0).variant.toInt();
             if (role >= Value_FirstColorRole && role <= Value_LastColorRole)
                 defaultBackground = palette.color((QPalette::ColorRole)(role-Value_FirstColorRole));
+        } else if (decl.d->propertyId == QtBorderAntiAlias) {
+            int value = decl.d->values.at(0).variant.toInt();
+            borderAntiAlias = (value != Value_Disabled);
         } else if (decl.d->property.startsWith(QLatin1String("qproperty-"), Qt::CaseInsensitive)) {
             // intentionally left blank...
         } else if (decl.d->propertyId == UnknownProperty) {
@@ -1226,7 +1230,7 @@ void QRenderRule::drawBorder(QPainter *p, const QRect& rect)
     }
 
     bool wasAntialiased = p->renderHints() & QPainter::Antialiasing;
-    p->setRenderHint(QPainter::Antialiasing);
+    p->setRenderHint(QPainter::Antialiasing, borderAntiAlias);
     qDrawBorder(p, rect, bd->styles, bd->borders, bd->colors, bd->radii);
     p->setRenderHint(QPainter::Antialiasing, wasAntialiased);
 }
@@ -1304,7 +1308,7 @@ void QRenderRule::drawBackground(QPainter *p, const QRect& rect, const QPoint& o
         if (!borderPath.isEmpty()) {
             // Drawn intead of being used as clipping path for better visual quality
             bool wasAntialiased = p->renderHints() & QPainter::Antialiasing;
-            p->setRenderHint(QPainter::Antialiasing);
+            p->setRenderHint(QPainter::Antialiasing, borderAntiAlias);
             p->fillPath(borderPath, brush);
             p->setRenderHint(QPainter::Antialiasing, wasAntialiased);
         } else {
