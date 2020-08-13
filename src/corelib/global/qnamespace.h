@@ -508,6 +508,8 @@ public:
         WA_KoboEpdWfModeGL16,
         WA_KoboEpdWfModeGLR32,
         WA_KoboEpdWfModeGLD16,
+        WA_KoboEpdWfModeGCK16,
+        WA_KoboEpdWfModeGLK16,
 
         WA_KoboEpdFlagInvert,
         WA_KoboEpdFlagMonochrome,
