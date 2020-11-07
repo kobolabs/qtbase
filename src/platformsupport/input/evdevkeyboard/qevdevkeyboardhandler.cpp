@@ -43,7 +43,6 @@
 
 #include <qplatformdefs.h>
 
-#include <QSocketNotifier>
 #include <QStringList>
 #include <qpa/qwindowsysteminterface.h>
 #include <QCoreApplication>
@@ -65,7 +64,7 @@ QT_BEGIN_NAMESPACE
 #include "qevdevkeyboardmanager_p.h"
 
 QEvdevKeyboardHandler::QEvdevKeyboardHandler(const QString &device, int fd, bool disableZap, bool enableCompose, const QString &keymapFile, QEvdevEventHandler *eventHandler)
-    : m_device(device), m_fd(fd),
+    : m_notifier(nullptr), m_device(device), m_fd(fd),
       m_modifiers(0), m_composing(0), m_dead_unicode(0xffff),
       m_no_zap(disableZap), m_do_compose(enableCompose),
       m_keymap(0), m_keymap_size(0), m_keycompose(0), m_keycompose_size(0),
@@ -83,9 +82,8 @@ QEvdevKeyboardHandler::QEvdevKeyboardHandler(const QString &device, int fd, bool
         unloadKeymap();
 
     // socket notifier for events on the keyboard device
-    QSocketNotifier *notifier;
-    notifier = new QSocketNotifier(m_fd, QSocketNotifier::Read, this);
-    connect(notifier, SIGNAL(activated(int)), this, SLOT(readKeycode()));
+    m_notifier = new QSocketNotifier(m_fd, QSocketNotifier::Read, this);
+    connect(m_notifier, SIGNAL(activated(int)), this, SLOT(readKeycode()));
 }
 
 QEvdevKeyboardHandler::~QEvdevKeyboardHandler()
@@ -166,6 +164,10 @@ void QEvdevKeyboardHandler::readKeycode()
     qWarning() << "Read new keycode on" << m_device;
 #endif
 
+    if (m_fd == -1) {
+        return;
+    }
+
     struct ::input_event buffer[32];
     int n = 0;
 
@@ -176,6 +178,10 @@ void QEvdevKeyboardHandler::readKeycode()
             qWarning("Got EOF from the input device.");
             return;
         } else if (result < 0) {
+            if (errno == ENODEV) {
+                m_notifier->setEnabled(false);
+                return;
+            }
             if (errno != EINTR && errno != EAGAIN) {
                 qWarning("Could not read from input device: %s", strerror(errno));
                 return;

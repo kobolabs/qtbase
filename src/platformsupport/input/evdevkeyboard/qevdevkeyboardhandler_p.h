@@ -45,6 +45,7 @@
 #include <qobject.h>
 #include <QTimer>
 #include <QDataStream>
+#include <QSocketNotifier>
 
 QT_BEGIN_NAMESPACE
 
@@ -173,6 +174,8 @@ private:
     void processKeyEvent(int nativecode, int unicode, int qtcode,
                          Qt::KeyboardModifiers modifiers, bool isPress, bool autoRepeat);
     void switchLed(int, bool);
+
+    QSocketNotifier *m_notifier;
 
     QString m_device;
     int m_fd;
