@@ -915,6 +915,11 @@ void WriteInitialization::acceptLayout(DomLayout *node)
     const DomPropertyMap properties = propertyMap(node->elementProperty());
     const bool oldLayoutProperties = properties.constFind(QLatin1String("margin")) != properties.constEnd();
 
+    const bool future = hasFutureProperty(node->elementProperty()) && !m_option.future;
+    if (future) {
+        m_output << "\n#if 0 // future\n";
+    }
+
     bool isGroupBox = false;
 
     m_output << m_indent << varName << " = new " << className << '(';
@@ -989,6 +994,10 @@ void WriteInitialization::acceptLayout(DomLayout *node)
     writePropertyList(varName, QLatin1String("setColumnStretch"), node->attributeColumnStretch(), numberNull);
     writePropertyList(varName, QLatin1String("setColumnMinimumWidth"), node->attributeColumnMinimumWidth(), numberNull);
     writePropertyList(varName, QLatin1String("setRowMinimumHeight"), node->attributeRowMinimumHeight(), numberNull);
+
+    if (future) {
+        m_output << "\n#endif // future\n";
+    }
 }
 
 // Apply a comma-separated list of values using a function "setSomething(int idx, value)"
@@ -1058,7 +1067,9 @@ void WriteInitialization::acceptLayoutItem(DomLayoutItem *node)
         }
     }
 
-    const bool future = node->kind() == DomLayoutItem::Widget && hasFutureProperty(node->elementWidget()->elementProperty(), m_widgetChain) && !m_option.future;
+    const bool widgetFuture = node->kind() == DomLayoutItem::Widget && hasFutureProperty(node->elementWidget()->elementProperty(), m_widgetChain);
+    const bool layoutFuture = node->kind() == DomLayoutItem::Layout && hasFutureProperty(node->elementLayout()->elementProperty());
+    const bool future = (widgetFuture || layoutFuture) && !m_option.future;
     if (future) {
         m_output << "\n#if 0 // future\n";
     }
