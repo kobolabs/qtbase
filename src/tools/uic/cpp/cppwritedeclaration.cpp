@@ -255,6 +255,10 @@ void WriteDeclaration::acceptSpacer(DomSpacer *node)
 
 void WriteDeclaration::acceptLayout(DomLayout *node)
 {
+    const bool future = hasFutureProperty(node->elementProperty()) && !m_option.future;
+    if (future) {
+        m_output << "\n#if 0 // future\n";
+    }
     QString className = QLatin1String("QLayout");
     if (node->hasAttributeClass())
         className = node->attributeClass();
@@ -262,6 +266,10 @@ void WriteDeclaration::acceptLayout(DomLayout *node)
     m_output << m_option.indent << className << " *" << m_driver->findOrInsertLayout(node) << ";\n";
 
     TreeWalker::acceptLayout(node);
+
+    if (future) {
+        m_output << "\n#endif // future\n";
+    }
 }
 
 void WriteDeclaration::acceptActionGroup(DomActionGroup *node)
