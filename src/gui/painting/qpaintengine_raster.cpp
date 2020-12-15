@@ -2160,7 +2160,7 @@ void QRasterPaintEngine::drawImage(const QPointF &p, const QImage &img)
     QRasterPaintEngineState *s = state();
     qreal scale = img.devicePixelRatio();
 
-    if (scale > 1.0 ||  s->matrix.type() > QTransform::TxTranslate) {
+    if (scale > 1.0 ||  s->matrix.type() > QTransform::TxTranslate || s->flags.dither) {
         drawImage(QRectF(p.x(), p.y(), img.width() / scale, img.height() / scale),
                   img,
                   QRectF(0, 0, img.width(), img.height()));
@@ -3689,7 +3689,7 @@ bool QRasterPaintEnginePrivate::canUseFastImageBlending(QPainter::CompositionMod
     Q_Q(const QRasterPaintEngine);
     const QRasterPaintEngineState *s = q->state();
 
-    return s->flags.fast_images
+    return s->flags.fast_images && !s->flags.dither
            && (mode == QPainter::CompositionMode_SourceOver
                || (mode == QPainter::CompositionMode_Source
                    && !image.hasAlphaChannel()));
