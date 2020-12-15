@@ -4354,6 +4354,9 @@ static void blend_untransformed_argb(int count, const QSpan *spans, void *userDa
                 const uint *src = (uint *)data->texture.scanLine(sy) + sx;
                 uint *dest = ((uint *)data->rasterBuffer->scanLine(spans->y)) + x;
                 op.func(dest, src, length, coverage);
+                if (data->dither) {
+                    ditherLine<uint>(dest, sy, length);
+                }
             }
         }
         ++spans;
