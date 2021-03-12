@@ -763,7 +763,7 @@ Q_GUI_EXPORT void qt_handleKeyEvent(QWindow *w, QEvent::Type t, int k, Qt::Keybo
     QWindowSystemInterface::handleKeyEvent(w, t, k, mods, text, autorep, count);
 }
 
-Q_GUI_EXPORT  void qt_handleTouchEvent(QWindow *w, QTouchDevice *device,
+Q_GUI_EXPORT  void qt_handleTouchEvent(QWindow *w, QTouchDevice *device, ulong timestamp,
                                 const QVector<QTouchEvent::TouchPoint> &points,
                                 Qt::KeyboardModifiers mods = Qt::NoModifier)
 {
@@ -781,10 +781,17 @@ Q_GUI_EXPORT  void qt_handleTouchEvent(QWindow *w, QTouchDevice *device,
     else if (states == Qt::TouchPointReleased)
         type = QEvent::TouchEnd;
 
-    unsigned long timestamp = QWindowSystemInterfacePrivate::eventTime.elapsed();
     QWindowSystemInterfacePrivate::TouchEvent *e =
             new QWindowSystemInterfacePrivate::TouchEvent(w, timestamp, type, device, points, mods);
     QWindowSystemInterfacePrivate::handleWindowSystemEvent(e);
+}
+
+Q_GUI_EXPORT  void qt_handleTouchEvent(QWindow *w, QTouchDevice *device,
+                                const QVector<QTouchEvent::TouchPoint> &points,
+                                Qt::KeyboardModifiers mods = Qt::NoModifier)
+{
+    unsigned long timestamp = QWindowSystemInterfacePrivate::eventTime.elapsed();
+    qt_handleTouchEvent(w, device, timestamp, points, mods);
 }
 
 QT_END_NAMESPACE
