@@ -75,6 +75,7 @@ public:
     virtual void close();
     virtual qint64 bytesAvailable() const;
     virtual bool isSequential () const;
+    virtual bool seek(qint64 pos);
     qint64 size() const;
 
     virtual qint64 readData(char *data, qint64 maxlen);
