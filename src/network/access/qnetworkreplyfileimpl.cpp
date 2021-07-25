@@ -164,9 +164,15 @@ qint64 QNetworkReplyFileImpl::bytesAvailable() const
     return QNetworkReply::bytesAvailable() + d->realFile.bytesAvailable();
 }
 
-bool QNetworkReplyFileImpl::isSequential () const
+bool QNetworkReplyFileImpl::isSequential() const
 {
-    return true;
+    return false;
+}
+
+bool QNetworkReplyFileImpl::seek(qint64 pos)
+{
+    Q_D(QNetworkReplyFileImpl);
+    return d->realFile.seek(pos);
 }
 
 qint64 QNetworkReplyFileImpl::size() const
