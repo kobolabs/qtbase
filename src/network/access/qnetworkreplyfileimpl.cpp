@@ -175,6 +175,12 @@ bool QNetworkReplyFileImpl::seek(qint64 pos)
     return d->realFile.seek(pos);
 }
 
+qint64 QNetworkReplyFileImpl::pos() const
+{
+    Q_D(const QNetworkReplyFileImpl);
+    return d->realFile.pos();
+}
+
 qint64 QNetworkReplyFileImpl::size() const
 {
     Q_D(const QNetworkReplyFileImpl);
