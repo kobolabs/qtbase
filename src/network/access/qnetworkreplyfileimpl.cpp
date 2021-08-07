@@ -114,7 +114,7 @@ QNetworkReplyFileImpl::QNetworkReplyFileImpl(QObject *parent, const QNetworkRequ
     }
 
     d->realFile.setFileName(fileName);
-    bool opened = d->realFile.open(QIODevice::ReadOnly | QIODevice::Unbuffered);
+    bool opened = d->realFile.open(QIODevice::ReadOnly);
 
     // could we open the file?
     if (!opened) {
@@ -161,7 +161,7 @@ void QNetworkReplyFileImpl::abort()
 qint64 QNetworkReplyFileImpl::bytesAvailable() const
 {
     Q_D(const QNetworkReplyFileImpl);
-    return QNetworkReply::bytesAvailable() + d->realFile.bytesAvailable();
+    return d->realFile.bytesAvailable();
 }
 
 bool QNetworkReplyFileImpl::isSequential() const
@@ -193,11 +193,7 @@ qint64 QNetworkReplyFileImpl::size() const
 qint64 QNetworkReplyFileImpl::readData(char *data, qint64 maxlen)
 {
     Q_D(QNetworkReplyFileImpl);
-    qint64 ret = d->realFile.read(data, maxlen);
-    if (ret == 0 && bytesAvailable() == 0)
-        return -1;
-    else
-        return ret;
+    return d->realFile.read(data, maxlen);
 }
 
 
