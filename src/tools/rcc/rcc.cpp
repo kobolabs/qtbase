@@ -501,6 +501,9 @@ bool RCCResourceLibrary::interpretResourceFile(QIODevice *inputDevice,
                     absFileName.prepend(currentPath);
                 QFileInfo file(absFileName);
                 if (!file.exists()) {
+                    if (future && !m_future) {
+                        continue;
+                    }
                     m_failedResources.push_back(absFileName);
                     const QString msg = QString::fromLatin1("RCC: Error in '%1': Cannot find file '%2'\n").arg(fname).arg(fileName);
                     m_errorDevice->write(msg.toUtf8());
