@@ -262,6 +262,20 @@ bool QFontDatabase::removeApplicationFont(int handle)
     return true;
 }
 
+bool QFontDatabase::removeApplicationFont(const QString &familyName)
+{
+    QMutexLocker locker(fontDatabaseMutex());
+    QFontDatabasePrivate *db = privateDb();
+    for (int i = 0; i < db->applicationFonts.count(); ++i) {
+        if (db->applicationFonts.at(i).families.contains(familyName)) {
+            db->applicationFonts[i] = QFontDatabasePrivate::ApplicationFont();
+        }
+    }
+    db->reregisterAppFonts = true;
+    db->invalidate();
+    return true;
+}
+
 bool QFontDatabase::removeAllApplicationFonts()
 {
     QMutexLocker locker(fontDatabaseMutex());
