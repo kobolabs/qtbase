@@ -149,6 +149,7 @@ public:
     static int addApplicationFontFromData(const QByteArray &fontData);
     static QStringList applicationFontFamilies(int id);
     static bool removeApplicationFont(int id);
+    static bool removeApplicationFont(const QString &familyName);
     static bool removeAllApplicationFonts();
 
 #if QT_DEPRECATED_SINCE(5, 2)
