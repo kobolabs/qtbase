@@ -707,8 +707,14 @@ unsigned int bestFoundry(int script, unsigned int score, int styleStrategy,
                          QtFontDesc *desc, int force_encoding_id)
 {
     Q_UNUSED(force_encoding_id);
-    Q_UNUSED(script);
     Q_UNUSED(pitch);
+
+    size_t writingSystem = std::find(scriptForWritingSystem, scriptForWritingSystem + QFontDatabase::WritingSystemsCount, script) - scriptForWritingSystem;
+    if (script == QChar::Script_Hiragana || script == QChar::Script_Katakana) {
+        writingSystem = QFontDatabase::Japanese;
+    } else if (script == QChar::Script_Bopomofo) {
+        writingSystem = QFontDatabase::TraditionalChinese;
+    }
 
     desc->foundry = 0;
     desc->style = 0;
@@ -805,11 +811,15 @@ unsigned int bestFoundry(int script, unsigned int score, int styleStrategy,
 
         unsigned int this_score = 0x0000;
         enum {
+            WritingSystemMismatch      = 0x8000,
             PitchMismatch       = 0x4000,
             StyleMismatch       = 0x2000,
             BitmapScaledPenalty = 0x1000,
             EncodingMismatch    = 0x0002
         };
+        if (!(family->writingSystems[writingSystem] & QtFontFamily::Supported)) {
+            this_score += WritingSystemMismatch;
+        }
         if (pitch != '*') {
             if ((pitch == 'm' && !family->fixedPitch)
                 || (pitch == 'p' && family->fixedPitch))
@@ -886,7 +896,12 @@ static int match(int script, const QFontDef &request,
 
     load(family_name, script);
 
-    const size_t writingSystem = std::find(scriptForWritingSystem, scriptForWritingSystem + QFontDatabase::WritingSystemsCount, script) - scriptForWritingSystem;
+    size_t writingSystem = std::find(scriptForWritingSystem, scriptForWritingSystem + QFontDatabase::WritingSystemsCount, script) - scriptForWritingSystem;
+    if (script == QChar::Script_Hiragana || script == QChar::Script_Katakana) {
+        writingSystem = QFontDatabase::Japanese;
+    } else if (script == QChar::Script_Bopomofo) {
+        writingSystem = QFontDatabase::TraditionalChinese;
+    }
 
     QFontDatabasePrivate *db = privateDb();
     for (int x = 0; x < db->count; ++x) {
@@ -903,7 +918,13 @@ static int match(int script, const QFontDef &request,
             load(test.family->name, script);
 
         // Check if family is supported in the script we want
-        if (script != QChar::Script_Common && !(test.family->writingSystems[writingSystem] & QtFontFamily::Supported))
+        if ((writingSystem == QFontDatabase::SimplifiedChinese || writingSystem == QFontDatabase::TraditionalChinese || writingSystem == QFontDatabase::Japanese)
+            && ((test.family->writingSystems[QFontDatabase::SimplifiedChinese] & QtFontFamily::Supported)
+                || (test.family->writingSystems[QFontDatabase::TraditionalChinese] & QtFontFamily::Supported)
+                || (test.family->writingSystems[QFontDatabase::Japanese] & QtFontFamily::Supported))) {
+            // pass
+        }
+        else if (script != QChar::Script_Common && !(test.family->writingSystems[writingSystem] & QtFontFamily::Supported))
             continue;
 
         // as we know the script is supported, we can be sure
