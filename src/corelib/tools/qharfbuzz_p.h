@@ -142,6 +142,12 @@ typedef enum {
     HB_Script_Runic,
     HB_Script_Khmer,
     HB_Script_Nko,
+
+    HB_Script_Hiragana,
+    HB_Script_Katakana,
+    HB_Script_Bopomofo,
+    HB_Script_Han,
+
     HB_Script_Inherited,
     HB_ScriptCount = HB_Script_Inherited
 } HB_Script;
@@ -345,6 +351,12 @@ static inline HB_Script script_to_hbscript(uchar script)
     case QChar::Script_Thai: return HB_Script_Thai;
     case QChar::Script_Tibetan: return HB_Script_Tibetan;
     case QChar::Script_Nko: return HB_Script_Nko;
+
+    case QChar::Script_Han: return HB_Script_Han;
+    case QChar::Script_Hiragana: return HB_Script_Hiragana;
+    case QChar::Script_Katakana: return HB_Script_Katakana;
+    case QChar::Script_Bopomofo: return HB_Script_Bopomofo;
+
     default: break;
     };
     return HB_Script_Common;
@@ -382,6 +394,12 @@ static inline uchar hbscript_to_script(uchar script)
     case HB_Script_Thai: return QChar::Script_Thai;
     case HB_Script_Tibetan: return QChar::Script_Tibetan;
     case HB_Script_Nko: return QChar::Script_Nko;
+
+    case HB_Script_Han: return QChar::Script_Han;
+    case HB_Script_Hiragana: return QChar::Script_Hiragana;
+    case HB_Script_Katakana: return QChar::Script_Katakana;
+    case HB_Script_Bopomofo: return QChar::Script_Bopomofo;
+
     default: break;
     };
     return QChar::Script_Common;

@@ -75,6 +75,12 @@ typedef enum {
         HB_Script_Runic,
         HB_Script_Khmer,
         HB_Script_Nko,
+
+        HB_Script_Hiragana,
+        HB_Script_Katakana,
+        HB_Script_Bopomofo,
+        HB_Script_Han,
+
         HB_Script_Inherited,
         HB_ScriptCount = HB_Script_Inherited
         /*
@@ -83,10 +89,6 @@ typedef enum {
         HB_Script_Cherokee = Common,
         HB_Script_CanadianAboriginal = Common,
         HB_Script_Mongolian = Common,
-        HB_Script_Hiragana = Common,
-        HB_Script_Katakana = Common,
-        HB_Script_Bopomofo = Common,
-        HB_Script_Han = Common,
         HB_Script_Yi = Common,
         HB_Script_OldItalic = Common,
         HB_Script_Gothic = Common,
