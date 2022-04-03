@@ -477,7 +477,17 @@ const HB_ScriptEngine HB_ScriptEngines[] = {
     // Khmer
     { HB_KhmerShape, HB_KhmerAttributes },
     // N'Ko
-    { HB_ArabicShape, 0}
+    { HB_ArabicShape, 0},
+
+    // Hiragana
+    { HB_BasicShape, 0 },
+    // Katakana
+    { HB_BasicShape, 0 },
+    // Bopomofo
+    { HB_BasicShape, 0 },
+    // Han
+    { HB_BasicShape, 0 }
+
 };
 
 void HB_GetTailoredCharAttributes(const HB_UChar16 *string, hb_uint32 stringLength,
